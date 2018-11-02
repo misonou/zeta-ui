@@ -1,0 +1,14 @@
+{
+    "regexp": true,
+    "browser": true,
+    "jquery": true,
+    "loopfunc": true,
+    "multistr": true,
+    "-W002": true,
+    "globals": {
+        "zeta": true,
+        "shim": true,
+        "console": true,
+        "waterpipe": true
+    }
+}

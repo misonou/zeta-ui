@@ -1,0 +1,47 @@
+## 1.0.0-pre / 2018-11-01
+
+Intial pre-release, changed from Typer 0.11.3:
+
+- Helper function module `zeta.helper`
+- Shim module `zeta.shim`
+  - New shim for Map
+  - Fix: WeakMap issue on proto chain
+  - Fix: Set missing iterating method
+- New DOM event module `zeta.dom` provides global functionality of:
+  - Focus delagation (migrated from `typer.retainFocus`)
+  - Block focus outside modal container
+  - Allow events to be routed within and between container
+- Editor module (`zeta.Editor`)
+  - Refactored based on the new DOM event module
+  - Added `typer.enable` and `typer.disable` to allow enabling and disabling editor
+  - Added `typer.destroy`
+  - Added `widget.parent`
+  - Removed `beforeStateChange` event
+  - Removed `focusin` and `focusout` event for content widget
+  - Expose command to new support interface (`zeta.dom.support`)
+  - Moved `Typer.historyLevel` as instance property
+  - Fix: incorrect state after cutting content
+  - Fix: `typer.hasContent` reported wrong value when composing text in IME
+- UI module (`zeta.UI`)
+  - Rewritten based on the new DOM event module
+  - Two-way bindings
+  - Observable property by `propertyChange` event and `control.watch` method
+  - Allow adding and removing controls dynamically
+  - Allow listening events of other controls (`control.on`)
+  - Control templates
+    - Allow customizing outlook when defining controls
+    - Allow templated attributes and DOM contents for dynamic evaluation
+    - Allow templated localization resource for dynamic evaluation
+  - Built-in components
+    - New component types: menu, form, fieldset, and RTE
+    - Add keyboard navigation support on menus
+    - Add icon support in suggestion list of keyword fields
+    - Add title, description and error message area in dialogs
+    - Add notification (`UI.notify`)
+    - Customizable action button label, title and description for standard dialogs (alert, confirm, prompt)
+    - Use native date-time picker on touch devices
+    - Prompt dialog for keyword field on touch devices
+    - Fix: keyword input failed to detect value change if existing values are removed
+- Other improvements
+  - Apply max-width/height to snapped elements
+  - Automatically determine snapping direction for dialogs

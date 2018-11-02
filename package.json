@@ -1,0 +1,26 @@
+{
+  "name": "zeta-ui",
+  "version": "1.0.0-pre",
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-clean": "^1.1.0",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-uglify": "^2.0.0",
+    "highlightjs": "^9.12.0",
+    "jq-scrollable": "^1.3.0",
+    "jquery": "^3.3.1",
+    "qunit": "^2.5.1",
+    "syn": "^0.13.0",
+    "waterpipe": "^2.2.0"
+  },
+  "author": "misonou",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/misonou/zeta-ui.git"
+  },
+  "homepage": "https://github.com/misonou/zeta-ui",
+  "scripts": {
+    "build": "grunt"
+  }
+}

@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="IE=Edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Samples</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlightjs/styles/atom-one-light.css"/>
+    <link rel="stylesheet" href="../css/zeta-ui.css" />
+    <link rel="stylesheet" href="main.css" />
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/misonou/waterpipe@2.2.0/src/waterpipe.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/misonou/jquery-scrollable@1.3.0/jquery.scrollable.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/highlightjs/highlight.pack.min.js"></script>
+    <script type="text/javascript" src="../dist/zeta-ui.min.js"></script>
+</head>
+<body>
+    <div id="topbar">
+        <div id="name">ζ</div>
+        <div id="topbar-buttons"></div>
+    </div>
+    <div id="navigation">
+        <div id="navigation-inner"></div>
+    </div>
+    <div id="main">
+    <div class="section">
+        <h1>Getting started</h1>
+
+        <h2>First control</h2>
+        <div class="desc">
+            All controls are created through control factory `new zeta.UI()`.
+        </div>
+        <div class="example">
+            // create control factory
+            var ui = new zeta.UI();
+
+            // define a button named "demoButton"
+            var button = ui.button('demoButton');
+
+            // render the button in the space on the right
+            // and context object is returned by render method
+            var context = button.render(div);
+        </div>
+
+        <h2>Name vs label</h2>
+        <div class="desc">
+            Although label for a control is automatically set to the control's name if not given,
+            the recommended way to specify labels is either explicitly set on control's options or through `ui.i18n()`.
+            Examples on this page only use labels directly for brevity.
+        </div>
+        <div class="example">
+            var ui = new zeta.UI();
+            var buttonlist = ui.buttonlist(
+                // directly use label as name
+                ui.checkbox('Demo Checkbox'),
+                // recommended way #1
+                ui.checkbox('demoCheckbox'),
+                // recommended way #2
+                ui.checkbox('anotherCbx', { label: 'Demo Checkbox' })
+            );
+            // recommended way #1
+            ui.i18n('en', 'demoCheckbox', 'Demo Checkbox');
+
+            // you will see why directly use label as name is not a good idea
+            // as just changing the label would break you code!
+            var context = buttonlist.render(div);
+            console.log(context.toJSON());
+            // click to inspect =[context]
+        </div>
+
+        <h2>Icon</h2>
+        <div class="desc">
+            Most button-like controls support icons. Currently only Material icons are supported.
+            For a complete list of icons please see <a href="https://material.io/tools/icons" target="_blank">https://material.io/tools/icons</a>.
+        </div>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button('Done', {
+                icon: 'done'
+            });
+            button.render(div);
+        </div>
+
+        <h2>Action</h2>
+        <div class="desc">
+            Actions can be assigned to any controls by the `execute` option.
+            Actions are triggered either by user interactions, e.g. mouse click, for button-like controls or
+            when value is changed for controls that let user to input values to or choose values from.
+        </div>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button('Click me', {
+                execute: function () {
+                    console.log('Button clicked');
+                }
+            });
+            button.render(div);
+        </div>
+    </div>
+
+    <div class="section">
+        <h1>Lifecycle</h1>
+
+        <h2>Init and destroy</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button({
+                label: 'Click me to remove',
+                execute: function (self) {
+                    // remove clicked button from button list
+                    self.destroy();
+                },
+                init: function (e, self) {
+                    console.log(self.name + ':', 'init');
+                },
+                destroy: function (e, self) {
+                    console.log(self.name + ':', 'destroy');
+                }
+            })
+            var buttonlist = ui.buttonlist(
+                ui.button('Add button', function (self) {
+                    self.parent.append(button);
+                }),
+                // append 3 buttons initially
+                button,
+                button,
+                button
+            );
+            buttonlist.render(div);
+        </div>
+
+        <h2>Property change and DOM update</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var buttonset = ui.buttonset(
+                ui.checkbox({
+                    // templated value will also be re-evaluated and upon changes to other properties
+                    // and is included in propertyChange event if the evaluated string differs from previous value
+                    label: 'Value is {{value}}',
+                    propertyChange: function (e) {
+                        console.log('Old values:', e.oldValues);
+                        console.log('New values:', e.newValues);
+                    },
+                    // stateChange event is fired whenever updates to DOM are needed
+                    // such as changes to control states (enabled, active, ...) or
+                    // property changed, or focus entering or leaving the control
+                    stateChange: function (e) {
+                        console.log('DOM update')
+                    }
+                })
+            );
+            buttonset.render(div);
+        </div>
+
+        <h2>Async operation</h2>
+        <div class="desc">
+            Any control that returns a promise when execution will be automatically locked to prevent double execution.
+            The `pending` flag of that control will be on during the period, and the `asyncStart` and `asyncEnd` event fired.
+        </div>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button('Click me', {
+                execute: function () {
+                    console.log('Do async stuff. Now clicking the button again will not execute again until async end');
+                    return delay(5000);
+                },
+                asyncStart: function (e, self) {
+                    console.log('Async operation started. self.pending =', self.pending);
+                },
+                asyncEnd: function (e, self) {
+                    console.log('Async operation ended. self.pending =', self.pending);
+                }
+            });
+            button.render(div);
+        </div>
+
+        <h1>Scripting with control</h1>
+
+        <h2>Finding controls</h2>
+        <div class="desc">
+            Controls can be retrieved either through control's `all` property or through the context object.
+        </div>
+        <div class="example">
+            var ui = new zeta.UI();
+            var buttonset = ui.buttonset(ui.checkbox(), ui.textbox(), {
+                init: function (e, self) {
+                    // within control event
+                    // console.log(self.all);
+                }
+            });
+            var context = buttonset.render(div);
+
+            // get from context object
+            // click to inspect =[ui.all(context)]
+            // alternatively get from DOM element
+            // click to inspect =[ui.all(div)]
+        </div>
+
+        <h2>Control state</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var buttonset = ui.buttonlist(
+                ui.button('Enabled', {
+                    enabled: function () { return true; }
+                }),
+                ui.button('Disabled', {
+                    enabled: function () { return false; }
+                }),
+                ui.button('Active', {
+                    active: function () { return true; }
+                }),
+                ui.button('Hidden', {
+                    visible: function () { return false; }
+                }),
+                ui.button('Disabled', {
+                    hiddenWhenDisabled: true,
+                    enabled: function () { return false; }
+                })
+            );
+            buttonset.render(div);
+        </div>
+
+        <h2>Setting control state</h2>
+        <div class="desc">
+            Alternatively the three control states can be set during runtime.
+        </div>
+        <div class="example">
+            var ui = new zeta.UI();
+            var buttonset = ui.buttonlist(
+                ui.button('Enabled', {
+                    init: function (e, self) { self.enabled = true; }
+                }),
+                ui.button('Disabled', {
+                    init: function (e, self) { self.enabled = false; }
+                }),
+                ui.button('Active', {
+                    init: function (e, self) { self.active = true; }
+                }),
+                ui.button('Hidden', {
+                    init: function (e, self) { self.visible = false; }
+                })
+            );
+            buttonset.render(div);
+        </div>
+
+        <h2>Control dependency</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var buttonset = ui.buttonset(
+                ui.checkbox('toggle'),
+                ui.button('demoButton', 'favorite', {
+                    init: function (e, self) {
+                        self.all.toggle.on('stateChange', function (e, checkbox) {
+                            self.enabled = checkbox.value;
+                        });
+                    }
+                })
+            );
+            buttonset.render(div);
+        </div>
+
+        <h1>Context object</h1>
+
+        <h2>Two-way bindings</h2>
+        <div class="desc">
+            By default two-way bindings are created on the context object for controls that has a value.
+        </div>
+        <div class="example">
+            var ui = new zeta.UI();
+            var buttonset = ui.buttonset(ui.checkbox(), ui.textbox());
+            var context = buttonset.render(div);
+
+            // try setting values to context object
+            // or inspect context object after playing controls
+            context.checkbox = true;
+            // click to inspect =[context]
+
+            // the same object that can retrieve by other components
+            // click to run =[zeta.dom.getContext(div)]
+        </div>
+
+        <h2>Action bindings</h2>
+        <div class="desc">
+            By default any non-valued control that can be executed, like a button that has the `execute` option defined, method are created on the context object that executes the control.
+            For other types of control there may also be method created to do other stuff.
+            See individual control types for more information.
+        </div>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button('demoButton', function (self) {
+                console.log('Button clicked');
+            });
+            var context = button.render(div);
+            // click to run =[context.demoButton()]
+        </div>
+
+        <h2>Custom bindings</h2>
+        <div class="desc">
+            Bindings with custom logic can be done via a get/setter.
+        </div>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button({
+                init: function (e, self) {
+                    zeta.helper.defineGetterProperty(self.context, 'icon', function () {
+                        return self.icon;
+                    }, function (value) {
+                        self.icon = value;
+                    });
+                }
+            });
+            var context = button.render(div);
+            context.icon = 'favorite';
+        </div>
+
+        <h2>Using contextChange event</h2>
+        <div class="desc">
+            The contextChange event is an interface where external code can actively notify
+            about changes that does not simply reflect on simple value change.
+        </div>
+        <div class="example">
+            var ui = new zeta.UI();
+            var dropdown = ui.dropdown({
+                contextChange: function (e, self) {
+                    // event fired when context.update() is called
+                    self.choices = self.context.choices;
+                }
+            });
+            var context = dropdown.render(div);
+            context.choices = ['One', 'Two', 'Three'];
+            context.update();
+        </div>
+
+        <h1>Modularization</h1>
+
+        <h2>Import and export control</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            ui.export('custom.namespace',
+                ui.button('Button 1'),
+                ui.button('Button 2')
+            );
+
+            var anotherUI = new zeta.UI();
+            var buttonlist = anotherUI.buttonlist(
+                anotherUI.import('custom.namespace')
+            );
+            buttonlist.render(div);
+        </div>
+
+        <h2>Labels in separate file</h2>
+        <div class="desc">
+            It is common to put language resources in a separate file. Those labels can be imported without accessing control factory by a namespace.
+        </div>
+        <div class="example">
+            // label.en.js
+            // add labels to the "example" namespace
+            zeta.UI.i18n('example', 'en', {
+                'demoButton': 'Demo Button'
+            });
+
+            // main.js
+            // use labels in the "example" namespace
+            var ui = new zeta.UI('example');
+            ui.button('demoButton').render(div);
+        </div>
+
+        <h1>Advanced usage</h1>
+
+        <h2>Observing custom property</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button({
+                init: function (e, self) {
+                    self.watch('customProperty', function (self, prop, oldValue, newValue) {
+                         console.log('customProperty changed from', oldValue, 'to', newValue);
+                    });
+                },
+                propertyChange: function (e) {
+                    // custom property is included in propertyChange event when observed
+                    console.log(e.newValues);
+                },
+                execute: function (self) {
+                    self.customProperty = true;
+                }
+            });
+            button.render(div);
+        </div>
+
+        <h2>Control ordering</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var buttonlist = ui.buttonlist(
+                ui.button('Last button', { after: '*' }),
+                ui.button('Button')
+            );
+            buttonlist.render(div);
+        </div>
+
+        <h2>Keyboard and mouse event</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.textbox({
+                click: function (e) {
+                    console.log('Mouse clicked');
+                },
+                enter: function (e) {
+                    console.log('Key pressed:', e.eventName);
+                },
+                keystroke: function (e) {
+                    console.log('Key pressed:', e.data);
+                }
+            });
+            textbox.render(div);
+        </div>
+
+        <h2>Realm</h2>
+        <div class="desc">
+            Controls can be assigned to different realms to identify which contexts those controls required.
+            It looks for the named property on the toolset state object `self.state` and if the value is a falsy one (e.g. `0`, `false`, `null`, ...), that control will be disabled.
+            Controls disabled by this way is in the sense that it is <b>truly</b> disabled rather than in a disabled state. No events nor the `enabled` method will be called.
+        </div>
+        <div class="example">
+            var ui = new zeta.UI('realm', {
+                contextChange: function (e, self) {
+                    console.log('realm:', self.foo ? 'enabled' : 'disabled');
+                }
+            });
+            var buttonset = ui.buttonset(
+                // toggle flag and trigger contextChange event
+                ui.button('Toggle', function (self) {
+                    self.state.foo = !self.state.foo;
+                    self.context.update();
+                }, { showText: true }),
+
+                // only show and enable when foo is true
+                ui.dropdown('Foo', {
+                    realm: 'foo',
+                    choices: ['One', 'Two', 'Three'],
+                    contextChange: function () {
+                        console.log('dropdown: contextChange event fired');
+                    },
+                    enabled: function () {
+                        console.log('dropdown: enabled method called')
+                        return true;
+                    }
+                })
+            );
+            buttonset.render(div);
+        </div>
+
+        <h2>Templated label</h2>
+        <div class="desc">
+            Templated value can be used for observed properties.
+            Consult the wiki for <a href="https://github.com/misonou/waterpipe" target="_blank">waterpipe</a> for template syntax.
+        </div>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button('Click me', function (self) {
+                // increment count by each click
+                self.count = (self.count || 0) + 1;
+                // display how many clicks in button label
+                self.label = 'Clicked {{count}} times';
+                // which is also reflected in control's property
+                console.log(self.label);
+            });
+            button.render(div);
+        </div>
+
+        <h2>Customizing outlook</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var dropdown = ui.dropdown({
+                template: '&lt;div>&lt;div class="title">{{label}}&lt;/div>&lt;z:dropdown/>&lt;/div>',
+                label: 'Test Dropdown',
+                choices: ['One', 'Two', 'Three']
+            });
+            dropdown.render(div);
+        </div>
+    </div>
+
+    <div class="section">
+        <h1>Button</h1>
+
+        <h2>Simple button</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button('Click me', function () {
+                console.log('Button clicked');
+            });
+            button.render(div);
+        </div>
+
+        <h2>Danger button</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button('Danger', {
+                danger: true
+            });
+            button.render(div);
+        </div>
+
+        <h2>Simulate click</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button('demoButton', function (self) {
+                console.log('Button clicked');
+            });
+            var context = button.render(div);
+
+            // execute method is exposed to context object
+            // same as clicked by user
+            // click to execute =[context.demoButton()]
+        </div>
+
+        <h1>Hyperlink button</h1>
+
+        <h2>Link with icon</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var link = ui.link({
+                icon: 'open_in_new',
+                label: 'GitHub Homepage',
+                value: 'https://github.com/misonou/jquery-typer',
+                target: '_blank'
+            });
+            link.render(div);
+        </div>
+    </div>
+
+    <div class="section">
+        <h1>Menu</h1>
+
+        <h2>Show menu</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var menu = ui.menu(
+                ui.button('Menu item 1'),
+                ui.button('Menu item 2'),
+                ui.button('Menu item 3')
+            ).render(/* notice that no arguments are given here */);
+
+            var $link = $('&lt;a href="javascript:void 0;"&gt;Show menu&lt;/a&gt;');
+            $link.click(function () {
+                menu.showMenu(this);
+            });
+            $link.appendTo(div);
+        </div>
+
+        <h2>Context menu</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var menu = ui.menu(
+                ui.button('Menu item 1'),
+                ui.button('Menu item 2'),
+                ui.button('Menu item 3')
+            ).render(/* notice that no arguments are given here */);
+
+            zeta.dom.on(div, 'rightClick', function (e) {
+                menu.showMenu({
+                    x: e.clientX,
+                    y: e.clientY
+                });
+                e.preventDefault();
+            });
+            div.appendChild(document.createTextNode('Right click in region here'));
+        </div>
+
+        <h1>Menu button</h1>
+
+        <h2>Simple menu button</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var callout = ui.callout('Menu',
+                ui.button('Menu item 1'),
+                ui.button('Menu item 2'),
+                ui.button('Menu item 3')
+            );
+            callout.render(div);
+        </div>
+
+        <h2>Grouping menu items</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var callout = ui.callout('Menu',
+                // separator will be displayed for nested button list
+                ui.buttonlist(
+                    ui.button('Menu item 1'),
+                    ui.button('Menu item 2')
+                ),
+                ui.button('Menu item 3')
+            );
+            callout.render(div);
+        </div>
+
+        <h2>Toolbar in menu</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var callout = ui.callout('Menu',
+                // buttonlist required to show the separator
+                ui.buttonlist(
+                    ui.buttonset(
+                        ui.button('button1', 'favorite'),
+                        ui.button('button1', 'lock')
+                    )
+                ),
+                ui.button('Menu item 1'),
+                ui.button('Menu item 2'),
+                ui.button('Menu item 3')
+            );
+            callout.render(div);
+        </div>
+
+        <h2>Item description</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var callout = ui.callout('Menu',
+                ui.button('Menu item 1', { description: 'Description 1' }),
+                ui.button('Menu item 2', { description: 'Description 2' }),
+                ui.button('Menu item 3', { description: 'Description 3' })
+            );
+            callout.render(div);
+        </div>
+
+        <h2>Command shortcut</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var callout = ui.callout('Menu',
+                ui.button('Menu item 1', {
+                    // command shortcut is automatically resolved
+                    // when command name is supplied
+                    execute: 'dummy_command'
+                }),
+                ui.button('Menu item 2', {
+                    // or manually provide
+                    shortcut: 'ctrlAltQ'
+                })
+            );
+            zeta.dom.setShortcut('dummy_command', 'ctrlAltP');
+            callout.render(div);
+        </div>
+
+        <h2>Button mode</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var callout = ui.callout('Menu', 'menu',
+                ui.button('Disable me', 'favorite', {
+                    init: function (e, self) {
+                        self.enabled = false;
+                    },
+                    execute: function (self) {
+                        // since only one button is enabled after disabling
+                        // callout will become like a normal button
+                        self.enabled = false;
+                        console.log('Enter button mode');
+                    }
+                }),
+                ui.button('Button', 'lock_open', {
+                    execute: function (self) {
+                        self.all['Disable me'].enabled = true;
+                        console.log('Enter menu mode');
+                    }
+                }),
+                // specifies callout to become button when needed
+                { alwaysShowCallout: false }
+            );
+            callout.render(div);
+        </div>
+
+        <h1>Toolbar</h1>
+
+        <h2>Simple toolbar</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var buttonset = ui.buttonset(
+                ui.button('button1', 'search'),
+                ui.button('button2', 'favorite'),
+                ui.button('button3', 'lock')
+            );
+            buttonset.render(div);
+        </div>
+
+        <h2>Hiding button label</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var buttonset = ui.buttonset(
+                ui.button('button1', 'search'),
+                ui.button('button2', 'favorite'),
+                ui.button('button3', 'lock'),
+                { showText: false }
+            );
+            buttonset.render(div);
+        </div>
+    </div>
+
+    <div class="section">
+        <h1>Input fields</h1>
+
+        <h1>Dropdown</h1>
+
+        <h2>Simple dropdown</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var dropdown = ui.dropdown('Dropdown', ['One', 'Two', 'Three'], function (self) {
+                console.log(self.value);
+            });
+            dropdown.render(div);
+        </div>
+
+        <h2>Initial value</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var dropdown = ui.dropdown('Dropdown', ['One', 'Two', 'Three'], 'One');
+            dropdown.render(div);
+        </div>
+
+        <h2>Non-empty</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var dropdown = ui.dropdown('Dropdown', ['One', 'Two', 'Three'], {
+                allowEmpty: false
+            });
+            dropdown.render(div);
+        </div>
+
+        <h2>Using map for choices</h2>
+        <div class="example">
+            // use zeta.shim.Map for support in IE 10
+            var choices = new zeta.shim.Map();
+            choices.set(1, 'One');
+            choices.set(2, 'Two');
+            choices.set(3, 'Three');
+
+            var ui = new zeta.UI();
+            var dropdown = ui.dropdown('Dropdown', choices, function (self) {
+                // value will be the key added to the map
+                console.log(self.value);
+            });
+            dropdown.render(div);
+        </div>
+
+        <h2>Fixed label</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var dropdown = ui.dropdown('Dropdown', {
+                valueAsLabel: false,
+                choices: ['One', 'Two', 'Three']
+            });
+            dropdown.render(div);
+        </div>
+
+        <h2>Additional menu item</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var dropdown = ui.dropdown('Dropdown', {
+                value: 'One',
+                choices: ['One', 'Two', 'Three'],
+                controls: [
+                    // buttonlist required to show line
+                    // between choices and the additional item
+                    ui.buttonlist(
+                        ui.button('Additional button', function () {
+                            console.log('Button clicked');
+                        }),
+                        // show the addition item after choices
+                        { after: '*' }
+                    )
+                ],
+                execute: function () {
+                    console.log('Dropdown changed');
+                }
+            });
+            dropdown.render(div);
+        </div>
+
+        <h1>Checkbox</h1>
+
+        <h2>Simple checkbox</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var checkbox = ui.checkbox('Checkbox', function (self) {
+                console.log(self.value);
+            });
+            checkbox.render(div);
+        </div>
+
+        <h2>Required</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var checkbox = ui.checkbox('Checkbox', {
+                required: true
+            });
+            checkbox.render(div);
+        </div>
+
+        <h1>Textbox</h1>
+
+        <h2>Simple textbox</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.textbox();
+            textbox.render(div);
+        </div>
+
+        <h2>Required</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.textbox({
+                required: true
+            });
+            textbox.render(div);
+        </div>
+
+        <h2>Multiline textarea</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.textbox({
+                options: {
+                    lineBreak: true
+                }
+            });
+            textbox.render(div);
+        </div>
+
+        <h2>Maximum length</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.textbox('input', {
+                options: {
+                    validation: { maxlength: 6 }
+                }
+            });
+            var context = textbox.render(div);
+            context.input = '012345678';
+        </div>
+
+        <h2>Character blacklist</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.textbox('input', {
+                options: {
+                    validation: { invalidChars: '~"#%&*:<>?/\{|}' }
+                }
+            });
+            var context = textbox.render(div);
+            context.input = '0123&456?';
+        </div>
+
+        <h2>Character whitelist</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.textbox('input', {
+                options: {
+                    validation: { allowChars: '~"#%&*:<>?/\{|}' }
+                }
+            });
+            var context = textbox.render(div);
+            context.input = '0123&456?';
+        </div>
+
+        <h2>Keep label</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.textbox('input', {
+                showPlaceholder: 'always'
+            });
+            var context = textbox.render(div);
+            context.input = '0123&456?';
+        </div>
+
+        <h2>Custom placeholder</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.textbox('input', {
+                placeholder: 'This is placeholder. This is a very long description.'
+            });
+            var context = textbox.render(div);
+        </div>
+
+        <h1>Number</h1>
+
+        <h2>Simple number input</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.number();
+            textbox.render(div);
+        </div>
+
+        <h2>Min/max</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.number({
+                options: { min: 0, max: 10 }
+            });
+            textbox.render(div);
+        </div>
+
+        <h2>Step</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.number({
+                options: { step: 10 }
+            });
+            textbox.render(div);
+        </div>
+
+        <h2>Loop</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.number({
+                options: { min: 1, max: 5, loop: true }
+            });
+            textbox.render(div);
+        </div>
+
+        <h1>Tags</h1>
+
+        <h2>Simple tag input</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.keyword({
+                execute: function (self) {
+                    console.log(self.value);
+                }
+            });
+            textbox.render(div);
+        </div>
+
+        <h2>Suggestions</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.keyword({
+                options: {
+                    allowedValues: 'ice,tongue,fate,mild,homosexual,dividend,throw,chief,drop,spokesperson,distort,sensitivity,fault,despair,moment,soft,short circuit,bottom,referee,chew'.split(',')
+                },
+                execute: function (self) {
+                    console.log(self.value);
+                }
+            });
+            textbox.render(div);
+        </div>
+
+        <h2>Suggestions label/icon</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.keyword({
+                options: {
+                    allowedValues: [
+                        { value: '1', label: 'One', icon: 'looks_one' },
+                        { value: '2', label: 'Two', icon: 'looks_two' },
+                        { value: '3', label: 'Three', icon: 'looks_3' }
+                    ]
+                },
+                execute: function (self) {
+                    console.log(self.value);
+                }
+            });
+            textbox.render(div);
+        </div>
+
+        <h2>Defined values only</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var textbox = ui.keyword('tags', {
+                options: {
+                    allowFreeInput: false,
+                    allowedValues: ['One', 'Two', 'Three']
+                }
+            });
+            var context = textbox.render(div);
+            context.tags = ['Four'];
+        </div>
+
+        <h1>Date picker</h1>
+
+        <h2>Date picker</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var datepicker = ui.datepicker();
+            datepicker.render(div);
+        </div>
+
+        <h2>Week picker</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var datepicker = ui.datepicker({
+                options: { mode: 'week' },
+                execute: function () {
+                    console.log(this.value);
+                }
+            });
+            datepicker.render(div);
+        </div>
+
+        <h2>Month picker</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var datepicker = ui.datepicker({
+                options: { mode: 'month' },
+                execute: function () {
+                    console.log(this.value);
+                }
+            });
+            datepicker.render(div);
+        </div>
+
+        <h2>Date/time picker</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var datepicker = ui.datepicker({
+                options: { mode: 'datetime' },
+                execute: function () {
+                    console.log(this.value);
+                }
+            });
+            datepicker.render(div);
+        </div>
+
+        <h2>Min/max date</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var datepicker = ui.datepicker({
+                options: { min: 'today', max: '+14day' },
+                execute: function () {
+                    console.log(this.value);
+                }
+            });
+            datepicker.render(div);
+        </div>
+
+        <h2>Calendar</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var calendar = ui.calendar({
+                execute: function () {
+                    console.log(this.value);
+                }
+            });
+            calendar.render(div);
+        </div>
+
+        <h1>File upload</h1>
+
+        <h2>Multiple file upload</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var file = ui.file('Upload', 'file_upload', {
+                multiple: true,
+                execute: function (self) {
+                    console.log(self.value);
+                }
+            });
+            file.render(div);
+        </div>
+
+        <h1>Rich text editor</h1>
+
+        <h2>Sample editor</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var rte = ui.richtext();
+            rte.render(div);
+        </div>
+    </div>
+
+    <div class="section">
+        <h1>Dialog</h1>
+
+        <h2>Alert box</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button('Click me', function () {
+                ui.alert('This is an alert box').then(function (value) {
+                    console.log(value);
+                });
+            });
+            button.render(div);
+
+            // alternatively you can create alert box without factory
+            // click to run =[zeta.UI.alert('This is an alert box')]
+        </div>
+
+        <h2>Confirm box</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button('Click me', function () {
+                ui.confirm('This is an confirm box').then(function (value) {
+                    console.log(value);
+                });
+            });
+            button.render(div);
+
+            // alternatively you can create alert box without factory
+            // click to run =[zeta.UI.confirm('This is an confirm box')]
+        </div>
+
+        <h2>Prompt box</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var button = ui.button('Click me', function (self) {
+                ui.prompt('This is an prompt box', 'Initial value').then(function (value) {
+                    console.log(value);
+                });
+            });
+            button.render(div);
+
+            // alternatively you can create alert box without factory
+            // click to run =[zeta.UI.prompt('This is an prompt box')]
+        </div>
+
+        <h2>Using label as message</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            ui.i18n('en', 'alertMessage', 'This is an alert box');
+            var button = ui.button('Click me', function () {
+                ui.alert('alertMessage');
+            });
+            button.render(div);
+        </div>
+
+        <h2>Custom dialog</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var dialog = ui.dialog(
+                ui.checkbox({
+                    required: true
+                }),
+                ui.buttonset(
+                    ui.submit('submit', 'done'),
+                    ui.button('cancel', 'cancel', function (self) {
+                        // close the dialog without executing
+                        return self.all.dialog.destroy();
+                    })
+                )
+            );
+            var button = ui.button('Click me', function () {
+                // notice that no arguments are given to render()
+                var context = dialog.render();
+                context.dialog.then(function (value) {
+                    // do stuff like submitting request to server
+                    console.log('Submitted', value);
+                }, function () {
+                    console.log('Cancelled')
+                });
+            });
+            button.render(div);
+        </div>
+
+        <h2>Dialog with async operation</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var dialog = ui.dialog(
+                ui.textbox(),
+                ui.checkbox(),
+                ui.buttonset(
+                    ui.submit('submit', 'done')
+                ), {
+                execute: function (self) {
+                    return delay(5000);
+                }
+            });
+            var button = ui.button('Click me', function () {
+                // notice that no arguments are given to render()
+                var context = dialog.render();
+                context.dialog.then(function (value) {
+                    console.log('Submitted', value);
+                }, function () {
+                    console.log('Cancelled')
+                });
+            });
+            button.render(div);
+        </div>
+
+        <h2>Title and description</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var dialog = ui.dialog(
+                ui.textbox(),
+                ui.buttonset(
+                    ui.submit('submit', 'done')
+                ), {
+                title: 'This is title',
+                description: 'This is description.'
+            });
+            var button = ui.button('Click me', function () {
+                dialog.render();
+            });
+            button.render(div);
+        </div>
+
+        <h2>Error message</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var dialog = ui.dialog(
+                ui.textbox(),
+                ui.buttonset(
+                    ui.submit('submit', 'done')
+                ), {
+                execute: function (self) {
+                    return zeta.helper.reject('Error occured');
+                }
+            });
+            var button = ui.button('Click me', function () {
+                dialog.render();
+            });
+            button.render(div);
+        </div>
+
+        <h2>Danger zone</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var dialog = ui.dialog(
+                ui.checkbox(),
+                ui.buttonset(
+                    ui.submit('submit', 'done'),
+                    ui.button('delete', 'delete', {
+                        // put this button in danger zone
+                        danger: true,
+                        execute: function (self) {
+                            console.log('Danger button clicked');
+                            return self.all.dialog.destroy();
+                        }
+                    })
+                )
+            );
+            var button = ui.button('Click me', function () {
+                dialog.render().dialog.then(function (value) {
+                    console.log('Submitted', value);
+                }, function () {
+                    console.log('Cancelled')
+                });
+            });
+            button.render(div);
+        </div>
+    </div>
+
+    <div class="section">
+        <h1>Form</h1>
+
+        <h2>Simple form</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var form = ui.form(
+                ui.textbox('value'),
+                ui.buttonset(
+                    ui.submit('Submit', 'done')
+                ), {
+                execute: function () {
+                    // do stuff like submitting request to server
+                    console.log('Send to server', this.context.toJSON());
+                    return delay(5000, { result: 'OK' });
+                }
+            });
+            form.render(div);
+        </div>
+
+        <h2>Initial values</h2>
+        <div class="desc">
+            Although initial values can be supplied as individual `value` option for each control,
+            it is recommended to supplied it through `render()` method to increase reusability.
+        </div>
+        <div class="example">
+            var ui = new zeta.UI();
+            var form = ui.form(
+                ui.textbox('value'),
+                ui.buttonset(
+                    ui.submit('Submit', 'done')
+                )
+            );
+            form.render(div, {
+                value: 'Initial value'
+            });
+        </div>
+
+        <h2>Validation</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var form = ui.form(
+                ui.textbox('value', { required: true }),
+                ui.buttonset(
+                    ui.submit('Submit', 'done')
+                ),
+                function () {
+                    // will not execute if textbox is empty
+                    console.log('Form executed');
+                }
+            );
+            form.render(div);
+        </div>
+
+        <h2>Resetting form fields</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var form = ui.form(
+                ui.fieldset('Field set',
+                    ui.textbox('Textbox 1'),
+                    ui.textbox('Textbox 2'),
+                    ui.checkbox('Checkbox'),
+                    { description: 'Try playing with form fields and then click Reset.' }
+                ),
+                ui.buttonset(
+                    ui.button('Reset', 'undo', function (self) {
+                        self.context.reset();
+                    })
+                )
+            );
+            form.render(div, {
+                'Textbox 1': 'foo',
+                'Checkbox': true
+            });
+        </div>
+
+        <h2>Form section</h2>
+        <div class="example">
+            var ui = new zeta.UI();
+            var form = ui.form(
+                ui.fieldset('Normal section',
+                    ui.textbox('Textbox 1'),
+                    ui.textbox('Textbox 2')
+                ),
+                ui.fieldset('Optional section',
+                    ui.textbox('value', { required: true }),
+                    { optional: true, description: 'This is an optional set. When ' }
+                ),
+                ui.buttonset(
+                    ui.submit('Submit', 'done')
+                ),
+                function (self) {
+                    console.log('Validation passed')
+                }
+            );
+            var context = form.render(div);
+            // try playing with the fields and form sections and inspect the values
+            // click to inspect =[context.toJSON()]
+        </div>
+    </div>
+    </div>
+
+    <script src="./console.js"></script>
+    <script src="./main.js"></script>
+</body>
+</html>

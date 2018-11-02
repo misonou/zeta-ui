@@ -1,0 +1,1352 @@
+.zeta-ui {
+    font-family: 'Roboto', system-ui, -apple-system, 'Helvetica Neue', 'Segoe UI', 'Arial';
+    font-size: 14px;
+    color: #333;
+    line-height: 1.2;
+}
+
+.zeta-ui input,
+.zeta-ui textarea,
+.zeta-ui select,
+.zeta-ui button,
+.zeta-ui label {
+    font-family: inherit;
+    font-size: 100%;
+}
+
+.zeta-ui button::-moz-focus-inner {
+    border: 0;
+}
+
+.zeta-ui label a {
+    display: block;
+    color: inherit !important;
+}
+
+.zeta-ui *:active,
+.zeta-ui *:focus {
+    outline: none;
+}
+
+.zeta-ui .hidden {
+    display: none !important;
+}
+
+.zeta-ui .disabled {
+    opacity: 0.5 !important;
+    pointer-events: none !important;
+    cursor: default !important;
+}
+
+.zeta-ui .disabled .disabled {
+    opacity: 1 !important;
+}
+
+.zeta-ui input[type="file"] {
+    position: absolute;
+    left: -10000px;
+}
+
+.zeta-checkbox:before,
+.zeta-textbox-error:before {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 16px;
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'liga';
+}
+
+
+/* Icons and Labels */
+
+.zeta-label {
+    display: inline-block;
+    position: relative;
+    vertical-align: top;
+    -webkit-flex-grow: 1;
+    -ms-flex-positive: 1;
+    flex-grow: 1;
+}
+
+.zeta-label > span {
+    display: inline-block;
+    padding: 0.7em 0;
+    line-height: 1.2;
+    white-space: normal;
+}
+
+.zeta-label:empty,
+.zeta-label > span:empty {
+    display: none !important;
+}
+
+.zeta-label .material-icons {
+    display: inline-block;
+    position: relative;
+    width: 1em;
+    height: 1em;
+    font-size: 18px;
+    line-height: 1;
+    vertical-align: text-bottom;
+    overflow: hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.zeta-label > span {
+    display: inline-block;
+}
+
+.zeta-label .material-icons:not(.hidden) + span,
+.zeta-checkbox > span:first-child {
+    padding-left: 8px;
+}
+
+.zeta-label p {
+    margin: 0;
+}
+
+.zeta-label-description {
+    position: relative;
+    padding-left: 4em;
+    color: #aeb8c2;
+    font-weight: normal;
+    text-align: right;
+}
+
+
+/* Buttons */
+
+.zeta-ui label,
+.zeta-ui button {
+    display: block;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    border-style: none;
+    background-color: transparent;
+    background-image: none;
+    line-height: 2.67;
+    text-align: left;
+    vertical-align: top;
+    cursor: pointer;
+    color: inherit;
+    font-weight: inherit;
+    text-transform: inherit;
+    white-space: nowrap;
+    border-radius: 2px;
+    box-sizing: border-box;
+    overflow: visible;
+    -webkit-transition: opacity 0.1s ease-out, background-color 0.1s ease-out;
+    -moz-transition: opacity 0.1s ease-out, background-color 0.1s ease-out;
+    -ms-transition: opacity 0.1s ease-out, background-color 0.1s ease-out;
+    transition: opacity 0.1s ease-out, background-color 0.1s ease-out;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.zeta-ui button,
+.zeta-ui label.has-clickeffect,
+.zeta-buttonlist label,
+.zeta-buttonset label {
+    padding-left: 0.75em;
+    padding-right: 0.75em;
+}
+
+.zeta-ui label.disabled,
+.zeta-ui button.disabled {
+    background-color: transparent;
+    color: #999;
+}
+
+.zeta-ui .has-clickeffect:hover,
+.zeta-ui .has-clickeffect.focused-keyboard,
+.zeta-ui .has-clickeffect.active,
+.zeta-ui button:hover,
+.zeta-ui button.focused-keyboard,
+.zeta-ui button.active {
+    background-color: rgba(238, 238, 238, 0.5);
+}
+
+.zeta-ui .has-clickeffect.danger:not(.disabled),
+.zeta-ui button.danger:not(.disabled) {
+    color: #a90007;
+}
+
+.zeta-ui .has-clickeffect.loading,
+.zeta-ui button.loading {
+    background-color: #d3d3d3;
+    cursor: progress;
+    color: inherit;
+}
+
+.zeta-form > button.zeta-checkbox,
+.zeta-fieldset-title > button.zeta-checkbox {
+    margin-left: -0.75em;
+}
+
+button.zeta-checkbox:focus,
+button.zeta-checkbox:hover {
+    background-color: transparent;
+}
+
+.zeta-buttonlist > button.zeta-checkbox:focus,
+.zeta-buttonlist > button.zeta-checkbox:hover,
+.zeta-buttonset > button.zeta-checkbox:focus,
+.zeta-buttonset > button.zeta-checkbox:hover {
+    background-color: rgba(238, 238, 238, 0.5);
+}
+
+button.zeta-checkbox:before {
+    content: '\00e876';
+    display: inline-block;
+    margin: -1px -1px 0;
+    width: 1em;
+    height: 1em;
+    border: 2px solid #aaa;
+    border-radius: 2px;
+    background-color: white;
+    color: transparent;
+    vertical-align: text-bottom;
+}
+
+button.zeta-checkbox:hover:before {
+    border-color: #aeb8c2;
+}
+
+button.zeta-checkbox.disabled:before {
+    border-color: #d3d3d3;
+}
+
+button.zeta-checkbox.checked:before {
+    color: #212121;
+}
+
+button.zeta-checkbox:focus:before,
+button.zeta-checkbox:active:before {
+    border-color: rgba(16, 52, 146, 0.75);
+}
+
+button.zeta-checkbox.error:before {
+    border-color: rgba(169, 0, 7, 0.749);
+}
+
+button.zeta-checkbox.disabled:before {
+    box-shadow: none;
+}
+
+label.zeta-callout,
+label.zeta-dropdown {
+    padding: 0;
+}
+
+label.zeta-dropdown > button,
+.zeta-buttonlist > label.zeta-callout > button {
+    padding-right: 2em !important;
+}
+
+label.zeta-dropdown > button:after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: 0;
+    margin: -0.25em 0.5em 0 0;
+    border-top: 0.5em solid;
+    border-left: 0.4em solid transparent;
+    border-right: 0.4em solid transparent;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.zeta-buttonlist > label.zeta-callout > button:after,
+.zeta-buttonlist > label.zeta-dropdown > button:after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: 0;
+    height: 0;
+    margin: -0.4em 0.5em 0 0;
+    border-left: 0.5em solid #666;
+    border-top: 0.4em solid transparent;
+    border-bottom: 0.4em solid transparent;
+    border-right: none;
+    pointer-events: none;
+}
+
+label.zeta-dropdown.disabled:after {
+    border-top-color: #999;
+}
+
+label.zeta-dropdown.error {
+    color: #a00009;
+}
+
+label.zeta-dropdown.error .zeta-label:after {
+    content: '\00e001';
+    display: inline-block;
+    margin-left: 0.25em;
+    font-family: 'Material Icons';
+    font-weight: normal;
+    text-transform: none;
+    vertical-align: top;
+}
+
+.is-dropdown button {
+    padding-left: 2em;
+}
+
+.is-dropdown button.selected:before,
+.zeta-dropdown button.selected:before {
+    position: absolute;
+    content: '\00e876';
+    font-family: 'Material Icons';
+    top: 50%;
+    left: 0.7em;
+    line-height: 1;
+    margin-top: -0.5em;
+    text-transform: none;
+    font-size: 16px;
+}
+
+
+/* Menus */
+
+.zeta-float {
+    position: absolute;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+    z-index: 1;
+}
+
+.zeta-float > .zeta-float {
+    position: relative;
+    box-shadow: none;
+}
+
+.zeta-float label,
+.zeta-float button {
+    border-radius: 0;
+}
+
+.zeta-float .zeta-buttonlist {
+    min-width: 7em;
+}
+
+label > .zeta-float {
+    left: 100%;
+    top: 0;
+}
+
+label > .zeta-float.float-top {
+    top: auto;
+    bottom: 0;
+}
+
+label > .zeta-float.float-left {
+    left: auto;
+    right: 100%;
+}
+
+.zeta-buttonlist {
+    display: block;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-direction: column;
+    flex-direction: column;
+}
+
+.zeta-buttonlist label,
+.zeta-buttonlist button {
+    display: block;
+    display: -ms-flexbox;
+    display: flex;
+    width: 100%;
+    align-items: center;
+}
+
+.zeta-buttonlist.sep-before:before,
+.zeta-buttonlist.sep-after:after {
+    content: '';
+    display: block;
+    margin: 0.25em 0;
+    border-top: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.zeta-buttonset {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;
+    min-height: 2.67em;
+}
+
+.zeta-float .zeta-buttonset {
+    flex-wrap: nowrap;
+}
+
+.zeta-buttonset-pad {
+    display: block;
+    -webkit-flex-grow: 1;
+    -ms-flex-positive: 1;
+    flex-grow: 1;
+}
+
+.zeta-buttonset-pad:last-child {
+    display: none;
+}
+
+.zeta-buttonset > *,
+.zeta-buttonset > label,
+.zeta-buttonset > button {
+    display: inline-block;
+    position: relative;
+    vertical-align: top;
+    width: auto;
+}
+
+.zeta-buttonset > .zeta-buttonset {
+    display: inline;
+    display: inline-flex;
+    display: contents;
+}
+
+
+/* Textbox */
+
+.zeta-textbox .zeta-label {
+    -webkit-flex-grow: 0;
+    -ms-flex-positive: 0;
+    flex-grow: 0;
+}
+
+.zeta-buttonlist .zeta-textbox .zeta-label,
+.zeta-buttonset .zeta-textbox .zeta-label {
+    display: inline-block;
+    margin-right: 0.25em;
+}
+
+.zeta-textbox-wrapper {
+    display: block;
+    position: relative;
+    margin: 0 -0.25em 0.42em;
+    padding: 0.67em 0.25em 0.25em;
+    width: 100%;
+    border-bottom: 1px solid #aeb8c2;
+    vertical-align: top;
+    line-height: 1.33;
+}
+
+.zeta-buttonset .zeta-textbox .zeta-textbox-wrapper,
+.zeta-buttonlist .zeta-textbox .zeta-textbox-wrapper {
+    display: inline-block;
+    border-bottom-style: hidden;
+    width: auto;
+}
+
+.zeta-textbox.focused .zeta-textbox-wrapper {
+    border-bottom-color: #103492;
+}
+
+.zeta-textbox.error .zeta-textbox-wrapper {
+    border-bottom-color: #a90007;
+}
+
+.zeta-textbox-wrapper[data-label]:before {
+    content: attr(data-label);
+    display: block;
+    position: absolute;
+    font-size: 95%;
+    color: #103492;
+}
+
+.zeta-textbox-wrapper:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background-color: #103492;
+    transform: scaleX(0);
+    transition: transform 0.2s;
+}
+
+.zeta-textbox.error .zeta-textbox-wrapper:after {
+    background-color: #a90007;
+}
+
+.zeta-textbox.focused .zeta-textbox-wrapper:after {
+    transform: scaleX(1);
+}
+
+.zeta-textbox-inner {
+    position: relative;
+    cursor: text;
+}
+
+.zeta-textbox .zeta-editable {
+    display: inline-block;
+    position: relative;
+    margin: -0.17em 0;
+    padding: 0.17em 0;
+    width: 100%;
+    background: url('data:image/gif:,');
+    vertical-align: top;
+    color: #212121;
+    white-space: normal;
+    word-wrap: break-word;
+    cursor: text;
+    box-sizing: border-box;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    z-index: 0;
+}
+
+.zeta-textbox.keep-placeholder .zeta-editable {
+    white-space: normal;
+    word-break: break-all;
+    -webkit-transition: padding 0.2s;
+    -moz-transition: padding 0.2s;
+    -ms-transition: padding 0.2s;
+    transition: padding 0.2s;
+}
+
+.zeta-buttonlist .zeta-textbox .zeta-editable,
+.zeta-buttonset .zeta-textbox .zeta-editable {
+    white-space: nowrap;
+    overflow: hidden;
+    min-width: 3em;
+}
+
+.zeta-textbox-placeholder,
+.zeta-textbox-error {
+    display: none;
+    position: relative;
+    margin: -0.17em 0 -0.17em -100%;
+    padding: 0.17em 0;
+    width: 100%;
+    color: #aeb8c2;
+    line-height: 1.33;
+    vertical-align: top;
+    pointer-events: none;
+    white-space: normal;
+    cursor: text;
+    z-index: -1;
+    box-sizing: border-box;
+}
+
+.zeta-textbox-error {
+    color: #a90007;
+    text-align: right;
+}
+
+.zeta-buttonlist .zeta-textbox-placeholder,
+.zeta-buttonlist .zeta-textbox-error,
+.zeta-buttonset .zeta-textbox-placeholder,
+.zeta-buttonset .zeta-textbox-error {
+    white-space: nowrap;
+}
+
+.zeta-textbox.empty .zeta-textbox-placeholder,
+.zeta-textbox.error .zeta-textbox-error,
+.zeta-richtext.empty .zeta-textbox-placeholder,
+.zeta-richtext.error .zeta-textbox-error {
+    display: inline-block;
+}
+
+.zeta-textbox-placeholder:empty:before {
+    content: 'Enter text';
+}
+
+.zeta-textbox-error:before {
+    content: '\00e001';
+    vertical-align: text-bottom;
+}
+
+.zeta-textbox.keep-placeholder .zeta-textbox-placeholder {
+    display: block;
+    position: absolute;
+    top: 0;
+    margin-left: 0;
+    white-space: nowrap;
+    visibility: visible;
+    -webkit-transition: font-size 0.2s;
+    -moz-transition: font-size 0.2s;
+    -ms-transition: font-size 0.2s;
+    transition: font-size 0.2s;
+}
+
+.zeta-textbox.keep-placeholder:not(.empty) .zeta-textbox-placeholder {
+    color: #103492;
+    font-size: 95%;
+}
+
+.zeta-textbox-wrapper[data-label] .zeta-textbox-placeholder,
+.zeta-textbox-wrapper[data-label] .zeta-textbox-error,
+.zeta-textbox-wrapper[data-label] .zeta-editable,
+.zeta-textbox.keep-placeholder:not(.empty) .zeta-editable {
+    padding-top: 1.5em;
+}
+
+.zeta-textbox.error .zeta-textbox-placeholder {
+    padding-right: 20px;
+}
+
+.zeta-richtext {
+    margin: 0.67em -1px;
+    border: 1px solid #d3d3d3;
+    border-radius: 2px;
+}
+
+.zeta-richtext.focused {
+    border-color: #103492;
+    box-shadow: inset 0 0 2px rgba(128, 128, 128, 0.5), 0 0 2px #103492;
+}
+
+.zeta-richtext-toolbar {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.zeta-richtext .zeta-textbox {
+    padding: 0 0.67em;
+    line-height: 1.7;
+}
+
+.zeta-richtext .zeta-editable {
+    padding: 0;
+}
+
+
+/* Form */
+
+.zeta-form {
+    position: relative;
+    padding: 0 0.75em;
+}
+
+.zeta-form .zeta-form,
+.zeta-form > .zeta-buttonset,
+.zeta-form > .zeta-buttonlist,
+.zeta-form > .zeta-dropdown {
+    margin-left: -0.75em;
+    margin-right: -0.75em;
+}
+
+.zeta-fieldset,
+.zeta-fieldset-title {
+    position: relative;
+}
+
+.zeta-fieldset-title p {
+    margin: 0.25em 0 1em;
+    color: #555;
+}
+
+.zeta-fieldset-title p:empty {
+    display: none;
+}
+
+.zeta-fieldset.optional {
+    padding-left: 24px;
+}
+
+.zeta-fieldset.optional-checked,
+.zeta-fieldset:not(.optional) {
+    margin-bottom: 1em;
+}
+
+.optional > .zeta-fieldset-title {
+    margin-left: -24px;
+}
+
+.optional > .zeta-fieldset-title > p {
+    margin-left: 24px;
+}
+
+:not(.optional) > .zeta-fieldset-title {
+    pointer-events: none;
+}
+
+:not(.optional) > .zeta-fieldset-title > .zeta-checkbox {
+    font-size: 90%;
+    font-weight: bold;
+    color: #103492;
+    text-transform: uppercase;
+}
+
+:not(.optional) > .zeta-fieldset-title > .zeta-checkbox:before {
+    content: none;
+}
+
+:not(.optional) > .zeta-fieldset-title > .zeta-checkbox > span:first-child {
+    padding-left: 0;
+}
+
+
+/* Snackbar */
+
+.zeta-snackbar {
+    max-width: 80%;
+}
+
+@media (max-width: 500px) {
+    .zeta-snackbar {
+        width: calc(100% - 1em);
+    }
+}
+
+.zeta-snackbar .zeta-float {
+    position: relative;
+    border-radius: 2px;
+    -webkit-transform: translateY(-10px);
+    -moz-transform: translateY(-10px);
+    -ms-transform: translateY(-10px);
+    transform: translateY(-10px);
+    -webkit-transition: transform 0.2s, opacity 0.2s;
+    -moz-transition: transform 0.2s, opacity 0.2s;
+    -ms-transition: transform 0.2s, opacity 0.2s;
+    transition: transform 0.2s, opacity 0.2s;
+    overflow: hidden;
+}
+
+.zeta-snackbar.open .zeta-float {
+    -webkit-transform: : translateY(0);
+    -moz-transform: translateY(0);
+    -ms-transform: translateY(0);
+    transform: translateY(0);
+}
+
+.zeta-snackbar.closing .zeta-float {
+    opacity: 0;
+}
+
+.zeta-snackbar .zeta-buttonset {
+    padding: 0 0 0 0.75em;
+    align-items: center;
+}
+
+.zeta-snackbar.notify-info .zeta-buttonset {
+    border-left: 5px solid #4078f2;
+}
+
+.zeta-snackbar.notify-success .zeta-buttonset {
+    border-left: 5px solid #50a14f;
+}
+
+.zeta-snackbar.notify-warn .zeta-buttonset {
+    border-left: 5px solid #c18401;
+}
+
+.zeta-snackbar.notify-error .zeta-buttonset {
+    border-left: 5px solid #a90007;
+}
+
+.zeta-snackbar button {
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 90%;
+}
+
+
+/* Dialog */
+
+.zeta-dialog {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    position: fixed;
+    top: 0;
+    margin: 10px;
+    min-width: 350px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 370px) {
+    .zeta-dialog {
+        min-width: 0;
+    }
+}
+
+.zeta-dialog-inner {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    position: relative;
+    max-width: inherit;
+    max-height: inherit;
+    background-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5), 0 2px 30px rgba(0, 0, 0, 0.5);
+    border-radius: 2px;
+    overflow: hidden;
+    -webkit-transition: 0.2s ease-out;
+    -moz-transition: 0.2s ease-out;
+    -ms-transition: 0.2s ease-out;
+    transition: 0.2s ease-out;
+    -webkit-transition-property: transform, opacity;
+    -moz-transition-property: transform, opacity;
+    -ms-transition-property: transform, opacity;
+    transition-property: transform, opacity;
+    opacity: 0;
+    -webkit-flex: 1 1 auto;
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    z-index: 0;
+}
+
+.zeta-dialog-inner.open {
+    opacity: 1;
+}
+
+.zeta-dialog-inner.closing {
+    -webkit-transform: scale(0.75);
+    -moz-transform: scale(0.75);
+    -ms-transform: scale(0.75);
+    transform: scale(0.75);
+    opacity: 0;
+}
+
+.zeta-dialog-inner.pop {
+    -webkit-animation: dialog-content-pop 0.1s linear;
+    -moz-animation: dialog-content-pop 0.1s linear;
+    animation: dialog-content-pop 0.1s linear;
+}
+
+@-webkit-keyframes dialog-content-pop {
+    0% {
+        -webkit-transform: translateY(-10px);
+    }
+}
+
+@-moz-keyframes dialog-content-pop {
+    0% {
+        -moz-transform: translateY(-10px);
+    }
+}
+
+@keyframes dialog-content-pop {
+    0% {
+        transform: translateY(-10px);
+    }
+}
+
+.zeta-dialog-pin {
+    display: none;
+    position: absolute;
+    padding: 0.4em;
+    width: 1.2em;
+    height: 1.2em;
+    font-size: 10px;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.zeta-dialog-pin:before {
+    content: '';
+    display: block;
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.95);
+    width: 1.2em;
+    height: 1.2em;
+    box-shadow: 1.4px 1.4px 5px rgba(0, 0, 0, 0.3);
+    -webkit-transform: rotate(45deg);
+    -moz-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+.zeta-dialog-pin.dir-bottom:before {
+    bottom: -0.6em;
+}
+
+.zeta-dialog-pin.dir-top:before {
+    top: -0.6em;
+}
+
+.zeta-dialog-pin.dir-left:before {
+    left: -0.6em;
+}
+
+.zeta-dialog-pin.dir-right:before {
+    right: -0.6em;
+}
+
+.zeta-dialog-content {
+    position: relative;
+    padding: 1em;
+    -webkit-flex: 0 1 auto;
+    -ms-flex: 0 1 auto;
+    flex: 0 1 auto;
+    overflow: auto;
+}
+
+.zeta-dialog-content > h2 {
+    margin: 0.5em 0;
+    color: #103492;
+    font-size: 100%;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.zeta-dialog-content > h2:empty,
+.zeta-dialog-content > p:empty {
+    display: none;
+}
+
+.zeta-dialog-content > .zeta-form {
+    padding: 0;
+    -webkit-transform: scale(1);
+    -moz-transform: scale(1);
+    transform: scale(1);
+}
+
+.zeta-dialog-content > .zeta-form > .zeta-label {
+    display: block;
+    margin: 0.5em 0;
+}
+
+.zeta-dialog-error {
+    margin: 0 1em;
+    color: #a90007;
+}
+
+.zeta-dialog-buttonset {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    margin: 0.5em;
+    text-align: right;
+    font-weight: bold;
+    font-size: 80%;
+    text-transform: uppercase;
+}
+
+.zeta-dialog-buttonset button.zeta-submit {
+    background-color: rgba(16, 52, 146, 0.7);
+    color: white;
+}
+
+.is-menu .zeta-dialog-buttonset {
+    margin: 0.5em;
+}
+
+.loading .zeta-dialog-inner:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    height: 3px;
+    animation-name: dialog-loadingbar;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    background-color: #aeb8c2;
+}
+
+@keyframes dialog-loadingbar {
+    0% {
+        left: -50%;
+        right: 100%
+    }
+    25% {
+        left: -50%;
+        right: 25%
+    }
+    50% {
+        left: 25%;
+        right: -50%
+    }
+    100% {
+        left: 100%;
+        right: -50%
+    }
+}
+
+
+/* Animated Effects */
+
+.zeta-float.is-contextmenu {
+    -webkit-transition: 0.1s ease-out;
+    -moz-transition: 0.1s ease-out;
+    -ms-transition: 0.1s ease-out;
+    transition: 0.1s ease-out;
+    -webkit-transition-property: filter, transform, opacity;
+    -moz-transition-property: filter, transform, opacity;
+    -ms-transition-property: filter, transform, opacity;
+    transition-property: filter, transform, opacity;
+    -webkit-filter: blur(2px);
+    -moz-filter: blur(2px);
+    -ms-filter: blur(2px);
+    filter: blur(2px);
+    opacity: 0;
+}
+
+.zeta-float.is-contextmenu.open {
+    -webkit-filter: none;
+    -moz-filter: none;
+    -ms-filter: none;
+    filter: none;
+    opacity: 1;
+}
+
+.zeta-float.is-contextmenu.closing {
+    -webkit-transform: scale(0.75);
+    -moz-transform: scale(0.75);
+    -ms-transform: scale(0.75);
+    transform: scale(0.75);
+    -webkit-filter: blur(20px);
+    -moz-filter: blur(20px);
+    -ms-filter: blur(20px);
+    filter: blur(20px);
+    opacity: 0;
+}
+
+.zeta-clickeffect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.zeta-clickeffect i {
+    position: absolute !important;
+    background-color: #fafafa;
+    width: 1em;
+    height: 1em;
+    border-radius: 1em;
+    opacity: 0.3;
+    -webkit-transform: translate(-50%, -50%);
+    -moz-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    -webkit-transition: transform ease-out, background-color cubic-bezier(0, 0, 0, 1), opacity cubic-bezier(1, 0, 1, 1);
+    -moz-transition: transform ease-out, background-color cubic-bezier(0, 0, 0, 1), opacity cubic-bezier(1, 0, 1, 1);
+    -ms-transition: transform ease-out, background-color cubic-bezier(0, 0, 0, 1), opacity cubic-bezier(1, 0, 1, 1);
+    transition: transform ease-out, background-color cubic-bezier(0, 0, 0, 1), opacity cubic-bezier(1, 0, 1, 1);
+    -webkit-transition-duration: 0.2s;
+    -moz-transition-duration: 0.2s;
+    -ms-transition-duration: 0.2s;
+    transition-duration: 0.2s;
+}
+
+.zeta-clickeffect i.animate-in {
+    background-color: #999;
+    opacity: 0.5;
+}
+
+.zeta-clickeffect i.animate-out {
+    opacity: 0;
+}
+
+
+/* Grid */
+
+.zeta-grid .zeta-label {
+    display: block;
+    text-align: center;
+}
+
+.zeta-grid .zeta-label span:first-child {
+    padding-left: 0;
+    text-indent: 0;
+}
+
+.zeta-grid-cell {
+    margin: 1px;
+    border: 1px solid #d3d3d3;
+    background-color: white;
+    width: 1em;
+    height: 1em;
+    float: left;
+}
+
+.zeta-grid-cell.active {
+    background-color: #d3d3d3;
+}
+
+.zeta-grid-cell:nth-child(7n+1) {
+    clear: left;
+}
+
+.zeta-grid {
+    width: calc(7em + 28px);
+    padding: 0 0.75em;
+}
+
+.zeta-grid-wrapper {
+    margin-top: 0.75em;
+}
+
+.zeta-grid-row:after {
+    content: '';
+    display: block;
+    clear: both;
+}
+
+
+/* Tagging */
+
+.zeta-keyword {
+    display: inline-block;
+    margin-right: 0.25em;
+    vertical-align: baseline;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.zeta-keyword::selection {
+    background-color: transparent;
+}
+
+.zeta-keyword.invalid {
+    background: bottom repeat-x url(data:image/gif;base64,R0lGODdhBAADAPcAAAAAAAAAVQAAqgAA/wAkAAAkVQAkqgAk/wBJAABJVQBJqgBJ/wBtAABtVQBtqgBt/wCSAACSVQCSqgCS/wC2AAC2VQC2qgC2/wDbAADbVQDbqgDb/wD/AAD/VQD/qgD//yQAACQAVSQAqiQA/yQkACQkVSQkqiQk/yRJACRJVSRJqiRJ/yRtACRtVSRtqiRt/ySSACSSVSSSqiSS/yS2ACS2VSS2qiS2/yTbACTbVSTbqiTb/yT/ACT/VST/qiT//0kAAEkAVUkAqkkA/0kkAEkkVUkkqkkk/0lJAElJVUlJqklJ/0ltAEltVUltqklt/0mSAEmSVUmSqkmS/0m2AEm2VUm2qkm2/0nbAEnbVUnbqknb/0n/AEn/VUn/qkn//20AAG0AVW0Aqm0A/20kAG0kVW0kqm0k/21JAG1JVW1Jqm1J/21tAG1tVW1tqm1t/22SAG2SVW2Sqm2S/222AG22VW22qm22/23bAG3bVW3bqm3b/23/AG3/VW3/qm3//5IAAJIAVZIAqpIA/5IkAJIkVZIkqpIk/5JJAJJJVZJJqpJJ/5JtAJJtVZJtqpJt/5KSAJKSVZKSqpKS/5K2AJK2VZK2qpK2/5LbAJLbVZLbqpLb/5L/AJL/VZL/qpL//7YAALYAVbYAqrYA/7YkALYkVbYkqrYk/7ZJALZJVbZJqrZJ/7ZtALZtVbZtqrZt/7aSALaSVbaSqraS/7a2ALa2Vba2qra2/7bbALbbVbbbqrbb/7b/ALb/Vbb/qrb//9sAANsAVdsAqtsA/9skANskVdskqtsk/9tJANtJVdtJqttJ/9ttANttVdttqttt/9uSANuSVduSqtuS/9u2ANu2Vdu2qtu2/9vbANvbVdvbqtvb/9v/ANv/Vdv/qtv///8AAP8AVf8Aqv8A//8kAP8kVf8kqv8k//9JAP9JVf9Jqv9J//9tAP9tVf9tqv9t//+SAP+SVf+Sqv+S//+2AP+2Vf+2qv+2///bAP/bVf/bqv/b////AP//Vf//qv///yH5BAAAAAAALAAAAAAEAAMAQAgMAP8JBPePYMFvBAMCADs=)
+}
+
+.zeta-keyword i {
+    display: inline-block;
+    font-size: 0;
+    line-height: 0;
+    opacity: 0.5;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.zeta-keyword i:after {
+    content: 'close';
+    margin-left: 0.25em;
+    font-size: 14px;
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga' 1;
+    -webkit-font-smoothing: antialiased;
+}
+
+
+/* Calendar */
+
+.zeta-buttonlist .zeta-calendar,
+.zeta-buttonlist .zeta-clock,
+.zeta-calendar-header {
+    border-bottom: 1px solid #d3d3d3;
+}
+
+.zeta-calendar-header label.zeta-dropdown > button {
+    padding-right: 0.75em !important;
+}
+
+.zeta-calendar-header label.zeta-dropdown > button:after {
+    content: none;
+}
+
+.zeta-calendar table {
+    border-collapse: separate;
+    border-spacing: 0.5em 0;
+    table-layout: fixed;
+    font-size: 90%;
+    line-height: 1.2;
+}
+
+.zeta-calendar.select-range table {
+    border-collapse: collapse;
+}
+
+.zeta-calendar th {
+    padding: 0.75em 0.5em 0.5em 0;
+    color: #999;
+    font-weight: normal;
+    text-align: right;
+    cursor: default;
+}
+
+.zeta-calendar.select-range th {
+    padding-right: 0.75em;
+}
+
+.zeta-calendar td {
+    padding: 0;
+}
+
+.zeta-calendar.select-range td {
+    padding-left: 0.25em;
+    padding-right: 0.25em;
+}
+
+.zeta-calendar.select-range td:first-child {
+    padding-left: 0.5em;
+}
+
+.zeta-calendar.select-range td:last-child {
+    padding-right: 0.5em;
+}
+
+.zeta-calendar td.prev,
+.zeta-calendar td.next {
+    color: rgba(16, 52, 146, 0.5);
+}
+
+.zeta-calendar td.selected {
+    background-color: rgba(16, 52, 146, 0.2);
+}
+
+.zeta-calendar td button {
+    display: block;
+    padding: 0.5em;
+    width: 2.2em;
+    min-height: 0;
+    line-height: 1.2;
+    text-align: right;
+}
+
+.zeta-clock {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-align-self: stretch;
+    -ms-flex-item-align: stretch;
+    align-self: stretch;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.zeta-calendar + .zeta-clock {
+    border-left: 1px solid #d3d3d3;
+}
+
+.zeta-clock [contenteditable] {
+    min-width: auto !important;
+}
+
+.zeta-clock-face {
+    position: relative;
+    margin: 1em;
+    width: 10em;
+    height: 10em;
+    -webkit-flex-grow: 1;
+    -ms-flex-positive: 1;
+    flex-grow: 1;
+}
+
+.zeta-clock-face i,
+.zeta-clock-face s {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+}
+
+.zeta-clock-face i {
+    width: 50%;
+    -webkit-transform-origin: left center;
+    -moz-transform-origin: left center;
+    -ms-transform-origin: left center;
+    transform-origin: left center;
+}
+
+.zeta-clock-face i:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-left: 30%;
+    border-top: 1px solid;
+    width: 0.5em;
+}
+
+.zeta-clock-face s {
+    margin-left: -2px;
+    -webkit-transform-origin: 2px center;
+    -moz-transform-origin: 2px center;
+    -ms-transform-origin: 2px center;
+    transform-origin: 2px center;
+}
+
+.zeta-clock-face s[hand="m"] {
+    color: #a30000;
+    width: 35%;
+}
+
+.zeta-clock-face s[hand="h"] {
+    color: green;
+    width: 25%;
+}
+
+.zeta-clock-face s:before {
+    content: '';
+    position: absolute;
+    left: 100%;
+    margin-left: -0.5em;
+    margin-top: -0.5em;
+    border: 0.5em solid;
+    border-radius: 1em;
+    opacity: 0.1;
+}
+
+.zeta-clock-face:hover s:before {
+    opacity: 1;
+}
+
+.zeta-clock-face s:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin-top: -2px;
+    width: 100%;
+    border-top: 4px solid;
+}
+
+.zeta-clock-face s[hand="m"]:after {
+    margin-top: -1px;
+    border-top-width: 2px;
+}
+
+.zeta-textbox input[type="month"],
+.zeta-textbox input[type="week"],
+.zeta-textbox input[type="date"],
+.zeta-textbox input[type="datetime-local"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    -webkit-appearance: none;
+}
