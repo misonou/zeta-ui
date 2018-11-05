@@ -185,7 +185,7 @@
 
         var deltaX = Math.max(0, rect.right - parentRect.right) || Math.min(rect.left - parentRect.left, 0);
         var deltaY = Math.max(0, rect.bottom - parentRect.bottom) || Math.min(rect.top - parentRect.top, 0);
-        var result = deltaX && deltaY ? mixin.scrollBy(deltaX, deltaY) : OFFSET_ZERO;
+        var result = deltaX || deltaY ? mixin.scrollBy(deltaX, deltaY) : OFFSET_ZERO;
         if (parent !== root) {
             var parentResult = scrollIntoView(parent.parentNode, rect.translate(result.x, result.y));
             if (parentResult) {
