@@ -21,7 +21,7 @@ this.Map = window.Map || (function (shim) {
         },
         set: function (i, v) {
             var self = this;
-            var index = indexOf(self, v);
+            var index = indexOf(self, i);
             self.values[index >= 0 ? index : self.items.push(i) - 1] = v;
             return self;
         },
