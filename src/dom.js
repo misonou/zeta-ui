@@ -1001,7 +1001,7 @@
                     event.initMouseEvent(e.type, e.bubbles, e.cancelable, e.view, e.detail, e.screenX, e.screenY, e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.metaKey, e.button, e.relatedTarget);
                     helper.elementFromPoint(e.clientX, e.clientY).dispatchEvent(event);
                 }
-            });
+            }, true);
         }
 
         // document.activeElement or FocusEvent.relatedTarget does not report non-focusable element
