@@ -1326,6 +1326,9 @@
         function setEnable(bool) {
             enabled = bool;
             $self.attr('contenteditable', bool ? 'true' : null);
+            if (!bool && getActiveRange(topElement)) {
+                topElement.blur();
+            }
         }
 
         function setWidgetOption(id, base, options) {
@@ -1910,15 +1913,16 @@
             return this.select(this.typer.element, 'contents');
         },
         focus: function () {
-            var topElement = this.typer.element;
-            if (containsOrEquals(document, topElement)) {
-                applySelection(this);
+            var self = this;
+            var topElement = self.typer.element;
+            if (containsOrEquals(document, topElement) && self.typer.enabled()) {
+                applySelection(self);
                 // Firefox does not set focus on the host element automatically
                 // when selection is changed by JavaScript
-                if (!zeta.IS_IE && document.activeElement !== topElement) {
+                if (document.activeElement !== topElement) {
                     topElement.focus();
                 }
-                dom.scrollIntoView(topElement, this.extendCaret.getRect());
+                dom.scrollIntoView(topElement, self.extendCaret.getRect());
             }
         },
         clone: function () {
