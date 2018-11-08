@@ -1257,7 +1257,7 @@
                 keystroke: function (e) {
                     // suppress browser native behavior on content editing shortcut (e.g. bold)
                     // common browser shortcuts that has no effect on content are excluded
-                    if (!/ctrl(?=[acfnprstvwx]|f5|shift[nt]$)/i.test(e.data)) {
+                    if (!/ctrl(?=[acfnprstvwx]|f5|shift[nt]$)|^(shift)?tab$/i.test(e.data)) {
                         e.preventDefault();
                     }
                 },
