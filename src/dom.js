@@ -795,7 +795,7 @@
                 setFocus(focusWithin);
             }
             modalElements.set(element, focusPath.splice(0, focusWithin === root || document.body ? focusPath.length : focusPath.indexOf(focusWithin)));
-            setFocus(element, true);
+            setFocus(element);
         },
         lock: function (element, promise, oncancel) {
             var lock = lockedElements.get(element) || new ZetaDOMLock(element);

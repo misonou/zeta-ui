@@ -1876,7 +1876,6 @@
             defineHiddenProperty(self.context, 'show' + suffix, function (to, dir, within) {
                 self.showCallout = true;
                 (is(to, Node) ? dom.snap : helper.position)(self.callout, to, dir, within);
-                dom.focus(self.callout);
             });
             defineHiddenProperty(self.context, 'hide' + suffix, function () {
                 self.showCallout = false;
@@ -1955,6 +1954,9 @@
             }
             dom.snap(element, snapTo, 'auto');
             helper.setZIndexOver(element, parentElement || document.activeElement);
+            setTimeout(function () {
+                dom.focus(element, true);
+            });
         },
         error: function (e, self) {
             self.errorMessage = (e.error || '').message || e.error || '';
@@ -1996,7 +1998,9 @@
                 self.callout = self.element.parentNode;
                 defineHiddenProperty(self.context, 'element', self.callout);
                 self.watch('showCallout', function (a, b, c, value) {
-                    if (!value) {
+                    if (value) {
+                        dom.focus(self.callout);
+                    } else {
                         $(self.callout).detach();
                     }
                 });
@@ -2083,7 +2087,9 @@
         exports: 'title description errorMessage',
         controls: [
             ui.label('message'),
-            ui.textbox('value'),
+            ui.textbox('value', {
+                hiddenWhenDisabled: true
+            }),
             ui.buttonset(
                 ui.submit('action', 'done', {
                     defaultExport: 'label',
@@ -2097,7 +2103,7 @@
         init: function (e, self) {
             self.all.message.visible = !self.context.prompt;
             self.all.cancel.visible = self.context.cancellable;
-            self.all.value.visible = self.context.prompt;
+            self.all.value.enabled = self.context.prompt;
             self.all.value.label = self.context.message;
         },
         execute: function (self) {
