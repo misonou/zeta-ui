@@ -934,6 +934,7 @@
         var modifiedKeyCode;
         var mousemovedX;
         var mousemovedY;
+        var mousedownFocus;
         var previousPoint;
 
         function getEventName(e, suffix) {
@@ -1093,11 +1094,17 @@
                 if (e.buttons === 1) {
                     triggerMouseEvent('mousedown', e);
                 }
+                mousedownFocus = document.activeElement;
             },
             mousemove: function (e) {
                 if (previousPoint) {
                     mousemovedX = Math.max(mousemovedX, Math.abs(previousPoint.clientX - e.clientX));
                     mousemovedY = Math.max(mousemovedY, Math.abs(previousPoint.clientY - e.clientY));
+                }
+            },
+            mouseup: function (e) {
+                if (mousedownFocus && document.activeElement !== mousedownFocus) {
+                    mousedownFocus.focus();
                 }
             },
             wheel: function (e) {
