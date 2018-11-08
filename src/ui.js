@@ -1892,6 +1892,7 @@
         focusout: function (e, self) {
             if (self.activeButton) {
                 self.activeButton.active = false;
+                self.activeButton = null;
             }
         },
         keystroke: function (e, self) {
