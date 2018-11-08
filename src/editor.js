@@ -1303,18 +1303,23 @@
             };
 
             container.tap(function (e) {
+                var eventName = e.eventName;
+                var target;
                 if (enabled) {
-                    (beforeEmit[e.eventName] || helper.noop)(e);
-                    if (!e.isHandled()) {
-                        var target;
-                        if (helper.matchWord(e.eventName, 'rightClick focusin focusout focusreturn')) {
-                            target = topElement;
-                        } else if (helper.matchWord(e.eventName, 'click')) {
-                            target = e.target;
+                    (beforeEmit[eventName] || helper.noop)(e);
+                    if (helper.matchWord(eventName, 'focusin focusout focusreturn')) {
+                        // only fire focus related events for static widgets
+                        if (e.target !== topElement) {
+                            return;
                         }
-                        if (!container.emit(e, target || currentSelection.focusNode.element)) {
-                            (afterEmit[e.eventName] || helper.noop)(e);
-                        }
+                        target = topElement;
+                    } else if (eventName === 'rightClick') {
+                        target = topElement;
+                    } else if (eventName === 'click') {
+                        target = e.target;
+                    }
+                    if (!container.emit(e, target || currentSelection.focusNode.element)) {
+                        (afterEmit[eventName] || helper.noop)(e);
                     }
                     if (e.originalEvent && e.isHandled()) {
                         e.preventDefault();
