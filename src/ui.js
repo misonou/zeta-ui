@@ -1129,6 +1129,8 @@
                     var arr = self.parent.controls;
                     arr.splice(arr.indexOf(self), 1);
                     removeControlFromDOM(self);
+                    clearFlag(self.parent);
+                    registerStateChange(self.parent);
                 } else {
                     // ensure all other resources can be garbage collected
                     setTimeout(function () {
