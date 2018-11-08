@@ -130,7 +130,7 @@
     function refresh(force) {
         force = force === true;
         clearTimeout(timeout);
-        if (activeTyper && (force || activeTyper.focused(true))) {
+        if (activeTyper && (force || activeTyper.focused())) {
             var canvas = new TyperCanvas();
             if (force || canvas.editorReflow || canvas.selectionChanged || canvas.pointerMoved) {
                 each(allLayers, function (i, v) {
@@ -162,7 +162,8 @@
     function setActive(typer) {
         activeTyper = typer;
         if (typer) {
-            zeta.helper.setZIndexOver(container, typer.element);
+            helper.setZIndexOver(container, typer.element);
+            typer.retainFocus(container);
             refresh(true);
         } else {
             $(container).children().detach();
