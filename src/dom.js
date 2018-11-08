@@ -164,8 +164,13 @@
                     focusPath.unshift.apply(focusPath, added);
                     triggerFocusEvent('focusin', 'add', added, null, source || new ZetaEventSource(added[0], focusPath));
                 }
-                if (!containsOrEquals(focusPath[0], document.activeElement)) {
+                if (focusPath[0] !== document.activeElement) {
                     new ZetaMixin(focusPath[0]).focus();
+                    // ensure previously focused element is properly blurred
+                    // in case the new element is not focusable
+                    if (document.activeElement && focusPath[0] !== document.activeElement) {
+                        document.activeElement.blur();
+                    }
                 }
                 return true;
             }
