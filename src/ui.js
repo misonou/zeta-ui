@@ -1717,6 +1717,16 @@
             });
             textboxSetValue(self, self.value);
         },
+        stateChange: function (e, self) {
+            if (self.editor.enabled() ^ self.enabled) {
+                self.editor[self.enabled ? 'enable' : 'disable']();
+            }
+        },
+        focusin: function (e, self) {
+            if (!self.editor.focused()) {
+                self.editor.focus();
+            }
+        },
         setValue: function (e, self) {
             textboxSetValue(self, e.newValue);
             e.handled();
