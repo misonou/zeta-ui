@@ -83,6 +83,7 @@
     padding: 0.7em 0;
     line-height: 1.2;
     white-space: normal;
+    vertical-align: top;
 }
 
 .zeta-label:empty,
@@ -102,10 +103,6 @@
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-}
-
-.zeta-label > span {
-    display: inline-block;
 }
 
 .zeta-label .material-icons:not(.hidden) + span,
@@ -779,7 +776,7 @@ label > .zeta-float.float-left {
 
 @media (max-width: 370px) {
     .zeta-dialog {
-        min-width: 0;
+        min-width: calc(100vw - 20px);
     }
 }
 

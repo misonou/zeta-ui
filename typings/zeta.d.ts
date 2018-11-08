@@ -1042,7 +1042,7 @@ interface ZetaDOM {
     focused(element: Element, strict?: boolean): boolean;
     getContext(element?: Element): any;
     getEventScope(element: Element): any;
-    focus(element: Element): void;
+    focus(element: Element, focusOnInput?: boolean): void;
     focus(element: Element[]): void;
     lock(element: Element, promise: Promise<any>, oncancel?: () => Promise<any>): Promise<any>;
     lock(element: Element, modal: boolean, promise?: Promise<any>, oncancel?: () => Promise<any>): Promise<any>;
