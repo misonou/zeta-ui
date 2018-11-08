@@ -699,9 +699,6 @@
             var parent = _(parentContext).container;
             parentElement = parent.event && parent.event.context.element;
         }
-        if (parentElement) {
-            dom.retainFocus(parentElement, element);
-        }
 
         var container = new zeta.Container(element);
         container.context = new UIContext(container, values);
@@ -1950,6 +1947,9 @@
             var snapTo = parentElement && self.pinnable && screen.availWidth >= 600 && screen.availHeight >= 600 && UIToolset.hasRole(parentElement, 'button buttonlike') ? parentElement : window;
 
             $(element).appendTo(document.body);
+            if (parentElement) {
+                dom.retainFocus(parentElement, element);
+            }
             if (self.modal) {
                 dom.setModal(element);
             }
