@@ -72,6 +72,25 @@
         return (type && matchWord(type[0] === 'k' ? 'keyboard' : type[0] === 't' ? 'touch' : type[0] === 'm' || matchWord(type, 'wheel click dblclick contextmenu') ? 'mouse' : type, EVENT_SOURCES)) || 'script';
     }
 
+    function getEventScope(element) {
+        var source = new ZetaEventSource(element);
+        return {
+            source: source.source,
+            sourceKeyName: source.sourceKeyName,
+            wrap: function (callback) {
+                return function () {
+                    var prev = eventSource;
+                    try {
+                        eventSource = source;
+                        return callback.apply(this, arguments);
+                    } finally {
+                        eventSource = prev;
+                    }
+                };
+            }
+        };
+    }
+
     function getContainer(element) {
         for (var cur = element; cur && !containers.has(cur); cur = cur.parentNode);
         return mapGet(containers, cur) || domContainer;
@@ -228,32 +247,36 @@
     function drag(event, within, callback) {
         var deferred = $.Deferred();
         var lastPos = event;
+        var scope = getEventScope(event.target);
+        var progress = isFunction(callback || within) || helper.noop;
         var scrollParent = getScrollParent(is(within, Node) || event.target);
         var scrollTimeout;
+        var unbind1, unbind2;
+
+        function finish(accept) {
+            clearInterval(scrollTimeout);
+            unbind1();
+            unbind2();
+            deferred[accept ? 'resolve' : 'reject']();
+        }
 
         var handlers = {
             keydown: function (e) {
                 if (e.which === 27) {
-                    deferred.reject();
-                    handlers.mouseup(e);
+                    finish(false);
                 }
             },
             mousemove: function (e) {
-                if (!e.which) {
-                    handlers.mouseup(e);
-                    return;
-                }
-                if (e.clientX !== lastPos.clientX || e.clientY !== lastPos.clientY) {
-                    lastPos = e;
-                    deferred.notify(e.clientX, e.clientY);
-                }
                 e.preventDefault();
+                if (!e.which) {
+                    finish(true);
+                } else if (e.clientX !== lastPos.clientX || e.clientY !== lastPos.clientY) {
+                    lastPos = e;
+                    progress(e.clientX, e.clientY);
+                }
             },
             mouseup: function (e) {
-                clearInterval(scrollTimeout);
-                $(document.body).off(handlers);
-                $(scrollParent).off(scrollParentHandlers);
-                deferred.resolve();
+                finish(true);
             }
         };
         var scrollParentHandlers = {
@@ -261,7 +284,7 @@
                 if (!scrollTimeout && (!containsOrEquals(scrollParent, e.relatedTarget) || (scrollParent === root && e.relatedTarget === root))) {
                     scrollTimeout = setInterval(function () {
                         if (scrollIntoView(scrollParent, helper.toPlainRect(lastPos.clientX - 50, lastPos.clientY - 50, lastPos.clientX + 50, lastPos.clientY + 50))) {
-                            deferred.notify(lastPos.clientX, lastPos.clientY);
+                            progress(lastPos.clientX, lastPos.clientY);
                         } else {
                             clearInterval(scrollTimeout);
                             scrollTimeout = null;
@@ -276,9 +299,16 @@
                 }
             }
         };
-        $(document.body).on(handlers);
-        $(scrollParent).on(scrollParentHandlers);
-        return deferred.promise().progress(callback || within);
+        unbind1 = bind(document.body, handlers);
+        unbind2 = bind(scrollParent, scrollParentHandlers);
+        return {
+            then: function (a, b) {
+                return deferred.then(a && scope.wrap(a), b && scope.wrap(b));
+            },
+            catch: function (a) {
+                return deferred.catch(a && scope.wrap(a));
+            }
+        };
     }
 
     function ZetaMixin(element) {
@@ -780,6 +810,7 @@
 
     var dom = {
         drag: drag,
+        getEventScope: getEventScope,
         scrollIntoView: scrollIntoView,
         focused: focused,
         get activeElement() {
@@ -821,24 +852,6 @@
         cancel: function (element, force) {
             var lock = lockedElements.get(element);
             return lock ? lock.cancel(force) : when();
-        },
-        getEventScope: function (element) {
-            var source = new ZetaEventSource(element);
-            return {
-                source: source.source,
-                sourceKeyName: source.sourceKeyName,
-                wrap: function (callback) {
-                    return function () {
-                        var prev = eventSource;
-                        try {
-                            eventSource = source;
-                            return callback.apply(this, arguments);
-                        } finally {
-                            eventSource = prev;
-                        }
-                    };
-                }
-            };
         },
         emit: function (eventName, element, data, bubbles) {
             return triggerDOMEvent(eventName, null, element, data, bubbles);
