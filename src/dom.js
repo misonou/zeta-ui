@@ -117,9 +117,8 @@
         });
     }
 
-    function triggerFocusEvent(eventName, method, elements, relatedTarget, source) {
+    function triggerFocusEvent(eventName, elements, relatedTarget, source) {
         each(elements, function (i, v) {
-            focusElements[method](v);
             if (containers.has(v)) {
                 triggerDOMEvent(eventName, null, v, {
                     relatedTarget: relatedTarget
@@ -140,7 +139,11 @@
                 if (!within) {
                     return false;
                 }
-                triggerFocusEvent('focusout', 'delete', focusPath.splice(0, focusPath.indexOf(within)), element, source);
+                var removed = focusPath.splice(0, focusPath.indexOf(within));
+                each(removed, function (i, v) {
+                    focusElements.delete(v);
+                });
+                triggerFocusEvent('focusout', removed, element, source);
             }
             // check whether the element is still attached in ROM
             // which can be detached while dispatching focusout event above
@@ -162,14 +165,18 @@
                 }
                 if (added[0]) {
                     focusPath.unshift.apply(focusPath, added);
-                    triggerFocusEvent('focusin', 'add', added, null, source || new ZetaEventSource(added[0], focusPath));
+                    each(added, function (i, v) {
+                        focusElements.add(v);
+                    });
+                    triggerFocusEvent('focusin', added, null, source || new ZetaEventSource(added[0], focusPath));
                 }
-                if (focusPath[0] !== document.activeElement) {
+                var activeElement = document.activeElement;
+                if (focusPath[0] !== activeElement) {
                     new ZetaMixin(focusPath[0]).focus();
                     // ensure previously focused element is properly blurred
                     // in case the new element is not focusable
-                    if (document.activeElement && focusPath[0] !== document.activeElement) {
-                        document.activeElement.blur();
+                    if (document.activeElement === activeElement) {
+                        activeElement.blur();
                     }
                 }
                 return true;
@@ -1084,7 +1091,15 @@
             },
             beforeinput: function (e) {
                 if (!isComposing && e.cancelable) {
-                    triggerUIEvent('textInput', e, focusPath[0], e.data);
+                    switch (e.inputType) {
+                        case 'insertText':
+                            return triggerUIEvent('textInput', e, focusPath[0], e.data);
+                        case 'deleteContent':
+                        case 'deleteContentBackward':
+                            return triggerKeystrokeEvent('backspace', e);
+                        case 'deleteContentForward':
+                            return triggerKeystrokeEvent('delete', e);
+                    }
                 }
             },
             mousedown: function (e) {
