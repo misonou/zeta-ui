@@ -67,6 +67,29 @@
         return date;
     }
 
+    function toNumericValue(mode, value) {
+        // timestamp values for native controls are based on local time against local time epoch for "datetime-local" and
+        // UTC midnight against UTC epoch for other non-time types; which is exactly the opposite in this library:
+        // local time against UTC epoch and local midnight against UTC epoch respectively
+        switch (mode) {
+            case 'datetime':
+                return +value - TIMEZONE_OFFSET;
+            case 'month':
+                return (getFullYear(value) - 1970) * 12 + getMonth(value);
+        }
+        return +value + TIMEZONE_OFFSET;
+    }
+
+    function fromNumericValue(mode, value) {
+        switch (mode) {
+            case 'datetime':
+                return new Date(value + TIMEZONE_OFFSET);
+            case 'month':
+                return new Date(1970, value);
+        }
+        return new Date(value - TIMEZONE_OFFSET);
+    }
+
     function normalizeDate(options, date) {
         var min = parseMaxima(options.min);
         var max = parseMaxima(options.max);
@@ -104,6 +127,9 @@
     }
 
     function formatDate(mode, date) {
+        if (isNaN(+date)) {
+            return '';
+        }
         switch (mode) {
             case 'month':
                 return MONTH_STR[getMonth(date)] + ' ' + getFullYear(date);
@@ -545,19 +571,20 @@
                 var mode = self.options.mode || self.preset.options.mode;
                 self.nativeInput = $('<input type="' + INPUT_TYPES[mode] + '">').appendTo(self.element)[0];
                 helper.bind(self.nativeInput, 'change', function (e) {
-                    // see comments below for conversion
-                    self.setValue(new Date(self.nativeInput.valueAsNumber + (TIMEZONE_OFFSET * (mode === 'datetime' ? 1 : -1))));
+                    self.setValue(fromNumericValue(mode, self.nativeInput.valueAsNumber));
                 });
             }
         },
         focusin: function (e, self) {
             if (zeta.IS_TOUCH) {
-                // input type "datetime-local" does not support valueAsDate so we need to use with valueAsNumber (timestamp)
-                // timestamp values for native controls are based on local time against local time epoch for "datetime-local" and
-                // UTC midnight against UTC epoch for other non-time types; which is exactly the opposite in this library:
-                // local time against UTC epoch and local midnight against UTC epoch respectively
                 var mode = self.options.mode || self.preset.options.mode;
-                self.nativeInput.valueAsNumber = +(self.value || new Date()) - (TIMEZONE_OFFSET * (mode === 'datetime' ? 1 : -1));
+                if (!self.value) {
+                    self.value = new Date();
+                }
+                // input type "datetime-local" does not support valueAsDate so we need to use with valueAsNumber (timestamp)
+                self.nativeInput.valueAsNumber = toNumericValue(mode, self.value);
+                self.nativeInput.focus();
+                e.handled();
             }
         }
     });
