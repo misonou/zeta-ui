@@ -1032,7 +1032,7 @@
 
         // document.activeElement or FocusEvent.relatedTarget does not report non-focusable element
         bind(body, 'mousedown mouseup wheel keydown keyup keypress touchstart touchend cut copy paste drop click dblclick contextmenu', function (e) {
-            var moveFocus = matchWord(e.type, 'mousedown keydown touchend');
+            var moveFocus = matchWord(e.type, 'mousedown keydown');
             lastEventSource = null;
             if (!focusable(e.target)) {
                 e.stopImmediatePropagation();
