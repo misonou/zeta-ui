@@ -34,6 +34,7 @@
     var matchWord = helper.matchWord;
     var noop = helper.noop;
     var reject = helper.reject;
+    var removeNode = helper.removeNode;
     var runCSSTransition = helper.runCSSTransition;
     var setState = helper.setState;
     var tagName = helper.tagName;
@@ -594,7 +595,7 @@
             pos.end = elm.previousSibling;
         }
         pos.count--;
-        $(elm).detach();
+        removeNode(elm);
     }
 
     function appendControlToDOM(control, parent, suppressEvent) {
@@ -2004,7 +2005,7 @@
                     if (value) {
                         dom.focus(self.callout);
                     } else {
-                        $(self.callout).detach();
+                        removeNode(self.callout);
                     }
                 });
                 $(self.callout).addClass('zeta-float');
@@ -2017,10 +2018,10 @@
                         dom.snap(callout, self.originalParent);
                         dom.focus(callout);
                     } else {
-                        $(callout).detach();
+                        removeNode(callout);
                     }
                 });
-                $(callout).detach();
+                removeNode(callout);
             } else {
                 helper.bind(self.element, 'mouseover mouseout mousemove', function (e) {
                     self.showCallout = e.type !== 'mouseout';
