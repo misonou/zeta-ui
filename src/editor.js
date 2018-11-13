@@ -98,7 +98,6 @@
     var selectionCache = new WeakMap();
     var detachedElements = new WeakMap();
     var dirtySelections = new Set();
-    var checkNativeUpdate;
 
     function TyperSelection(typer, range) {
         var self = this;
@@ -2500,8 +2499,14 @@
     }
 
     setInterval(function () {
-        if (!dom.focused(window) && checkNativeUpdate) {
-            checkNativeUpdate();
+        var typer = is(dom.getContext(), Typer);
+        if (typer && dom.focused(window)) {
+            var selection = typer.getSelection();
+            var activeRange = getActiveRange(typer.element);
+            if (activeRange && !helper.rangeEquals(activeRange, createRange(selection))) {
+                selection.select(activeRange);
+                selection.focus();
+            }
         }
     }, 100);
 
