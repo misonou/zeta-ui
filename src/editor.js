@@ -1560,10 +1560,10 @@
             return true;
         },
         select: function (startNode, startOffset, endNode, endOffset) {
-            this.getSelection().select(startNode, startOffset, endNode, endOffset);
+            return this.getSelection().select(startNode, startOffset, endNode, endOffset);
         },
         selectAll: function () {
-            this.getSelection().selectAll();
+            return this.getSelection().selectAll();
         },
         focus: function () {
             this.getSelection().focus();
