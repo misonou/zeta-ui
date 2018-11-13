@@ -1268,6 +1268,17 @@
                         undoable.snapshot(200);
                         currentSelection.extendCaret.moveToPoint(x, y);
                     });
+                    // browsers update selection range after mousedown event
+                    setTimeout(function () {
+                        currentSelection.focus();
+                    });
+                },
+                click: function (e) {
+                    var node = typer.getNode(e.target);
+                    if (is(node, NODE_WIDGET | NODE_INLINE_WIDGET)) {
+                        currentSelection.select(node.widget.element);
+                    }
+                    currentSelection.focus();
                 },
                 dblclick: function (e) {
                     currentSelection.select('word');
@@ -1289,16 +1300,6 @@
                 textInput: function (e) {
                     handleTextInput(e.data);
                     e.handled();
-                },
-                click: function (e) {
-                    var node = typer.getNode(e.target);
-                    if (is(node, NODE_WIDGET | NODE_INLINE_WIDGET)) {
-                        currentSelection.select(node.widget.element);
-                    } else {
-                        currentSelection.moveToPoint(e.clientX, e.clientY);
-                    }
-                    currentSelection.focus();
-                    undoable.snapshot();
                 }
             };
 
