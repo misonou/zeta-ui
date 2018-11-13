@@ -1966,7 +1966,7 @@
     });
 
     function caretTextNodeIterator(inst, root, whatToShow) {
-        var iterator = new TyperDOMNodeIterator(new TyperTreeWalker(root || inst.typer.rootNode, NODE_ANY_ALLOWTEXT | NODE_WIDGET), whatToShow | 4);
+        var iterator = new TyperDOMNodeIterator(new TyperTreeWalker(root || inst.typer.rootNode, NODE_ANY_ALLOWTEXT | NODE_WIDGET | NODE_INLINE_WIDGET), whatToShow | 4);
         iterator.currentNode = inst.textNode || inst.element;
         return iterator;
     }
@@ -2022,13 +2022,19 @@
             offset = end ? element.length || 0 : 0;
         }
         var node = inst.typer.getNode(element);
-        if (is(node, NODE_WIDGET)) {
-            textNode = null;
-        } else if (is(node, NODE_INLINE_WIDGET)) {
-            node = node.parentNode;
-            element = node.element;
-            textNode = isText(end ? element.nextSibling : element.previousSibling) || $(createTextNode())[end ? 'insertAfter' : 'insertBefore'](element)[0];
-            offset = 1;
+        if (is(node, NODE_WIDGET | NODE_INLINE_WIDGET)) {
+            element = node.widget.element;
+            if (element !== node.element) {
+                node = inst.typer.getNode(element);
+            }
+            if (is(node.parentNode, NODE_ANY_ALLOWTEXT)) {
+                textNode = isText(end ? element.nextSibling : element.previousSibling) || $(createTextNode())[end ? 'insertAfter' : 'insertBefore'](element)[0];
+                element = textNode.parentNode;
+                offset = end ? 0 : textNode.length;
+                node = node.parentNode;
+            } else {
+                textNode = null;
+            }
         } else if (!is(node, NODE_ANY_ALLOWTEXT)) {
             var child = any(node.childNodes, function (v) {
                 return comparePosition(element, v.element) < 0;
@@ -2459,7 +2465,7 @@
                         if (!node) {
                             return false;
                         }
-                        if (is(self.typer.getNode(node), NODE_WIDGET) && !containsOrEquals(node, self.element)) {
+                        if (is(self.typer.getNode(node), NODE_WIDGET | NODE_INLINE_WIDGET) && !containsOrEquals(node, self.element)) {
                             return self.moveToText(node, 0 * direction) || self.moveTo(node, direction < 0);
                         }
                         overBr |= !!isBR(node);
