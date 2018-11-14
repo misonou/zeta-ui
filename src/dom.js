@@ -1117,7 +1117,7 @@
                 mousemovedX = 0;
                 mousemovedY = 0;
                 previousPoint = e;
-                if (e.buttons === 1) {
+                if ((e.buttons || e.which) === 1) {
                     triggerMouseEvent('mousedown', e);
                 }
                 mousedownFocus = document.activeElement;
