@@ -2,16 +2,19 @@
     'use strict';
 
     function setValueAndUpdate(widget, value) {
-        value = +value || 0;
-        var min = widget.options.min;
-        var max = widget.options.max;
-        var loop = widget.options.loop && min !== null && max !== null;
-        if ((loop && value < min) || (!loop && max !== null && value > max)) {
-            value = max;
-        } else if ((loop && value > max) || (!loop && min !== null && value < min)) {
-            value = min;
+        if (isNaN(+value)) {
+            value = value ? '0' : '';
+        } else {
+            var min = widget.options.min;
+            var max = widget.options.max;
+            var loop = widget.options.loop && min !== null && max !== null;
+            if ((loop && value < min) || (!loop && max !== null && value > max)) {
+                value = max;
+            } else if ((loop && value > max) || (!loop && min !== null && value < min)) {
+                value = min;
+            }
+            value = String(+value | 0);
         }
-        value = String(+value || 0);
         if (widget.options.digits === 'fixed') {
             var numOfDigits = String(+widget.options.max || 0).length;
             value = (new Array(numOfDigits + 1).join('0') + value).substr(-numOfDigits);
@@ -78,7 +81,7 @@
     zeta.UI.define('number', {
         template: '<z:textbox/>',
         preventLeave: true,
-        value: 0,
+        value: NaN,
         preset: preset
     });
 
