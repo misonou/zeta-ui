@@ -813,7 +813,7 @@
                 if (containsOrEquals(topElement, content)) {
                     removeNode(content);
                 }
-                content = createDocumentFragment(content).childNodes;
+                content = helper.makeArray(createDocumentFragment(content).childNodes);
                 textOnly = content.length === 1 && !!is(content[0], 'p:not([class])');
             } else {
                 content = $(String(content || '').replace(/\u000d/g, '').replace(/</g, '&lt;').replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>').replace(/.*/, '<p>$&</p>').replace(/\s/g, '\u00a0')).get();
