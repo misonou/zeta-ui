@@ -374,9 +374,9 @@
         var staticWidgets = [];
         var undoable = {};
         var currentSelection;
-        var muteChanges;
         var triggerDOMChange;
         var enabled;
+        var muteChanges = true;
         var needNormalize = true;
         var $self = $(topElement);
 
@@ -561,7 +561,7 @@
                         }
                     });
                 }
-                if (needNormalize) {
+                if (needNormalize && !muteChanges) {
                     timeout = timeout || setTimeout(snapshotAfterNormalize);
                 }
             }
