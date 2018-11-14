@@ -1360,7 +1360,8 @@
             defineHiddenProperty(widgetOptions, WIDGET_UNKNOWN, {
                 // make all other tags that are not considered paragraphs and inlines to be widgets
                 // to avoid unknown behavior while editing
-                element: options.disallowedElement || ':not(' + INNER_PTAG + ',br,b,em,i,u,strike,small,strong,sub,sup,ins,del,mark,span)'
+                element: options.disallowedElement || ':not(' + INNER_PTAG + ',br,b,em,i,u,strike,small,strong,sub,sup,ins,del,mark,span)',
+                allowedIn: ''
             });
             options.textFlow = true;
 
