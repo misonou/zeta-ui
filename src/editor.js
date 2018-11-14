@@ -863,7 +863,7 @@
                                         receivedNode: nodeToInsert,
                                         caret: caretPoint.clone()
                                     };
-                                    if (container.emit('receive', widgetNode.widget, prop)) {
+                                    if (container.emit('receive', widgetNode.widget.element, prop)) {
                                         caretPoint = currentSelection.clone();
                                         hasInsertedBlock = true;
                                         return;
