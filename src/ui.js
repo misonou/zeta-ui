@@ -33,6 +33,7 @@
     var mapGet = helper.mapGet;
     var matchWord = helper.matchWord;
     var noop = helper.noop;
+    var randomId = helper.randomId;
     var reject = helper.reject;
     var removeNode = helper.removeNode;
     var runCSSTransition = helper.runCSSTransition;
@@ -895,6 +896,7 @@
         var toolsetState = mapGet(_(context).toolsets, v.toolset, function () {
             return new UIToolsetState(container, v.toolset, context);
         });
+        var toolsetEventHandle = randomId();
         var name = controlUniqueName(toolsetState.all, v.name);
 
         var state = {
@@ -908,16 +910,16 @@
             values: {},
             initialValues: {},
             exports: [],
-            pending: false,
             toolsetState: toolsetState,
-            toolsetEventHandle: container.add(toolsetState, {
-                stateChange: function () {
-                    clearFlag(self, 5);
-                }
-            })
+            toolsetEventHandle: toolsetEventHandle
         };
         _(self, state);
         mapGet(speciesMap, getPrototypeOf(self), Set).add(self);
+        container.add(toolsetState, toolsetEventHandle, {
+            stateChange: function () {
+                clearFlag(self, 5);
+            }
+        });
 
         self.name = name;
         self.type = v.type;
@@ -946,7 +948,7 @@
         self.parentElement = container.parentElement || null;
         self.controls = [];
         self.errors = null;
-        self.id = helper.randomId();
+        self.id = randomId();
         self.all = toolsetState.all;
         self.all[name] = self;
         if (parent) {

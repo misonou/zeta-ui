@@ -662,14 +662,12 @@
             var self = this;
             var target = is(element, Node) || element.element || element;
             var component = is(target, Node) ? containerGetContext(self, target) : containerSetContext(self, element, element);
-            if (!component || component.states[key]) {
-                return false;
+            if (component) {
+                var state = component.states[key] || new ZetaEventHandlerState(target, is(element, Node) ? component.context : element, handlers);
+                component.attached = true;
+                component.states[key] = state;
+                containerRegisterWidgetEvent(self, state, true);
             }
-            var state = new ZetaEventHandlerState(target, is(element, Node) ? component.context : element, handlers);
-            component.attached = true;
-            component.states[key] = state;
-            containerRegisterWidgetEvent(self, state, true);
-            return key;
         },
         delete: function (element, key) {
             var self = this;
