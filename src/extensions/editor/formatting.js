@@ -335,7 +335,7 @@
         },
         receive: function (e) {
             if (helper.sameElementSpec(e.widget.element, e.receivedNode)) {
-                e.preventDefault();
+                e.handled();
                 e.typer.invoke(function (tx) {
                     tx.insertHtml(e.receivedNode.childNodes);
                 });
