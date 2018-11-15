@@ -2348,7 +2348,9 @@
                 }
             }
         } else {
-            findNearsetPoint(container, textNode, (dirX || 1) * (mode & 2 ? -1 : 1), 1);
+            // search backwards from the end if the initial point is beyond the last line
+            var inverse = !dirX && point.top > getAbstractRect(getRect(container.element), mode).bottom;
+            findNearsetPoint(container, textNode, (dirX || 1) * (mode & 2 ? -1 : 1) * (inverse ? -1 : 1), 1);
         }
         if (newPoint) {
             var beforeSoftBreak = dirX > 0 || lastDist < 0;
@@ -2399,8 +2401,8 @@
         },
         moveToPoint: function (x, y) {
             var self = this;
-            var node = self.typer.nodeFromPoint(x, y);
-            return !!node && caretMoveToPoint(self, node.element, toPlainRect(x, y));
+            var node = self.typer.nodeFromPoint(x, y) || self.typer.rootNode;
+            return caretMoveToPoint(self, node.element, toPlainRect(x, y));
         },
         moveToText: function (node, offset) {
             if (node.nodeType !== 3) {
