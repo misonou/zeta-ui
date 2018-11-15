@@ -1,8 +1,8 @@
 (function ($, zeta) {
     'use strict';
 
-    function setValueAndUpdate(widget, value) {
-        if (isNaN(+value)) {
+    function setValue(widget, value) {
+        if (value === null || value === '' || isNaN(value)) {
             value = value ? '0' : '';
         } else {
             var min = widget.options.min;
@@ -27,8 +27,8 @@
         }
     }
 
-    function setValue(widget, delta) {
-        setValueAndUpdate(widget, (widget.typer.getValue() || 0) + (delta || 0) * widget.options.step);
+    function stepValue(widget, delta) {
+        setValue(widget, (widget.typer.getValue() || 0) + delta * widget.options.step);
     }
 
     var preset = {
@@ -44,36 +44,28 @@
         },
         overrides: {
             getValue: function (preset) {
-                return parseInt(this.extractText());
+                var value = parseInt(this.extractText());
+                return isNaN(value) ? null : value;
             },
             setValue: function (preset, value) {
-                setValueAndUpdate(preset, value);
-            },
-            hasContent: function () {
-                return !!this.extractText();
-            },
-            validate: function (preset) {
-                return true;
+                setValue(preset, value);
             }
         },
-        focusout: function (e) {
-            setValue(e.widget);
-        },
         mousewheel: function (e) {
-            setValue(e.widget, -e.data);
+            stepValue(e.widget, -e.data);
             e.handled();
         },
         upArrow: function (e) {
-            setValue(e.widget, 1);
+            stepValue(e.widget, 1);
             e.handled();
         },
         downArrow: function (e) {
-            setValue(e.widget, -1);
+            stepValue(e.widget, -1);
             e.handled();
         },
         contentChange: function (e) {
             if (e.source !== 'keyboard') {
-                setValue(e.widget);
+                setValue(e.widget, e.typer.getValue());
             }
         }
     };
@@ -81,7 +73,7 @@
     zeta.UI.define('number', {
         template: '<z:textbox/>',
         preventLeave: true,
-        value: NaN,
+        value: null,
         preset: preset
     });
 
