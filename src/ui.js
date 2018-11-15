@@ -1710,7 +1710,8 @@
         init: function (e, self) {
             self.editor = new zeta.Editor(e.target, self.editorOptions);
             self.editor.enable('stateclass', {
-                target: self.element
+                target: self.element,
+                focused: ''
             });
             self.editor.on('contentChange', function () {
                 if (self.setValue(self.editor.getValue())) {
