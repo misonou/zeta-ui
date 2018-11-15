@@ -4,8 +4,10 @@
     var helper = zeta.helper;
 
     function toggleClass(widget, className, value) {
-        var target = widget.options.target;
-        helper.setState(helper.is(target, Node) || $(widget.typer.element).parents(target).addBack()[0], widget.options[className], value);
+        var options = widget.options;
+        if (options[className]) {
+            helper.setState(helper.is(options.target, Node) || $(widget.typer.element).parents(options.target).addBack()[0], options[className], value);
+        }
     }
 
     zeta.Editor.widgets.stateclass = {
