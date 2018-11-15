@@ -48,7 +48,8 @@
 }
 
 .zeta-checkbox:before,
-.zeta-textbox-error:before {
+.zeta-textbox-error:before,
+.zeta-textbox-clear:before {
     font-family: 'Material Icons';
     font-weight: normal;
     font-style: normal;
@@ -59,6 +60,7 @@
     letter-spacing: normal;
     word-wrap: normal;
     white-space: nowrap;
+    vertical-align: text-bottom;
     direction: ltr;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -216,7 +218,6 @@ button.zeta-checkbox:before {
     border-radius: 2px;
     background-color: white;
     color: transparent;
-    vertical-align: text-bottom;
 }
 
 button.zeta-checkbox:hover:before {
@@ -438,21 +439,34 @@ label > .zeta-float.float-left {
 }
 
 .zeta-textbox-wrapper {
-    display: block;
+    display: flex;
     position: relative;
-    margin: 0 -0.25em 0.42em;
-    padding: 0.67em 0.25em 0.25em;
-    width: 100%;
+    margin: 0.5em 0.25em 0.42em;
+    padding: 0 0.25em 0.17em;
     border-bottom: 1px solid #aeb8c2;
     vertical-align: top;
-    line-height: 1.33;
+    line-height: 1.5;
+    -webkit-transition: padding 0.2s;
+    -moz-transition: padding 0.2s;
+    -ms-transition: padding 0.2s;
+    transition: padding 0.2s;
 }
 
-.zeta-buttonset .zeta-textbox .zeta-textbox-wrapper,
-.zeta-buttonlist .zeta-textbox .zeta-textbox-wrapper {
+.zeta-textbox-wrapper[data-label],
+.zeta-textbox.keep-placeholder:not(.empty) .zeta-textbox-wrapper {
+    padding-top: 1.5em;
+}
+
+.zeta-buttonset .zeta-textbox-wrapper,
+.zeta-buttonlist .zeta-textbox-wrapper {
     display: inline-block;
     border-bottom-style: hidden;
     width: auto;
+}
+
+.zeta-form .zeta-textbox-wrapper {
+    margin-left: -0.25em;
+    margin-right: -0.25em;
 }
 
 .zeta-textbox.focused .zeta-textbox-wrapper {
@@ -467,6 +481,7 @@ label > .zeta-float.float-left {
     content: attr(data-label);
     display: block;
     position: absolute;
+    top: 0;
     font-size: 95%;
     color: #103492;
 }
@@ -492,36 +507,27 @@ label > .zeta-float.float-left {
 }
 
 .zeta-textbox-inner {
-    position: relative;
-    cursor: text;
+    -webkit-flex: 1 0 1px;
+    -ms-flex: 1 0 1px;
+    flex: 1 0 1px;
 }
 
 .zeta-textbox .zeta-editable {
     display: inline-block;
     position: relative;
-    margin: -0.17em 0;
-    padding: 0.17em 0;
     width: 100%;
     background: url('data:image/gif:,');
     vertical-align: top;
     color: #212121;
     white-space: normal;
     word-wrap: break-word;
+    word-break: break-word;
     cursor: text;
     box-sizing: border-box;
     -webkit-user-select: text;
     -moz-user-select: text;
     -ms-user-select: text;
-    z-index: 0;
-}
-
-.zeta-textbox.keep-placeholder .zeta-editable {
-    white-space: normal;
-    word-break: break-all;
-    -webkit-transition: padding 0.2s;
-    -moz-transition: padding 0.2s;
-    -ms-transition: padding 0.2s;
-    transition: padding 0.2s;
+    z-index: 1;
 }
 
 .zeta-buttonlist .zeta-textbox .zeta-editable,
@@ -531,26 +537,27 @@ label > .zeta-float.float-left {
     min-width: 3em;
 }
 
-.zeta-textbox-placeholder,
-.zeta-textbox-error {
+.zeta-textbox-placeholder {
     display: none;
     position: relative;
-    margin: -0.17em 0 -0.17em -100%;
-    padding: 0.17em 0;
+    margin-left: -100%;
     width: 100%;
     color: #aeb8c2;
-    line-height: 1.33;
     vertical-align: top;
     pointer-events: none;
     white-space: normal;
     cursor: text;
-    z-index: -1;
     box-sizing: border-box;
 }
 
 .zeta-textbox-error {
+    display: none;
     color: #a90007;
-    text-align: right;
+}
+
+.zeta-textbox-clear {
+    display: none;
+    cursor: pointer;
 }
 
 .zeta-buttonlist .zeta-textbox-placeholder,
@@ -563,7 +570,8 @@ label > .zeta-float.float-left {
 .zeta-textbox.empty .zeta-textbox-placeholder,
 .zeta-textbox.error .zeta-textbox-error,
 .zeta-richtext.empty .zeta-textbox-placeholder,
-.zeta-richtext.error .zeta-textbox-error {
+.zeta-richtext.error .zeta-textbox-error,
+.zeta-textbox.focused:not(.empty) .zeta-textbox-clear {
     display: inline-block;
 }
 
@@ -572,8 +580,11 @@ label > .zeta-float.float-left {
 }
 
 .zeta-textbox-error:before {
-    content: '\00e001';
-    vertical-align: text-bottom;
+    content: 'error_outline';
+}
+
+.zeta-textbox-clear:before {
+    content: 'close';
 }
 
 .zeta-textbox.keep-placeholder .zeta-textbox-placeholder {
@@ -581,6 +592,7 @@ label > .zeta-float.float-left {
     position: absolute;
     top: 0;
     margin-left: 0;
+    width: calc(100% - 0.5em);
     white-space: nowrap;
     visibility: visible;
     -webkit-transition: font-size 0.2s;
@@ -592,13 +604,6 @@ label > .zeta-float.float-left {
 .zeta-textbox.keep-placeholder:not(.empty) .zeta-textbox-placeholder {
     color: #103492;
     font-size: 95%;
-}
-
-.zeta-textbox-wrapper[data-label] .zeta-textbox-placeholder,
-.zeta-textbox-wrapper[data-label] .zeta-textbox-error,
-.zeta-textbox-wrapper[data-label] .zeta-editable,
-.zeta-textbox.keep-placeholder:not(.empty) .zeta-editable {
-    padding-top: 1.5em;
 }
 
 .zeta-textbox.error .zeta-textbox-placeholder {

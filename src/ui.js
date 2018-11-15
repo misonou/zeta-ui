@@ -1688,7 +1688,13 @@
     });
 
     defineControlType('textboxlike', {
-        template: '<label class="zeta-textbox keep-placeholder:{{showPlaceholder == always && ! $placeholder}}"><z:label show-text="false" show-icon="auto"/><div class="zeta-textbox-wrapper" data-label="{{? $placeholder label}}"><div class="zeta-textbox-inner"><children/><div class="zeta-textbox-placeholder">{{placeholder || label}}</div><div class="zeta-textbox-error"></div></div></div></label>'
+        template: '<label class="zeta-textbox keep-placeholder:{{showPlaceholder == always && ! $placeholder}}"><z:label show-text="false" show-icon="auto"/><div class="zeta-textbox-wrapper" data-label="{{? $placeholder label}}"><div class="zeta-textbox-inner"><children/><div class="zeta-textbox-placeholder">{{placeholder || label}}</div></div><div class="zeta-textbox-error"></div><div class="zeta-textbox-clear"></div></div></label>',
+        click: function (e, self) {
+            if (is(e.target, '.zeta-textbox-clear')) {
+                self.value = '';
+                self.editor.focus();
+            }
+        }
     }, true);
 
     defineControlType('richtext', {
