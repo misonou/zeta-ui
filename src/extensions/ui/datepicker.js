@@ -484,9 +484,6 @@
                     }
                 }
             },
-            hasContent: function (preset) {
-                return !!this.extractText();
-            },
             validate: function (preset) {
                 if (preset.options.required && !!preset.selectedDate) {
                     return helper.reject('required');
