@@ -761,6 +761,7 @@
                     }
                 }
             });
+            container.flushEvents();
         },
         validate: function () {
             return _(this).container.control.validate();
