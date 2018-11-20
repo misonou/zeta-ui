@@ -331,6 +331,7 @@
     function validateAll(control, focusOnFailed) {
         var promises = [];
         var failed = [];
+        _(control).container.flushEvents();
         foreachControl(control, function (v) {
             var promise = validate(v);
             if (promise) {
