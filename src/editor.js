@@ -1206,6 +1206,9 @@
                     }
                     currentSelection.focus();
                     e.preventDefault();
+                },
+                dragstart: function (e) {
+                    e.preventDefault();
                 }
             }));
 
