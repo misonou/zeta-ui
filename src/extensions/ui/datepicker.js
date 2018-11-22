@@ -127,9 +127,6 @@
     }
 
     function formatDate(mode, date) {
-        if (isNaN(+date)) {
-            return '';
-        }
         switch (mode) {
             case 'month':
                 return MONTH_STR[getMonth(date)] + ' ' + getFullYear(date);
@@ -468,7 +465,7 @@
                 preset.softSelectedDate = null;
 
                 var text = '';
-                if (date) {
+                if (date && !isNaN(+date)) {
                     var format = function (fn) {
                         return helper.isFunction(fn) && fn(preset.options.mode, date);
                     };
