@@ -277,6 +277,9 @@
             },
             mouseup: function (e) {
                 finish(true);
+            },
+            touchend: function (e) {
+                finish(true);
             }
         };
         var scrollParentHandlers = {
