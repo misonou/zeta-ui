@@ -3,11 +3,7 @@
 
     var helper = zeta.helper;
 
-    $(document.documentElement).on(zeta.IS_TOUCH ? 'touchstart' : 'mousedown', '.zeta-ui button, .zeta-ui .has-clickeffect', function (e) {
-        var elm = e.currentTarget;
-        var p = (e.touches || [e])[0];
-        var x = p.clientX;
-        var y = p.clientY;
+    function createRipple(elm, x, y, until) {
         var rect = helper.getRect(elm);
         var p1 = Math.pow(y - rect.top, 2) + Math.pow(x - rect.left, 2);
         var p2 = Math.pow(y - rect.top, 2) + Math.pow(x - rect.right, 2);
@@ -24,11 +20,21 @@
             $anim.css('transform', $anim.css('transform') + ' scale(' + scalePercent + ')').addClass('animate-in');
         });
         $overlay.css('border-radius', $.css(elm, 'border-radius'));
-        helper.always(zeta.dom.drag(e), function () {
+        helper.always(until, function () {
             helper.runCSSTransition($overlay.children()[0], 'animate-out').then(function () {
                 $overlay.remove();
             });
         });
+    }
+
+    helper.bind(window, zeta.IS_TOUCH ? 'touchstart' : 'mousedown', function (e) {
+        var p = (e.touches || [e])[0];
+        for (var elm = e.target; elm; elm = elm.parentNode) {
+            if (helper.is(elm, '.zeta-ui button, .zeta-ui .has-clickeffect')) {
+                createRipple(elm, p.clientX, p.clientY, zeta.dom.drag(e));
+                return;
+            }
+        }
     });
 
 }(jQuery, zeta));
