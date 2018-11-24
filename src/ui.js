@@ -1043,7 +1043,7 @@
             }
         },
         validate: function () {
-            return when(validateAll(this, dom.getEventScope(this.element).source !== 'script'));
+            return when(validateAll(this, dom.getEventSource(this.element) !== 'script'));
         },
         execute: function (value) {
             var self = this;

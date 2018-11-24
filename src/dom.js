@@ -821,6 +821,9 @@
         get eventSource() {
             return getEventSource();
         },
+        getEventSource: function (element) {
+            return new ZetaEventSource(element).source;
+        },
         getContext: function (element) {
             return getContainer(element || focusPath[0]).context;
         },
