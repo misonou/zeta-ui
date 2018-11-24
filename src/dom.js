@@ -949,18 +949,44 @@
     };
 
     $(function () {
+        var selection = window.getSelection();
         var body = document.body;
-        var isComposing;
         var modifierCount;
         var modifiedKeyCode;
         var mousemovedX;
         var mousemovedY;
         var mousedownFocus;
         var previousPoint;
+        var imeNode;
+        var imeOffset;
+        var imeText;
 
         function getEventName(e, suffix) {
             var mod = ((e.ctrlKey || e.metaKey) ? 'Ctrl' : '') + (e.altKey ? 'Alt' : '') + (e.shiftKey ? 'Shift' : '');
             return mod ? helper.lcfirst(mod + helper.ucfirst(suffix)) : suffix;
+        }
+
+        function updateIMEState() {
+            var element = document.activeElement;
+            if ('selectionEnd' in element) {
+                imeNode = element;
+                imeOffset = element.selectionEnd;
+            } else {
+                imeNode = selection.anchorNode;
+                imeOffset = selection.anchorOffset;
+                if (imeNode.nodeType === 1) {
+                    // IE puts selection at element level
+                    // however it will insert text in the previous text node
+                    var child = imeNode.childNodes[imeOffset - 1];
+                    if (child && child.nodeType === 3) {
+                        imeNode = child;
+                        imeOffset = child.length;
+                    } else {
+                        imeNode = imeNode.childNodes[imeOffset];
+                        imeOffset = 0;
+                    }
+                }
+            }
         }
 
         function triggerKeystrokeEvent(keyName, nativeEvent) {
@@ -1056,18 +1082,62 @@
 
         bind(body, {
             compositionstart: function (e) {
-                isComposing = true;
-                triggerUIEvent('typing', e, focusPath[0]);
+                updateIMEState();
+                imeText = '';
+            },
+            compositionupdate: function (e) {
+                imeText = e.data;
             },
             compositionend: function (e) {
-                isComposing = false;
-                triggerUIEvent('typing', e, focusPath[0]);
-                if (triggerUIEvent('textInput', e, focusPath[0], e.data)) {
+                var isInputElm = 'selectionEnd' in imeNode;
+                var prevText = imeText;
+                var prevOffset = imeOffset;
+                updateIMEState();
+
+                var curText = imeNode.value || imeNode.data || '';
+                imeText = e.data;
+                // some IME lacks inserted character sequence when selecting from phrase candidate list
+                // also legacy Microsoft Changjie IME reports full-width spaces (U+3000) instead of actual characters
+                if (!imeText || /^\u3000+$/.test(imeText)) {
+                    imeText = curText.slice(prevOffset, imeOffset);
+                }
+
+                // some old mobile browsers fire compositionend event before replacing final character sequence
+                // need to compare both to truncate the correct range of characters
+                var o1 = imeOffset - imeText.length;
+                var o2 = imeOffset - prevText.length;
+                var startOffset = curText.slice(o1, imeOffset) === imeText ? o1 : o2;
+                var newText = curText.substr(0, startOffset) + curText.slice(imeOffset);
+                if (isInputElm) {
+                    imeNode.value = newText;
+                    imeNode.setSelectionRange(startOffset, startOffset);
+                } else {
+                    imeNode.data = newText;
+                    helper.makeSelection(imeNode, startOffset);
+                }
+                if (!triggerUIEvent('textInput', e, focusPath[0], imeText)) {
+                    if (isInputElm) {
+                        imeNode.value = curText;
+                        imeNode.setSelectionRange(imeOffset, imeOffset);
+                    } else {
+                        imeNode.data = curText;
+                        helper.makeSelection(imeNode, imeOffset);
+                    }
+                }
+                imeNode = null;
+                setTimeout(function () {
+                    imeText = null;
+                });
+            },
+            textInput: function (e) {
+                // required for older mobile browsers that do not support beforeinput event
+                // ignore in case browser fire textInput before/after compositionend
+                if (!imeNode && (e.data === imeText || triggerUIEvent('textInput', e, focusPath[0], e.data))) {
                     e.preventDefault();
                 }
             },
             keydown: function (e) {
-                if (!isComposing) {
+                if (!imeNode) {
                     var keyCode = e.keyCode;
                     var isModifierKey = (META_KEYS.indexOf(keyCode) >= 0);
                     if (isModifierKey && keyCode !== modifiedKeyCode) {
@@ -1084,7 +1154,7 @@
             },
             keyup: function (e) {
                 var isModifierKey = (META_KEYS.indexOf(e.keyCode) >= 0);
-                if (!isComposing && (isModifierKey || modifiedKeyCode === e.keyCode)) {
+                if (!imeNode && (isModifierKey || modifiedKeyCode === e.keyCode)) {
                     modifiedKeyCode = null;
                     modifierCount--;
                     if (isModifierKey) {
@@ -1094,7 +1164,7 @@
             },
             keypress: function (e) {
                 var data = e.char || e.key || String.fromCharCode(e.charCode);
-                if (!isComposing && !modifierCount && (e.synthetic || !('onbeforeinput' in e.target))) {
+                if (!imeNode && !modifierCount && (e.synthetic || !('onbeforeinput' in e.target))) {
                     if (textInputAllowed(e.target)) {
                         lastEventSource.sourceKeyName = KEYNAMES[modifiedKeyCode] || data;
                         triggerUIEvent('textInput', e, focusPath[0], data);
@@ -1104,7 +1174,7 @@
                 }
             },
             beforeinput: function (e) {
-                if (!isComposing && e.cancelable) {
+                if (!imeNode && e.cancelable) {
                     switch (e.inputType) {
                         case 'insertText':
                             return triggerUIEvent('textInput', e, focusPath[0], e.data);

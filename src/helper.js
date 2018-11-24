@@ -25,6 +25,7 @@
     var when = jQuery.when;
 
     var root = document.documentElement;
+    var selection = window.getSelection();
     var wsDelimCache = {};
     var originDiv = $('<div style="position:fixed; top:0; left:0;">')[0];
 
@@ -466,6 +467,38 @@
         b = is(b, Range) || createRange(b);
         var value = !connected(a, b) ? NaN : compareBoundaryPoints_.call(a, 0, b) + compareBoundaryPoints_.call(a, 2, b);
         return (strict && ((value !== 0 && rangeIntersects(a, b)) || (value === 0 && !rangeEquals(a, b)))) ? NaN : value && value / Math.abs(value);
+    }
+
+    function makeSelection(b, e) {
+        // for newer browsers that supports setBaseAndExtent
+        // avoid undesirable effects when direction of editor's selection direction does not match native one
+        if (selection.setBaseAndExtent && is(e, Range)) {
+            selection.setBaseAndExtent(b.startContainer, b.startOffset, e.startContainer, e.startOffset);
+            return;
+        }
+
+        var range = createRange(b, e);
+        try {
+            selection.removeAllRanges();
+        } catch (e) {
+            // IE fails to clear ranges by removeAllRanges() in occasions mentioned in
+            // http://stackoverflow.com/questions/22914075
+            var r = document.body.createTextRange();
+            r.collapse();
+            r.select();
+            selection.removeAllRanges();
+        }
+        try {
+            selection.addRange(range);
+        } catch (e) {
+            // IE may throws unspecified error even though the selection is successfully moved to the given range
+            // if the range is not successfully selected retry after selecting other range
+            if (!selection.rangeCount) {
+                selection.addRange(createRange(document.body));
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }
     }
 
     function getRect(elm, includeMargin) {
@@ -926,6 +959,7 @@
         rangeEquals: rangeEquals,
         rangeIntersects: rangeIntersects,
         compareRangePosition: compareRangePosition,
+        makeSelection: makeSelection,
         getRect: getRect,
         getRects: getRects,
         toPlainRect: toPlainRect,

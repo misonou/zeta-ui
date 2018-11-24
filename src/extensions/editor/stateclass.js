@@ -25,8 +25,6 @@
         },
         stateChange: function (e) {
             toggleClass(e.widget, 'disabled', !e.typer.enabled());
-        },
-        typing: function (e) {
             toggleClass(e.widget, 'empty', !e.typer.hasContent());
         },
         contentChange: function (e) {

@@ -94,7 +94,7 @@
     var selection = window.getSelection();
     var getComputedStyle = window.getComputedStyle;
     var clipboard = {};
-    var composition = {};
+    var composingEditor = null;
     var selectionCache = new WeakMap();
     var detachedElements = new WeakMap();
     var dirtySelections = new Set();
@@ -278,41 +278,6 @@
             content = $(v.cloneNode(false)).append(content)[0];
         });
         return is(content, Node) || createDocumentFragment(content);
-    }
-
-    function applySelection(sel) {
-        var b = sel.baseCaret.getRange();
-        var e = sel.extendCaret.getRange();
-
-        // for newer browsers that supports setBaseAndExtent
-        // avoid undesirable effects when direction of editor's selection direction does not match native one
-        if (selection.setBaseAndExtent) {
-            selection.setBaseAndExtent(b.startContainer, b.startOffset, e.startContainer, e.startOffset);
-            return;
-        }
-
-        var range = createRange(b, e);
-        try {
-            selection.removeAllRanges();
-        } catch (e) {
-            // IE fails to clear ranges by removeAllRanges() in occasions mentioned in
-            // http://stackoverflow.com/questions/22914075
-            var r = document.body.createTextRange();
-            r.collapse();
-            r.select();
-            selection.removeAllRanges();
-        }
-        try {
-            selection.addRange(range);
-        } catch (e) {
-            // IE may throws unspecified error even though the selection is successfully moved to the given range
-            // if the range is not successfully selected retry after selecting other range
-            if (!selection.rangeCount) {
-                selection.addRange(createRange(document.body));
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-        }
     }
 
     function getFontMetric(elm) {
@@ -1145,9 +1110,10 @@
                     insertContents(currentSelection, inputText);
                 } else if (inputText) {
                     var curTextNode = currentSelection.startTextNode;
-                    curTextNode.data = curTextNode.data.substr(0, currentSelection.startOffset) + inputText + curTextNode.data.slice(currentSelection.startOffset);
+                    var curOffset = currentSelection.startOffset;
+                    curTextNode.data = curTextNode.data.substr(0, curOffset) + inputText + curTextNode.data.slice(curOffset);
                     normalizeWhitespace(currentSelection.startNode.element);
-                    currentSelection.moveToText(curTextNode, currentSelection.startOffset + inputText.length);
+                    currentSelection.moveToText(curTextNode, curOffset + inputText.length);
                     undoable.snapshot(200);
                 }
             }
@@ -1186,6 +1152,18 @@
             }
 
             container.add(topElement, 'destroy', helper.bind(topElement, {
+                compositionstart: function () {
+                    muteChanges = true;
+                    composingEditor = typer;
+                },
+                compositionend: function () {
+                    muteChanges = false;
+                    composingEditor = false;
+                    // forcibly update the selection
+                    // because selection update is not reflected during composition
+                    currentSelection.focus();
+                    container.emitAsync('stateChange');
+                },
                 cut: handleClipboardExtract,
                 copy: handleClipboardExtract,
                 paste: function (e) {
@@ -1236,26 +1214,6 @@
             });
 
             var beforeEmit = {
-                typing: function (e) {
-                    var previous = composition;
-                    var range = getActiveRange(topElement);
-                    var node = range.startContainer;
-                    var offset = range.startOffset;
-                    if (isElm(node)) {
-                        node = node.childNodes[offset] || node.lastChild;
-                        offset = node.length;
-                    }
-                    composition = e.originalEvent.type.slice(-1) === 't' && {};
-                    muteChanges = !!composition;
-                    if (composition) {
-                        composition.node = node;
-                        composition.offset = offset;
-                    } else {
-                        var text = e.originalEvent.data || previous.node.data.slice(previous.offset - offset);
-                        createRange(node, offset - text.length, node, offset).deleteContents();
-                        currentSelection.select(node, offset - text.length);
-                    }
-                },
                 keystroke: function (e) {
                     // suppress browser native behavior on content editing shortcut (e.g. bold)
                     // common browser shortcuts that has no effect on content are excluded
@@ -1546,7 +1504,7 @@
             }
         },
         hasContent: function () {
-            if (containsOrEquals(this.element, composition.node)) {
+            if (this === composingEditor) {
                 return true;
             }
             if (trim(this.element.textContent).length) {
@@ -1924,8 +1882,8 @@
         focus: function () {
             var self = this;
             var topElement = self.typer.element;
-            if (containsOrEquals(document, topElement) && self.typer.enabled()) {
-                applySelection(self);
+            if (containsOrEquals(document, topElement) && self.typer.enabled() && composingEditor !== self.typer) {
+                helper.makeSelection(self.baseCaret.getRange(), self.extendCaret.getRange());
                 // Firefox does not set focus on the host element automatically
                 // when selection is changed by JavaScript
                 if (document.activeElement !== topElement) {
@@ -2512,7 +2470,7 @@
 
     setInterval(function () {
         var typer = is(dom.getContext(), Typer);
-        if (typer && dom.focused(window)) {
+        if (typer && !composingEditor && dom.focused(window)) {
             var selection = typer.getSelection();
             var activeRange = getActiveRange(typer.element);
             if (activeRange && !helper.rangeEquals(activeRange, createRange(selection))) {
