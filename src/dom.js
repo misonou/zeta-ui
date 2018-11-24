@@ -220,8 +220,10 @@
         if (parent !== root) {
             var parentResult = scrollIntoView(parent.parentNode, rect.translate(result.x, result.y));
             if (parentResult) {
-                result.x += parentResult.x;
-                result.y += parentResult.y;
+                result = {
+                    x: result.x + parentResult.x,
+                    y: result.y + parentResult.y
+                };
             }
         }
         return (result.x || result.y) ? result : false;
