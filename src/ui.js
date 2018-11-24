@@ -1838,7 +1838,7 @@
     defineControlType('buttonlist', {
         template: '<div class="zeta-buttonlist"><children show-text="true" show-icon="true" controls/></div>',
         templates: {
-            button: '<z:button><span class="zeta-label zeta-label-description">{{description}}</span><span class="zeta-label zeta-label-description is-shortcut">{{shortcut :zeta-shortcut}}</span></z:button>',
+            button: '<z:button><span class="zeta-label zeta-label-description">{{description ?? [ shortcut :zeta-shortcut ]}}</span></z:button>',
         },
         showIcon: true,
         showText: true,
