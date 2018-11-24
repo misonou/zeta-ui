@@ -146,60 +146,59 @@
         });
     }
 
-    function setFocus(element, focusOnInput, source) {
+    function setFocus(element, focusOnInput, source, path) {
+        path = path || focusPath;
+        if (path[0]) {
+            var within = path !== focusPath ? element : focusable(element);
+            if (!within) {
+                var lockParent = focusLockedWithin(element);
+                element = focused(lockParent) ? path[0] : lockParent;
+                within = focusable(element);
+            }
+            if (!within) {
+                return false;
+            }
+            var removed = path.splice(0, path.indexOf(within));
+            each(removed, function (i, v) {
+                focusElements.delete(v);
+            });
+            triggerFocusEvent('focusout', removed, element, source);
+        }
+        // check whether the element is still attached in ROM
+        // which can be detached while dispatching focusout event above
         if (containsOrEquals(root, element)) {
-            if (focusPath[0]) {
-                var within = focusable(element);
-                if (!within) {
-                    var lockParent = focusLockedWithin(element);
-                    element = focused(lockParent) ? focusPath[0] : lockParent;
-                    within = focusable(element);
-                }
-                if (!within) {
-                    return false;
-                }
-                var removed = focusPath.splice(0, focusPath.indexOf(within));
-                each(removed, function (i, v) {
-                    focusElements.delete(v);
-                });
-                triggerFocusEvent('focusout', removed, element, source);
+            if (focusOnInput && !is(element, SELECTOR_FOCUSABLE)) {
+                element = $(SELECTOR_FOCUSABLE, element).filter(':visible:not(:disabled,.disabled)')[0] || element;
             }
-            // check whether the element is still attached in ROM
-            // which can be detached while dispatching focusout event above
-            if (containsOrEquals(root, element)) {
-                if (focusOnInput && !is(element, SELECTOR_FOCUSABLE)) {
-                    element = $(SELECTOR_FOCUSABLE, element).filter(':visible:not(:disabled,.disabled)')[0] || element;
+            var added = parentsAndSelf(element).filter(function (v) {
+                return !focusElements.has(v);
+            });
+            var friend = map(added, function (v) {
+                return focusFriends.get(v);
+            })[0];
+            if (friend && !focused(friend)) {
+                var result = setFocus(friend);
+                if (result !== undefined) {
+                    return result && setFocus(element);
                 }
-                var added = parentsAndSelf(element).filter(function (v) {
-                    return !focusElements.has(v);
-                });
-                var friend = map(added, function (v) {
-                    return focusFriends.get(v);
-                })[0];
-                if (friend && !focused(friend)) {
-                    var result = setFocus(friend);
-                    if (result !== undefined) {
-                        return result && setFocus(element);
-                    }
-                }
-                if (added[0]) {
-                    focusPath.unshift.apply(focusPath, added);
-                    each(added, function (i, v) {
-                        focusElements.add(v);
-                    });
-                    triggerFocusEvent('focusin', added, null, source || new ZetaEventSource(added[0], focusPath));
-                }
-                var activeElement = document.activeElement;
-                if (focusPath[0] !== activeElement) {
-                    new ZetaMixin(focusPath[0]).focus();
-                    // ensure previously focused element is properly blurred
-                    // in case the new element is not focusable
-                    if (document.activeElement === activeElement) {
-                        activeElement.blur();
-                    }
-                }
-                return true;
             }
+            if (added[0]) {
+                path.unshift.apply(path, added);
+                each(added, function (i, v) {
+                    focusElements.add(v);
+                });
+                triggerFocusEvent('focusin', added, null, source || new ZetaEventSource(added[0], path));
+            }
+            var activeElement = document.activeElement;
+            if (path[0] !== activeElement) {
+                new ZetaMixin(path[0]).focus();
+                // ensure previously focused element is properly blurred
+                // in case the new element is not focusable
+                if (document.activeElement === activeElement) {
+                    activeElement.blur();
+                }
+            }
+            return true;
         }
     }
 
@@ -1010,6 +1009,11 @@
         }
 
         function unmount(mutations) {
+            var mapRemove = function (map, key) {
+                var value = map.get(key);
+                map.delete(key);
+                return value;
+            };
             // automatically free resources when DOM nodes are removed from document
             each(mutations, function (i, v) {
                 each(v.removedNodes, function (i, v) {
@@ -1018,18 +1022,17 @@
                         if (container && container.autoDestroy && container.element === v) {
                             container.destroy();
                         }
-                        var lock = lockedElements.get(v);
+                        var lock = mapRemove(lockedElements, v);
                         if (lock) {
-                            lockedElements.delete(v);
                             lock.cancel(true);
                         }
-                        var modalPath = modalElements.get(v);
-                        if (modalPath) {
-                            modalElements.delete(v);
-                            if (focused(v)) {
-                                focusPath.push.apply(focusPath, modalPath);
-                                setFocus(modalPath[0]);
-                            }
+                        var modalPath = mapRemove(modalElements, v);
+                        if (modalPath && focused(v)) {
+                            var path = any(modalElements, function (w) {
+                                return w.indexOf(v) >= 0;
+                            }) || focusPath;
+                            path.push.apply(path, modalPath);
+                            setFocus(modalPath[0], false, null, path);
                         }
                         var index = focusPath.indexOf(v);
                         if (index >= 0) {
