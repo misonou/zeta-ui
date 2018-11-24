@@ -784,11 +784,11 @@
         i18n: function (language, key, value) {
             addLabels(this.labels, language, key, value);
         },
-        alert: function (message, action, title, description, callback) {
-            return openDefaultDialog(this, 'alert', true, message, new ArgumentIterator([action, title, description, callback]));
+        alert: function (message, action, title, callback) {
+            return openDefaultDialog(this, 'alert', true, message, new ArgumentIterator([action, title, callback]));
         },
-        confirm: function (message, action, title, description, callback) {
-            return openDefaultDialog(this, 'confirm', true, message, new ArgumentIterator([action, title, description, callback]));
+        confirm: function (message, action, title, callback) {
+            return openDefaultDialog(this, 'confirm', true, message, new ArgumentIterator([action, title, callback]));
         },
         prompt: function (message, value, action, title, description, callback) {
             return openDefaultDialog(this, 'prompt', value, message, new ArgumentIterator([action, title, description, callback]));
@@ -2080,13 +2080,13 @@
 
     function openDefaultDialog(ui, type, value, message, iter) {
         return ui.import('dialog.prompt').render({
-            prompt: type === 'prompt',
-            cancellable: type !== 'alert',
             value: value,
-            message: message,
+            valueEnabled: type === 'prompt',
+            valueLabel: message,
+            cancelVisible: type !== 'alert',
             action: iter.string(),
             dialogTitle: iter.string(),
-            dialogDescription: iter.string(),
+            dialogDescription: type === 'prompt' ? iter.string() : message,
             callback: iter.fn()
         }).dialog;
     }
@@ -2101,26 +2101,23 @@
         preventLeave: false,
         exports: 'title description errorMessage',
         controls: [
-            ui.label('message'),
             ui.textbox('value', {
-                hiddenWhenDisabled: true
+                hiddenWhenDisabled: true,
+                exports: 'enabled label'
             }),
             ui.buttonset(
                 ui.submit('action', 'done', {
                     defaultExport: 'label',
                     exports: 'icon'
                 }),
-                ui.button('cancel', 'cancel', function (self) {
-                    return self.all.dialog.destroy();
+                ui.button('cancel', 'cancel', {
+                    exports: 'visible',
+                    execute: function (self) {
+                        return self.all.dialog.destroy();
+                    }
                 })
             )
         ],
-        init: function (e, self) {
-            self.all.message.visible = !self.context.prompt;
-            self.all.cancel.visible = self.context.cancellable;
-            self.all.value.enabled = self.context.prompt;
-            self.all.value.label = self.context.message;
-        },
         execute: function (self) {
             return (isFunction(self.context.callback) || when)(self.context.value);
         }
