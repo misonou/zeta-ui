@@ -147,6 +147,9 @@
     }
 
     function setFocus(element, focusOnInput, source, path) {
+        if (focusOnInput && !is(element, SELECTOR_FOCUSABLE)) {
+            element = $(SELECTOR_FOCUSABLE, element).filter(':visible:not(:disabled,.disabled)')[0] || element;
+        }
         path = path || focusPath;
         if (path[0]) {
             var within = path !== focusPath ? element : focusable(element);
@@ -167,9 +170,6 @@
         // check whether the element is still attached in ROM
         // which can be detached while dispatching focusout event above
         if (containsOrEquals(root, element)) {
-            if (focusOnInput && !is(element, SELECTOR_FOCUSABLE)) {
-                element = $(SELECTOR_FOCUSABLE, element).filter(':visible:not(:disabled,.disabled)')[0] || element;
-            }
             var added = parentsAndSelf(element).filter(function (v) {
                 return !focusElements.has(v);
             });
