@@ -1551,7 +1551,11 @@
         init: function (e, self) {
             var toolset = new UIToolset(_(self).toolset.name);
             toolset.choiceButton = toolset.button({
-                template: '<z:button class="selected:{{selected}}" show-icon="true" show-text="true"/>'
+                template: '<z:button class="selected:{{selected}}" show-icon="true" show-text="true"/>',
+                execute: function (choice) {
+                    dropdownSetValue(self, choice.value);
+                    self.execute();
+                }
             });
             _(self).ddToolset = toolset;
             self.hintValue = self.value;
@@ -1563,10 +1567,6 @@
             dropdownUpdateChoices(self);
             dropdownSetValue(self, e.newValue);
             e.handled();
-        },
-        childExecuted: function (e, self) {
-            dropdownSetValue(self, e.control.value);
-            self.execute();
         }
     });
 
