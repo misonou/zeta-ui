@@ -1685,7 +1685,12 @@
             self.editorOptions = textboxInitOptions(self.preset || DEFAULT_PRESET, self.options);
             self.watch('editor', function (a, b, c, typer) {
                 self.options = typer.getStaticWidget(PRESET_KEY).options;
+                self.editorOptions.options = extend({}, self.options);
             });
+        },
+        reset: function (e, self) {
+            self.options = self.editor.getStaticWidget(PRESET_KEY).options;
+            extend(self.options, self.editorOptions.options);
         }
     });
 
