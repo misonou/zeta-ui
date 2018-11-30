@@ -125,6 +125,12 @@ interface ZetaPrivateStore {
     (target: object, data: any): any;
 }
 
+interface ZetaEventBinder {
+    add(element: EventTarget, event: string, listener: (e: Event) => void, useCapture?: boolean): void;
+    add(element: EventTarget, event: Dictionary<(e: Event) => void>, useCapture?: boolean): Function;
+    off(): void;
+}
+
 interface ZetaStatic {
     /**
      * Whether current browser is Internet Explorer.
@@ -870,6 +876,8 @@ interface ZetaHelper {
 
     runCSSTransition(element: Element, className: string): Promise<any>;
 
+    bind(): ZetaEventBinder;
+
     /**
      * Adds event listeners to the Window object or other DOM elements.
      * @param element The Window object or a DOM element which event listeners are attached to.
@@ -877,7 +885,7 @@ interface ZetaHelper {
      * @param listener Function to be called when the specified event(s) is/are dispatched.
      * @param [useCapture] Optionally set the event listeners to be triggered in capture phase.
      */
-    bind(element: Element | Window, event: string, listener: (e: Event) => void, useCapture?: boolean): Function;
+    bind(element: EventTarget, event: string, listener: (e: Event) => void, useCapture?: boolean): (() => void);
 
     /**
      * Adds event listeners to the Window object or other DOM elements.
@@ -885,7 +893,7 @@ interface ZetaHelper {
      * @param event A dictionary which each property represents a event listener associated to an event.
      * @param [useCapture] Optionally set the event listeners to be triggered in capture phase.
      */
-    bind(element: Element | Window, event: Dictionary<(e: Event) => void>, useCapture?: boolean): Function;
+    bind(element: EventTarget, event: Dictionary<(e: Event) => void>, useCapture?: boolean): (() => void);
 
     /**
      * Creates a promise object that is resolved by the given value or that is depends on another promise object.
@@ -1031,6 +1039,10 @@ interface ZetaTextInputEvent extends ZetaEvent {
     readonly data: string;
 }
 
+interface ZetaEventScope {
+    wrap(promise: Promise<any>) : Promise<any>;
+}
+
 interface ZetaDOM {
     readonly activeElement: HTMLElement;
     readonly eventSource: ZetaEventSource;
@@ -1041,7 +1053,8 @@ interface ZetaDOM {
     focused(window: Window): boolean;
     focused(element: Element, strict?: boolean): boolean;
     getContext(element?: Element): any;
-    getEventScope(element: Element): any;
+    getEventScope(element: Element): ZetaEventScope;
+    getEventSource(element: Element): ZetaEventSource;
     focus(element: Element, focusOnInput?: boolean): void;
     focus(element: Element[]): void;
     lock(element: Element, promise: Promise<any>, oncancel?: () => Promise<any>): Promise<any>;

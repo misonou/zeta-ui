@@ -6,7 +6,13 @@
 
     function runWithGlobals(script, globals) {
         // jshint -W054
-        return (new Function('globals', 'with (globals) {\n' + script + '\n}'))(globals);
+        var limit = Error.stackTraceLimit;
+        try {
+            Error.stackTraceLimit = Infinity;
+            return (new Function('globals', 'with (globals) {\n' + script + '\n}'))(globals);
+        } finally {
+            Error.stackTraceLimit = limit;
+        }
     }
 
     function runInConsole(context, str) {
@@ -171,5 +177,40 @@
     });
 
     c.button();
+
+    zeta.dom.mixin({
+        canHandle: function (elm) {
+            return !!$(elm).data('xScrollable');
+        },
+        getUnobscuredRect: function (elm, child) {
+            var $child = $(elm).find('.scrollable-target');
+            if (!$child.find(child)[0]) {
+                return zeta.helper.getRect(elm);
+            }
+            var r = zeta.helper.getRect(elm);
+            var p = $(elm).scrollable('scrollPadding');
+            r.top += p.top;
+            r.left += p.left;
+            r.right -= p.right;
+            r.bottom -= p.bottom;
+            var f = $('.sticky', elm).filter(child ? function (i, v) {
+                return $.contains($(v).data('xScrollableSticky'), child);
+            } : ':visible')[0];
+            if (f) {
+                r.top += $(f).outerHeight();
+            }
+            return r;
+        },
+        scrollBy: function (elm, x, y) {
+            $(elm).scrollable('stop');
+            var origX = $(elm).scrollable('scrollLeft');
+            var origY = $(elm).scrollable('scrollTop');
+            $(elm).scrollable('scrollTo', origX + x, origY + y, 200);
+            return {
+                x: $(elm).scrollable('scrollLeft') - origX,
+                y: $(elm).scrollable('scrollTop') - origY
+            };
+        }
+    });
 
 }());
