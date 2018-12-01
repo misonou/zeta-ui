@@ -356,8 +356,10 @@
             }
         },
         mousewheel: function (e, self) {
-            showMonth(self, e.data);
-            e.handled();
+            if (self.context === callout) {
+                showMonth(self, e.data);
+                e.handled();
+            }
         },
         contextChange: function (e, self) {
             showMonth(self, self.currentMonth || self.value || new Date());
