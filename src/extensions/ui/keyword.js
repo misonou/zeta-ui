@@ -13,8 +13,8 @@
             ui.dropdown({
                 template: '<z:buttonlist/>',
                 execute: function (self) {
-                    callout.typer.invoke('add', self.value);
-                    callout.typer.getSelection().focus();
+                    insertItem(callout.preset, self.value);
+                    callout.preset.typer.focus();
                 },
                 contextChange: function (e, self) {
                     self.choices = self.context.suggestions;
@@ -49,10 +49,6 @@
 
     function sortValues(a, b) {
         return a.value.localeCompare(b.value);
-    }
-
-    function validate(preset, value) {
-        return preset.options.allowFreeInput || preset.knownValues[value];
     }
 
     function valueChanged(x, y) {
@@ -95,7 +91,7 @@
         return {
             firstIndex: firstIndex,
             consecutiveMatches: consecutiveMatches,
-            formattedText: formattedText.replace(/<\/b><b>/g, '')
+            formattedText: formattedText.replace(/\*\*(\ *)\*\*/g, '$1')
         };
     }
 
@@ -138,30 +134,30 @@
         var value = preset.typer.extractText();
         var promise = getSuggestions(preset, value, preset.typer.getValue());
         promise.then(function (suggestions) {
-            suggestions = processSuggestions(suggestions, value, preset.options.suggestionCount);
-            if (value && preset.options.allowFreeInput) {
-                suggestions.push({
-                    value: value,
-                    label: value,
-                    formattedText: '*' + value + '*'
-                });
-            }
-            callout.suggestions = suggestions.map(function (v) {
-                return {
-                    value: v.value,
-                    label: v.formattedText,
-                    icon: v.icon || ''
-                };
-            });
-            callout.update();
-        });
-        if (!callout) {
-            initCallout();
-        }
-        setTimeout(function () {
             if (preset.typer.focused()) {
+                suggestions = processSuggestions(suggestions, value, preset.options.suggestionCount);
+                if (value && preset.options.allowFreeInput && !suggestions.some(function (v) {
+                    return v.label === value;
+                })) {
+                    suggestions.push({
+                        value: value,
+                        label: value,
+                        formattedText: '*' + value + '*'
+                    });
+                }
+                if (!callout) {
+                    initCallout();
+                }
+                callout.preset = preset;
+                callout.suggestions = suggestions.map(function (v) {
+                    return {
+                        value: v.value,
+                        label: v.formattedText,
+                        icon: v.icon || ''
+                    };
+                });
+                callout.update();
                 dom.retainFocus(preset.typer.element, callout.element);
-                callout.typer = preset.typer;
                 callout.showMenu(preset.typer.element);
             }
         });
@@ -175,7 +171,6 @@
             controls: [
                 ui.textbox('newValue', {
                     enter: function (e, self) {
-                        // find existing
                         self.all.list.append(ui.checkbox({
                             label: self.value,
                             entry: self.value,
@@ -225,7 +220,7 @@
                             icon: v.icon,
                             entry: v.value,
                             value: checked,
-                            before: checked ? '*': ''
+                            before: checked ? '*' : ''
                         });
                     }));
                 });
@@ -233,6 +228,34 @@
         }).render().dialog.then(function (values) {
             preset.typer.setValue(values);
         });
+    }
+
+    function insertItem(preset, value) {
+        if (!value || preset.typer.getValue().indexOf(value.value || value) >= 0) {
+            return;
+        }
+        if (typeof value !== 'object') {
+            value = {
+                value: value,
+                label: preset.knownValues[value] || value
+            };
+        }
+        var span = $('<span class="zeta-keyword" data-value="' + encode(value.value, true) + '">' + encode(value.label) + '<i>delete</i></span>')[0];
+        var lastChild = preset.typer.rootNode.lastChild;
+        preset.typer.invoke(function (tx) {
+            tx.selection.selectAll();
+            if (lastChild) {
+                tx.selection.baseCaret.moveTo(lastChild.element, false);
+            }
+            tx.insertHtml(span);
+        });
+        if (!preset.options.allowFreeInput) {
+            getSuggestions(preset, value.value).then(function () {
+                if (!preset.knownValues[value.value]) {
+                    $(span).addClass('invalid');
+                }
+            });
+        }
     }
 
     var preset = {
@@ -250,21 +273,18 @@
                 }).get();
             },
             setValue: function (preset, values) {
-                values = ($.isArray(values) ? values : String(values).split(/\s+/)).filter(function (v) {
+                values = (helper.isArray(values) || String(values).split(/\s+/)).filter(function (v) {
                     return v;
                 });
                 if (valueChanged(values, this.getValue())) {
                     this.invoke(function (tx) {
-                        tx.selection.select(tx.typer.element, 'contents');
+                        tx.selection.selectAll();
                         tx.insertText('');
                         values.forEach(function (v) {
-                            tx.typer.invoke('add', v);
+                            insertItem(preset, v);
                         });
                     });
                 }
-            },
-            hasContent: function () {
-                return !!($('span', this.element)[0] || this.extractText());
             },
             validate: function (preset) {
                 if (preset.options.required && !this.getValue().length) {
@@ -280,9 +300,6 @@
                 element: 'span',
                 inline: true,
                 editable: 'none',
-                create: function (tx, value) {
-                    tx.insertHtml('<span class="zeta-keyword" data-value="' + encode(value.value, true) + '">' + encode(value.label) + '<i>delete</i></span>');
-                },
                 click: function (e) {
                     if (e.target !== e.widget.element) {
                         $(e.widget.element).detach();
@@ -290,37 +307,8 @@
                 }
             }
         },
-        commands: {
-            add: function (tx, value) {
-                if (!value || tx.typer.getValue().indexOf(value.value || value) >= 0) {
-                    return;
-                }
-                if (typeof value !== 'object') {
-                    value = {
-                        value: value,
-                        label: tx.widget.knownValues[value] || value
-                    };
-                }
-                var lastSpan = $('span:last', tx.typer.element)[0];
-                if (lastSpan) {
-                    tx.selection.select(lastSpan, false);
-                } else {
-                    tx.selection.select(tx.typer.element, 0);
-                }
-                tx.insertWidget('tag', value);
-                lastSpan = $('span:last', tx.typer.element)[0];
-                tx.selection.select(helper.createRange(lastSpan, false), helper.createRange(tx.typer.element, -0));
-                tx.insertText('');
-                if (!validate(tx.widget, value.value)) {
-                    $(lastSpan).addClass('invalid');
-                }
-                if (!SHOW_DIALOG && callout && callout.typer === tx.typer) {
-                    showSuggestions(tx.typer.getStaticWidget('__preset__'));
-                }
-            }
-        },
         init: function (e) {
-            e.typer.getSelection().moveToText(e.typer.element, -0);
+            e.typer.select(e.typer.element, -0);
             e.widget.knownValues = {};
         },
         focusin: function (e) {
@@ -331,7 +319,7 @@
         focusout: function (e) {
             if (!SHOW_DIALOG) {
                 callout.hideMenu();
-                e.typer.invoke('add', e.typer.extractText());
+                insertItem(e.widget, e.typer.extractText());
             }
         },
         upArrow: function (e) {
@@ -342,20 +330,21 @@
             dom.focus(callout.element);
             e.handled();
         },
+        textInput: function (e) {
+            var lastChild = e.typer.rootNode.lastChild;
+            if (lastChild && helper.compareRangePosition(e.typer.getSelection(), lastChild.element) < 0) {
+                e.typer.select(e.typer.element, -0);
+            }
+        },
         enter: function (e) {
-            e.typer.invoke('add', e.typer.extractText());
+            var suggestions = callout.suggestions;
+            insertItem(e.widget, suggestions.length === 1 || (suggestions[0] && suggestions[0].label === '**' + e.widget.knownValues[suggestions[0].value] + '**') ? suggestions[0].value : e.typer.extractText());
             e.handled();
         },
         escape: function (e) {
             if (helper.containsOrEquals(document, callout.element)) {
                 callout.hideMenu();
                 e.handled();
-            }
-        },
-        backspace: function (e) {
-            var selection = e.typer.getSelection().clone();
-            if (selection.isCaret && !selection.moveByCharacter(-1)) {
-                $('span:last', e.typer.element).remove();
             }
         },
         contentChange: function (e) {
@@ -383,6 +372,14 @@
                     });
                 });
             }
+        },
+        setValue: function (e, self) {
+            var newValue = e.newValue || [];
+            if (valueChanged(e.oldValue, newValue)) {
+                self.setValue(newValue);
+                self.editor.setValue(newValue);
+            }
+            e.handled();
         }
     });
 
