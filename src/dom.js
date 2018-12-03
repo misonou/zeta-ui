@@ -1221,15 +1221,6 @@
                         e.preventDefault();
                     }
                 }
-                for (var cur = e.target; cur !== body; cur = cur.parentNode) {
-                    var style = getComputedStyle(cur);
-                    if ((cur.scrollHeight > cur.offsetHeight && (style.overflowY === 'auto' || style.overflowY === 'scroll')) || (cur.scrollWidth > cur.offsetWidth && (style.overflowX === 'auto' || style.overflowX === 'scroll'))) {
-                        break;
-                    }
-                }
-                if (!focusable(cur)) {
-                    e.preventDefault();
-                }
             },
             click: function (e) {
                 if (mousemovedX <= 5 && mousemovedY <= 5) {
@@ -1251,6 +1242,25 @@
                 }
             }
         }, true);
+
+        bind(body, 'wheel', function (e) {
+            // scrolling will happen on first scrollable element up the DOM tree
+            // prevent scrolling if interaction on such element should be blocked by modal element
+            var deltaX = -e.deltaX;
+            var deltaY = -e.deltaY;
+            for (var cur = e.target; cur !== body; cur = cur.parentNode) {
+                var style = getComputedStyle(cur);
+                if (cur.scrollWidth > cur.offsetWidth && matchWord(style.overflowX, 'auto scroll') && ((deltaX > 0 && cur.scrollLeft > 0) || (deltaX < 0 && cur.scrollLeft + cur.offsetWidth < cur.scrollWidth))) {
+                    break;
+                }
+                if (cur.scrollHeight > cur.offsetHeight && matchWord(style.overflowY, 'auto scroll') && ((deltaY > 0 && cur.scrollTop > 0) || (deltaY < 0 && cur.scrollTop + cur.offsetHeight < cur.scrollHeight))) {
+                    break;
+                }
+            }
+            if (!focusable(cur)) {
+                e.preventDefault();
+            }
+        });
 
         new MutationObserver(unmount).observe(root, {
             subtree: true,
