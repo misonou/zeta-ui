@@ -2115,7 +2115,7 @@
                     defaultExport: 'label',
                     exports: 'icon'
                 }),
-                ui.button('cancel', 'cancel', {
+                ui.button('cancel', 'close', {
                     exports: 'visible',
                     execute: function (self) {
                         return self.all.dialog.destroy();
