@@ -1883,14 +1883,53 @@
     }
 
     defineControlType('menu', {
-        template: '<z:float><z:buttonlist/></z:float>',
+        template: '<div class="zeta-ui zeta-float is:{{type}} hidden:{{not showCallout}}"><z:buttonlist/></div>',
+        showCallout: false,
         waitForExecution: false,
         parseOptions: parseControlsAndExecute,
         init: function (e, self) {
+            var callout = e.target;
+            if (!self.parent && callout === self.element) {
+                defineHiddenProperty(self.context, 'element', callout);
+                self.watch('showCallout', function (a, b, c, value) {
+                    if (value) {
+                        dom.focus(callout);
+                    } else {
+                        removeNode(callout);
+                    }
+                });
+            } else if (!self.parent || !self.parent.hasRole('buttonlist')) {
+                var snapTo = callout.parentNode;
+                dom.retainFocus(self.element, callout);
+                self.watch('showCallout', function (a, b, c, value) {
+                    if (value) {
+                        dom.snap(callout, snapTo);
+                        dom.focus(callout);
+                    } else {
+                        removeNode(callout);
+                    }
+                });
+                removeNode(callout);
+            } else {
+                helper.bind(self.element, 'mouseover mouseout mousemove', function (e) {
+                    self.showCallout = e.type !== 'mouseout';
+                    if (self.showCallout) {
+                        var winRect = helper.getRect();
+                        var rect = helper.getRect(callout);
+                        var cur = helper.getState(callout, 'float') || [];
+                        setState(callout, 'float', {
+                            top: rect.bottom > winRect.height || (rect.top < 0 ? false : cur.indexOf('top') >= 0),
+                            left: rect.right > winRect.width || (rect.left < 0 ? false : cur.indexOf('left') >= 0)
+                        });
+                    }
+                });
+            }
+            self.callout = callout;
+
             var suffix = helper.ucfirst(self.name);
             defineHiddenProperty(self.context, 'show' + suffix, function (to, dir, within) {
                 self.showCallout = true;
-                (is(to, Node) ? dom.snap : helper.position)(self.callout, to, dir, within);
+                (is(to, Node) ? dom.snap : helper.position)(callout, to, dir, within);
             });
             defineHiddenProperty(self.context, 'hide' + suffix, function () {
                 self.showCallout = false;
@@ -1908,6 +1947,10 @@
             if (self.activeButton) {
                 self.activeButton.active = false;
                 self.activeButton = null;
+            }
+            if (self.hideCalloutOnBlur) {
+                self.showCallout = true;
+                self.showCallout = false;
             }
         },
         keystroke: function (e, self) {
@@ -1939,8 +1982,20 @@
                     return child;
             }
         },
+        click: function (e, self) {
+            if (!helper.containsOrEquals(self.callout, e.target)) {
+                self.showCallout = true;
+            }
+        },
         childExecuted: function (e, self) {
             self.activeButton = null;
+            for (var cur = e.control; cur && cur !== self.parent; cur = cur.parent) {
+                if (!cur.hideCalloutOnExecute) {
+                    return;
+                }
+            }
+            self.showCallout = true;
+            self.showCallout = false;
         }
     });
 
@@ -2005,72 +2060,6 @@
         },
         beforeDestroy: function (e, self) {
             return runCSSTransition(e.target, 'closing');
-        }
-    }, true);
-
-    defineControlType('float', {
-        template: '<div class="zeta-ui zeta-float is:{{type}} hidden:{{not showCallout}}"><children controls/></div>',
-        init: function (e, self) {
-            var callout = e.target;
-            self.showCallout = false;
-            if (!self.parent && callout === self.element) {
-                self.callout = self.element.parentNode;
-                defineHiddenProperty(self.context, 'element', self.callout);
-                self.watch('showCallout', function (a, b, c, value) {
-                    if (value) {
-                        dom.focus(self.callout);
-                    } else {
-                        removeNode(self.callout);
-                    }
-                });
-                $(self.callout).addClass('zeta-float');
-            } else if (!self.parent || !self.parent.hasRole('buttonlist')) {
-                self.callout = callout;
-                self.originalParent = callout.parentNode;
-                dom.retainFocus(self.element, self.callout);
-                self.watch('showCallout', function (a, b, c, value) {
-                    if (value) {
-                        dom.snap(callout, self.originalParent);
-                        dom.focus(callout);
-                    } else {
-                        removeNode(callout);
-                    }
-                });
-                removeNode(callout);
-            } else {
-                helper.bind(self.element, 'mouseover mouseout mousemove', function (e) {
-                    self.showCallout = e.type !== 'mouseout';
-                    if (self.showCallout) {
-                        var winRect = helper.getRect();
-                        var rect = helper.getRect(callout);
-                        var cur = helper.getState(callout, 'float') || [];
-                        setState(callout, 'float', {
-                            top: rect.bottom > winRect.height || (rect.top < 0 ? false : cur.indexOf('top') >= 0),
-                            left: rect.right > winRect.width || (rect.left < 0 ? false : cur.indexOf('left') >= 0)
-                        });
-                    }
-                });
-            }
-        },
-        click: function (e, self) {
-            if (self.originalParent) {
-                self.showCallout = true;
-            }
-        },
-        childExecuted: function (e, self) {
-            for (var cur = e.control; cur && cur !== self.parent; cur = cur.parent) {
-                if (!cur.hideCalloutOnExecute) {
-                    return;
-                }
-            }
-            self.showCallout = true;
-            self.showCallout = false;
-        },
-        focusout: function (e, self) {
-            if (self.hideCalloutOnBlur) {
-                self.showCallout = true;
-                self.showCallout = false;
-            }
         }
     }, true);
 
