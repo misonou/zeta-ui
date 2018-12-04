@@ -1,6 +1,7 @@
 (function ($, zeta) {
     'use strict';
 
+    var helper = zeta.helper;
     var toolbar;
     var contextmenu;
     var activeToolbar;
@@ -10,12 +11,11 @@
         if (canAccessClipboard === false) {
             callback();
         } else if (!canAccessClipboard) {
-            var handler = function () {
+            var unbind = helper.bind(document, 'paste', function () {
                 canAccessClipboard = true;
-            };
-            $(document).one('paste', handler);
+            });
             setTimeout(function () {
-                $(document).off('paste', handler);
+                unbind();
                 if (!canAccessClipboard) {
                     canAccessClipboard = false;
                     callback();
@@ -26,7 +26,7 @@
 
     function positionToolbar(toolbar) {
         var height = $(toolbar.element).height();
-        var rect = zeta.helper.getRect(toolbar.widget || toolbar.typer);
+        var rect = helper.getRect(toolbar.widget || toolbar.typer);
         if (rect.left === 0 && rect.top === 0 && rect.width === 0 && rect.height === 0) {
             // invisible element or IE bug related - https://connect.microsoft.com/IE/feedback/details/881970
             return;
@@ -48,7 +48,7 @@
             hideToolbar();
             activeToolbar = toolbar;
             $(toolbar.element).appendTo(document.body);
-            zeta.helper.setZIndexOver(toolbar.element, toolbar.typer.element);
+            helper.setZIndexOver(toolbar.element, toolbar.typer.element);
         }
         positionToolbar(toolbar);
     }
@@ -91,7 +91,6 @@
         },
         init: function (e) {
             e.widget.toolbar = createToolbar(e.typer, e.widget.options, toolbar);
-            e.widget.contextmenu = createToolbar(e.typer, e.widget.options, contextmenu);
         },
         focusin: function (e) {
             var toolbar = e.widget.toolbar;
@@ -104,9 +103,9 @@
             hideToolbar(e.widget.toolbar);
         },
         rightClick: function (e) {
-            var toolbar = e.widget.contextmenu;
+            var toolbar = e.widget.contextmenu || (e.widget.contextmenu = createToolbar(e.typer, e.widget.options, contextmenu));
             toolbar.update();
-            zeta.helper.position(toolbar.element, {
+            helper.position(toolbar.element, {
                 x: e.clientX,
                 y: e.clientY
             });
@@ -130,7 +129,7 @@
         }
     };
 
-    $(window).scroll(function () {
+    helper.bind(window, 'scroll', function () {
         if (activeToolbar) {
             positionToolbar(activeToolbar);
         }
@@ -185,21 +184,21 @@
             ui.button('cut', 'content_cut', {
                 shortcut: 'ctrlX',
                 execute: function (self) {
-                    self.context.typer.getSelection().focus();
+                    self.context.typer.focus();
                     document.execCommand('cut');
                 }
             }),
             ui.button('copy', 'content_copy', {
                 shortcut: 'ctrlC',
                 execute: function (self) {
-                    self.context.typer.getSelection().focus();
+                    self.context.typer.focus();
                     document.execCommand('copy');
                 }
             }),
             ui.button('paste', 'content_paste', {
                 shortcut: 'ctrlV',
                 execute: function (self) {
-                    self.context.typer.getSelection().focus();
+                    self.context.typer.focus();
                     document.execCommand('paste');
                     detectClipboardInaccessible(function () {
                         ui.alert('clipboardError');
