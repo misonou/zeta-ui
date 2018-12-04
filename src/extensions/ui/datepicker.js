@@ -392,38 +392,30 @@
             $(repeat('<i></i>', 12)).appendTo($face).each(function (i, v) {
                 $(v).css('transform', 'rotate(' + (i * 30) + 'deg)');
             });
-            $('s', self.element).on('mousedown touchstart', function (e) {
+            helper.bind(self.element, 'mousedown touchstart', function (e) {
                 var elm = e.target;
-                var rect = helper.getRect(elm.parentNode);
-                var isTouch = e.type === 'touchstart';
-                var handlers = {};
-                handlers[isTouch ? 'touchmove' : 'mousemove'] = function (e) {
-                    if (!isTouch && e.which !== 1) {
-                        return handlers.mouseup();
-                    }
-                    var point = isTouch ? e.originalEvent.touches[0] : e;
-                    var rad = Math.atan2(point.clientY - rect.centerY, point.clientX - rect.centerX) / Math.PI;
-                    var curM = getMinutes(self.value);
-                    var curH = getHours(self.value);
-                    if (elm.getAttribute('hand') === 'm') {
-                        var m = (Math.round((rad * 30 + 75) / self.step) * self.step) % 60;
-                        if (m !== curM) {
-                            var deltaH = Math.floor(Math.abs(curM - m) / 30) * (m > curM ? -1 : 1);
-                            self.setValue(makeTime(curH + deltaH, m));
+                if (helper.tagName(elm) === 's' && (e.which === 1 || (e.touches || '').length === 1)) {
+                    var rect = helper.getRect(elm.parentNode);
+                    var promise = dom.drag(e, function (x, y) {
+                        var rad = Math.atan2(y - rect.centerY, x - rect.centerX) / Math.PI;
+                        var curM = getMinutes(self.value);
+                        var curH = getHours(self.value);
+                        if (elm.getAttribute('hand') === 'm') {
+                            var m = (Math.round((rad * 30 + 75) / self.step) * self.step) % 60;
+                            if (m !== curM) {
+                                var deltaH = Math.floor(Math.abs(curM - m) / 30) * (m > curM ? -1 : 1);
+                                self.setValue(makeTime(curH + deltaH, m));
+                            }
+                        } else {
+                            var h = Math.round(rad * 6 + 15) % 12 + (ui.all(self).meridiem.value ? 12 : 0);
+                            if (h !== curH) {
+                                self.setValue(makeTime(h, curM));
+                            }
                         }
-                    } else {
-                        var h = Math.round(rad * 6 + 15) % 12 + (ui.all(self).meridiem.value ? 12 : 0);
-                        if (h !== curH) {
-                            self.setValue(makeTime(h, curM));
-                        }
-                    }
-                };
-                handlers[isTouch ? 'touchend' : 'mouseup'] = function () {
-                    $(document.body).off(handlers);
-                    self.execute();
-                };
-                if (e.which === 1 || (e.originalEvent.touches || '').length === 1) {
-                    $(document.body).on(handlers);
+                    });
+                    promise.then(function () {
+                        self.execute();
+                    });
                 }
             });
             self.setValue(new Date());

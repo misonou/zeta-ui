@@ -306,7 +306,7 @@
                 }
             }
         };
-        unbind1 = bind(document.body, handlers);
+        unbind1 = bind(window, handlers);
         unbind2 = bind(scrollParent, scrollParentHandlers);
         return prepEventSource(deferred);
     }
@@ -1278,10 +1278,7 @@
                 each(snaps, snapToElement);
             });
         }
-        bind(window, 'resize scroll orientationchange', updateSnaps, {
-            passive: true
-        });
-        bind(body, 'mousemove wheel keyup touchend transitionend MSTransitionEnd', updateSnaps, {
+        bind(window, 'resize scroll orientationchange mousemove wheel keyup touchend transitionend', updateSnaps, {
             passive: true
         });
     });

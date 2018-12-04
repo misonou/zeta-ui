@@ -3,6 +3,7 @@
 
     var Editor = zeta.Editor;
     var helper = zeta.helper;
+    var bind = helper.bind;
     var createRange = helper.createRange;
     var each = helper.each;
     var extend = helper.extend;
@@ -61,7 +62,7 @@
             return repl[v] || v;
         })).append(container);
 
-        $(container).mousedown(function (e) {
+        bind(container, 'mousedown', function (e) {
             if (e.buttons & 1) {
                 activeHandle = handles.get(e.target);
                 helper.always(zeta.dom.drag(e, activeTyper.element), function () {
@@ -71,7 +72,7 @@
                 e.preventDefault();
             }
         });
-        $(document.body).on('mousedown mousemove mouseup', function (e) {
+        bind(window, 'mousedown mousemove mouseup', function (e) {
             state.x = e.clientX;
             state.y = e.clientY;
             hoverNode = activeTyper && activeTyper.nodeFromPoint(state.x, state.y);
@@ -83,7 +84,7 @@
                 timeout = setTimeout(refresh, 0, true);
             }
         });
-        $(window).on('scroll resize orientationchange focus', refresh);
+        bind(window, 'scroll resize orientationchange focus', refresh);
     }
 
     function computeFillRects(range) {

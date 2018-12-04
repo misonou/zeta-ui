@@ -1,8 +1,6 @@
 (function () {
     'use strict';
 
-    var ANIMATION_END = 'animationend oanimationend webkitAnimationEnd';
-    var TRANSITION_END = 'transitionend otransitionend webkitTransitionEnd';
     var FLIP_POS = {
         top: 'bottom',
         left: 'right',
@@ -861,15 +859,14 @@
         }
 
         var deferred = $.Deferred();
-        var ontransitionend = function (e) {
+        var unbind = bind(element, 'animationend transitionend', function (e) {
             var dict = map.get(e.target) || {};
-            delete dict[matchWord(e.type, TRANSITION_END) ? removeVendorPrefix(e.propertyName) : '@' + e.animationName];
+            delete dict[e.propertyName ? removeVendorPrefix(e.propertyName) : '@' + e.animationName];
             if (!keys(dict)[0] && map.delete(e.target) && !map.size) {
-                unbind(element, ANIMATION_END + ' ' + TRANSITION_END, ontransitionend);
+                unbind();
                 deferred.resolveWith(element, [element]);
             }
-        };
-        bind(element, ANIMATION_END + ' ' + TRANSITION_END, ontransitionend);
+        });
         return deferred.promise();
     }
 
