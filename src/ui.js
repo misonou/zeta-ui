@@ -580,10 +580,9 @@
             nodeCount: index
         };
         cacheKeyObj = cacheKeyObj || templates;
-        while (cacheKeyObj !== defaultTemplates && !hasOverrideTemplate(cacheKeyObj, roles)) {
-            cacheKeyObj = getPrototypeOf(cacheKeyObj);
-        }
-        mapGet(parsedTemplates, cacheKeyObj, Object)[template] = result;
+        do {
+            mapGet(parsedTemplates, cacheKeyObj, Object)[template] = result;
+        } while (cacheKeyObj !== defaultTemplates && !hasOverrideTemplate(cacheKeyObj, roles) && (cacheKeyObj = getPrototypeOf(cacheKeyObj)));
         return result;
     }
 
