@@ -328,7 +328,8 @@
         control.errors = null;
     }
 
-    function validateAll(control, focusOnFailed) {
+    function validateAll(control) {
+        var focusOnFailed = dom.getEventSource(control.element) !== 'script';
         var promises = [];
         var failed = [];
         _(control).container.flushEvents();
@@ -1043,7 +1044,7 @@
             }
         },
         validate: function () {
-            return when(validateAll(this, dom.getEventSource(this.element) !== 'script'));
+            return when(validateAll(this));
         },
         execute: function (value) {
             var self = this;
@@ -1053,8 +1054,7 @@
             if (value !== undefined) {
                 self.value = value;
             }
-            var scope = dom.getEventScope(self.element);
-            var finish = scope.wrap(function (resolved, data) {
+            var finish = function (resolved, data) {
                 executingControls.delete(self);
                 if (resolved) {
                     triggerEvent(self, 'executed', {
@@ -1067,8 +1067,8 @@
                     }
                 }
                 triggerEvent(self, 'afterExecute', resolved);
-            });
-            var run = scope.wrap(function () {
+            };
+            var run = function () {
                 var promise;
                 triggerEvent(self, 'beforeExecute');
                 executingControls.add(self);
@@ -1087,14 +1087,14 @@
                     promise = dom.lock(self.element, promise, function () {
                         return triggerEvent(self, 'cancel') || reject();
                     });
-                    helper.always(promise, finish);
+                    helper.always(dom.prepEventSource(promise), finish);
                     return promise;
                 }
                 finish(true);
                 return when();
-            });
-            var promise = validateAll(self, scope.source !== 'script');
-            return promise ? promise.then(run) : run();
+            };
+            var promise = validateAll(self);
+            return promise ? dom.prepEventSource(promise).then(run) : run();
         },
         reset: function () {
             foreachControl(this, reset);

@@ -72,21 +72,25 @@
         return (type && matchWord(type[0] === 'k' ? 'keyboard' : type[0] === 't' ? 'touch' : type[0] === 'm' || matchWord(type, 'wheel click dblclick contextmenu') ? 'mouse' : type, EVENT_SOURCES)) || 'script';
     }
 
-    function getEventScope(element) {
-        var source = new ZetaEventSource(element);
+    function prepEventSource(promise) {
+        var source = eventSource || new ZetaEventSource(focusPath[0]);
+        var wrap = function (callback) {
+            return function () {
+                var prev = eventSource;
+                try {
+                    eventSource = source;
+                    return callback.apply(this, arguments);
+                } finally {
+                    eventSource = prev;
+                }
+            };
+        };
         return {
-            source: source.source,
-            sourceKeyName: source.sourceKeyName,
-            wrap: function (callback) {
-                return function () {
-                    var prev = eventSource;
-                    try {
-                        eventSource = source;
-                        return callback.apply(this, arguments);
-                    } finally {
-                        eventSource = prev;
-                    }
-                };
+            then: function (a, b) {
+                return promise.then(a && wrap(a), b && wrap(b));
+            },
+            catch: function (a) {
+                return promise.catch(a && wrap(a));
             }
         };
     }
@@ -248,7 +252,6 @@
     function drag(event, within, callback) {
         var deferred = $.Deferred();
         var lastPos = event;
-        var scope = getEventScope(event.target);
         var progress = isFunction(callback || within) || helper.noop;
         var scrollParent = getScrollParent(is(within, Node) || event.target);
         var scrollTimeout;
@@ -305,14 +308,7 @@
         };
         unbind1 = bind(document.body, handlers);
         unbind2 = bind(scrollParent, scrollParentHandlers);
-        return {
-            then: function (a, b) {
-                return deferred.then(a && scope.wrap(a), b && scope.wrap(b));
-            },
-            catch: function (a) {
-                return deferred.catch(a && scope.wrap(a));
-            }
-        };
+        return prepEventSource(deferred);
     }
 
     function ZetaMixin(element) {
@@ -812,7 +808,7 @@
 
     var dom = {
         drag: drag,
-        getEventScope: getEventScope,
+        prepEventSource: prepEventSource,
         scrollIntoView: scrollIntoView,
         focused: focused,
         get activeElement() {
