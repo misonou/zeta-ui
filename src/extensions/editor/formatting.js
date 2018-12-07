@@ -531,7 +531,11 @@
         simpleCommandButton('justifyLeft', 'formatting'),
         simpleCommandButton('justifyCenter', 'formatting'),
         simpleCommandButton('justifyRight', 'formatting'),
-        simpleCommandButton('justifyFull', 'formatting')
+        simpleCommandButton('justifyFull', 'formatting'), {
+            visible: function (self) {
+                return isEnabled(self, 'inlineStyle');
+            }
+        }
     ));
 
     ui.i18n('en', {
