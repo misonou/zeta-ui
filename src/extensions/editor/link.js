@@ -86,8 +86,8 @@
                     return self.parentContext.typer.hasCommand('unlink');
                 }
             }),
-            ui.submit('submit', 'done'),
-            ui.button('cancel', 'cancel', function (self) {
+            ui.submit('ok', 'done'),
+            ui.button('cancel', 'close', function (self) {
                 return self.all.dialog.destroy();
             })
         )
@@ -170,14 +170,16 @@
     ));
 
     ui.i18n('en', {
-        'insertLink': 'Insert hyperlink',
-        'editLink': 'Edit hyperlink',
-        'removeLink': 'Remove hyperlink',
-        'remove': 'Remove',
-        'text': 'Text',
-        'href': 'Link URL',
-        'blank': 'Open in new window',
-        'open': 'Open hyperlink'
+        insertLink: 'Insert hyperlink',
+        editLink: 'Edit hyperlink',
+        removeLink: 'Remove hyperlink',
+        remove: 'Remove',
+        text: 'Text',
+        href: 'Link URL',
+        blank: 'Open in new window',
+        open: 'Open hyperlink',
+        cancel: 'Cancel',
+        ok: 'OK',
     });
 
 }(jQuery, zeta));
