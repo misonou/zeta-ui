@@ -160,6 +160,7 @@
                 callout.update();
                 dom.retainFocus(preset.typer.element, callout.element);
                 callout.showMenu(preset.typer.element);
+                preset.typer.focus();
             }
         });
     }
