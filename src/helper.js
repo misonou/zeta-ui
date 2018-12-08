@@ -868,7 +868,7 @@
             delete dict[e.propertyName ? removeVendorPrefix(e.propertyName) : '@' + e.animationName];
             if (!keys(dict)[0] && map.delete(e.target) && !map.size) {
                 unbind();
-                deferred.resolveWith(element, [element]);
+                deferred[getState(element, className) ? 'resolve' : 'reject'](element);
             }
         });
         return deferred.promise();
