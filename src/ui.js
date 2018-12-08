@@ -17,7 +17,9 @@
     var helper = zeta.helper;
     var dom = zeta.dom;
     var any = helper.any;
+    var bind = helper.bind;
     var camel = helper.camel;
+    var containsOrEquals = helper.containsOrEquals;
     var createDocumentFragment = helper.createDocumentFragment;
     var defineGetterProperty = helper.defineGetterProperty;
     var defineHiddenProperty = helper.defineHiddenProperty;
@@ -33,6 +35,7 @@
     var mapGet = helper.mapGet;
     var matchWord = helper.matchWord;
     var noop = helper.noop;
+    var position = helper.position;
     var randomId = helper.randomId;
     var reject = helper.reject;
     var removeNode = helper.removeNode;
@@ -1873,7 +1876,7 @@
         var arr = [];
         (function getButtonList(control) {
             each(control.controls, function (i, v) {
-                if (v.hasRole('buttonlist')) {
+                if (v.hasRole('buttonlist') && !v.hasRole('menu')) {
                     getButtonList(v);
                 } else if (v.hasRole('button') && v.enabled) {
                     arr[arr.length] = v;
@@ -1884,109 +1887,104 @@
         return arr[i < 0 ? 0 : i + dir];
     }
 
+    function menuShowCallout(self, to, dir, within) {
+        var callout = self.callout;
+        if (self.parent && containsOrEquals(self.element, callout)) {
+            setState(callout, 'hidden', false);
+            position(callout, self.element, 'right top inset-y');
+        } else {
+            if (self.calloutParent) {
+                dom.snap(callout, self.calloutParent);
+            } else if (is(to, Node)) {
+                dom.snap(callout, to, dir);
+            } else if (to) {
+                position(callout, to, dir, within);
+            }
+            dom.focus(callout);
+            setState(callout, 'open', false);
+            setState(callout, 'closing', false);
+            runCSSTransition(callout, 'open');
+        }
+    }
+
+    function menuHideCallout(self) {
+        var callout = self.callout;
+        if (self.parent && containsOrEquals(self.element, callout)) {
+            setState(callout, 'hidden', true);
+        } else {
+            runCSSTransition(callout, 'closing').then(function () {
+                removeNode(callout);
+            });
+        }
+        self.activeButton = null;
+    }
+
     defineControlType('menu', {
-        template: '<div class="zeta-ui zeta-float is:{{type}} hidden:{{not showCallout}}"><z:buttonlist/></div>',
-        showCallout: false,
+        template: '<div class="zeta-ui zeta-menu zeta-float"><z:buttonlist/></div>',
         waitForExecution: false,
         parseOptions: parseControlsAndExecute,
         init: function (e, self) {
             var callout = e.target;
-            if (!self.parent && callout === self.element) {
+            for (var cur = self.parent; cur && cur.hasRole('menu buttonlist'); cur = cur.parent);
+            if (self.parent && !cur) {
+                bind(self.element, 'mouseenter', menuShowCallout.bind(null, self));
+                bind(self.element, 'mouseleave', menuHideCallout.bind(null, self));
+            } else if (!self.parent && callout === self.element) {
+                defineHiddenProperty(self.context, 'showMenu', menuShowCallout.bind(null, self));
+                defineHiddenProperty(self.context, 'hideMenu', menuHideCallout.bind(null, self));
                 defineHiddenProperty(self.context, 'element', callout);
-                self.watch('showCallout', function (a, b, c, value) {
-                    if (value) {
-                        dom.focus(callout);
-                    } else {
-                        removeNode(callout);
-                    }
-                });
-            } else if (!self.parent || !self.parent.hasRole('buttonlist')) {
-                var snapTo = callout.parentNode;
-                dom.retainFocus(self.element, callout);
-                self.watch('showCallout', function (a, b, c, value) {
-                    if (value) {
-                        dom.snap(callout, snapTo);
-                        dom.focus(callout);
-                    } else {
-                        removeNode(callout);
-                    }
-                });
-                removeNode(callout);
             } else {
-                helper.bind(self.element, 'mouseover mouseout mousemove', function (e) {
-                    self.showCallout = e.type !== 'mouseout';
-                    if (self.showCallout) {
-                        var winRect = helper.getRect();
-                        var rect = helper.getRect(callout);
-                        var cur = helper.getState(callout, 'float') || [];
-                        setState(callout, 'float', {
-                            top: rect.bottom > winRect.height || (rect.top < 0 ? false : cur.indexOf('top') >= 0),
-                            left: rect.right > winRect.width || (rect.left < 0 ? false : cur.indexOf('left') >= 0)
-                        });
-                    }
-                });
+                self.calloutParent = callout.parentNode;
+                dom.retainFocus(self.element, callout);
+                removeNode(callout);
             }
+            bind(self.element, 'mousemove', function () {
+                self.activeButton = null;
+            });
+            setState(e.target, 'is-' + self.type, true);
             self.callout = callout;
-
-            var suffix = helper.ucfirst(self.name);
-            defineHiddenProperty(self.context, 'show' + suffix, function (to, dir, within) {
-                self.showCallout = true;
-                (is(to, Node) ? dom.snap : helper.position)(callout, to, dir, within);
+            self.activeButton = null;
+            self.watch('activeButton', function (a, b, old, cur) {
+                (old || {}).active = false;
+                (cur || {}).active = true;
+                (cur || self).focus();
             });
-            defineHiddenProperty(self.context, 'hide' + suffix, function () {
-                self.showCallout = false;
-            });
+            menuHideCallout(self);
         },
         focusin: function (e, self) {
-            if (e.source === 'keyboard') {
+            if (e.source === 'keyboard' && !self.parent) {
+                menuShowCallout(self);
                 self.activeButton = menuGetNextItem(self, self, 1);
-                if (self.activeButton) {
-                    self.activeButton.active = true;
-                }
             }
         },
         focusout: function (e, self) {
-            if (self.activeButton) {
-                self.activeButton.active = false;
-                self.activeButton = null;
-            }
+            self.activeButton = null;
             if (self.hideCalloutOnBlur) {
-                self.showCallout = true;
-                self.showCallout = false;
+                menuHideCallout(self);
             }
         },
         keystroke: function (e, self) {
             var cur = self.activeButton;
-            switch (e.data) {
-                case 'upArrow':
-                case 'downArrow':
-                    var next = menuGetNextItem(self, cur, e.data[0] === 'u' ? -1 : 1);
-                    if (next) {
-                        (cur || {}).active = false;
-                        next.active = true;
-                        self.activeButton = next;
-                        next.focus();
-                    }
-                    return next || cur;
-                case 'leftArrow':
-                    if (cur && self.parent) {
-                        cur.active = false;
-                        self.activeButton = null;
-                        self.parent.focus();
-                    }
-                    return cur;
-                case 'rightArrow':
-                    var child = cur && cur.controls[0];
-                    if (child && cur.hasRole('menu')) {
-                        cur.showCallout = true;
-                        child.focus();
-                    }
-                    return child;
+            var dir = /^(up|down|left|right)Arrow$/.test(e.data) && RegExp.$1[0];
+            if (dir === 'l') {
+                if (!self.parent) {
+                    e.handled();
+                } else if (cur) {
+                    menuHideCallout(self);
+                    e.handled();
+                }
+            } else if (dir === 'r') {
+                menuShowCallout(self);
+                self.activeButton = cur || menuGetNextItem(self, self, 1);
+                e.handled();
+            } else if (!self.parent || cur) {
+                self.activeButton = menuGetNextItem(self, cur, dir === 'u' ? -1 : 1) || cur;
+                e.handled();
             }
         },
         click: function (e, self) {
-            if (!helper.containsOrEquals(self.callout, e.target)) {
-                self.showCallout = true;
+            if (!containsOrEquals(self.callout, e.target)) {
+                menuShowCallout(self);
             }
         },
         childExecuted: function (e, self) {
@@ -1996,8 +1994,10 @@
                     return;
                 }
             }
-            self.showCallout = true;
-            self.showCallout = false;
+            menuHideCallout(self);
+        },
+        beforeDestroy: function (e, self) {
+            menuHideCallout(self);
         }
     });
 
