@@ -2006,7 +2006,7 @@
     }
 
     defineControlType('dialog', {
-        template: '<div class="zeta-ui zeta-dialog is-modal:{{modal}}"><z:anim class="zeta-dialog-inner"><div class="zeta-dialog-content"><h2>{{title}}</h2><z:form><p>{{description}}</p><controls/></z:form></div><div class="zeta-dialog-error error hidden:{{not errorMessage}}">{{errorMessage}}</div><controls of="type == buttonset"/></z:anim></div>',
+        template: '<div class="zeta-ui zeta-dialog"><z:anim class="zeta-float zeta-dialog-inner"><div class="zeta-dialog-content"><h2>{{title}}</h2><z:form><p>{{description}}</p><controls/></z:form></div><div class="zeta-dialog-error error hidden:{{not errorMessage}}">{{errorMessage}}</div><controls of="type == buttonset"/></z:anim></div>',
         templates: {
             buttonset: '<z:buttonset class="zeta-dialog-buttonset"><controls of="danger" show-text="true"/><div class="zeta-buttonset-pad"></div><controls show-text="true"/></z:buttonset>'
         },
