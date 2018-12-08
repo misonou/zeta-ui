@@ -389,7 +389,9 @@
     });
 
     ui.i18n('en', {
-        newValue: 'Enter new value'
+        newValue: 'Enter new value',
+        done: 'Done',
+        cancel: 'Cancel'
     });
 
 }(jQuery, zeta));
