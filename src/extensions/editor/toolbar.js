@@ -141,10 +141,17 @@
 
     var ui = new zeta.UI('zeta.editor');
 
+    function childExecuted(e, self) {
+        if (e.source === 'mouse') {
+            self.context.typer.focus();
+        }
+    }
+
     toolbar = ui.buttonset(
         ui.callout('insertWidgets', 'widgets', ui.import('zeta.editor.insertMenu')),
         ui.import('zeta.editor.toolbar'), {
-            showText: false
+            showText: false,
+            childExecuted: childExecuted
         });
 
     contextmenu = ui.menu(
@@ -206,7 +213,9 @@
                 }
             })
         ),
-        ui.import('zeta.editor.contextmenu')
+        ui.import('zeta.editor.contextmenu'), {
+            childExecuted: childExecuted
+        }
     );
 
     ui.i18n('en', {

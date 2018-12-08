@@ -477,23 +477,6 @@
                 }
                 eventSource = prevEventSource;
                 contextContainer.event = prevEvent;
-
-                // return focus after execution where focus is likely
-                // temporarily changed to current element by mouse event
-                if (self.handled && self.source === 'mouse') {
-                    var activeElement = focusPath[0];
-                    helper.always(self.handled, function () {
-                        if (activeElement === focusPath[0]) {
-                            var activeContainer = getContainer(activeElement);
-                            for (var i = 1, len = focusPath.length; i < len; i++) {
-                                if (!containsOrEquals(focusPath[i], focusPath[i - 1]) && getContainer(focusPath[i]) !== activeContainer) {
-                                    setFocus(focusPath[i]);
-                                    break;
-                                }
-                            }
-                        }
-                    });
-                }
                 return self.handled;
             };
             if (is(target, ZetaEventHandlerState)) {
