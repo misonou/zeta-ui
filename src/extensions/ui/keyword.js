@@ -6,6 +6,7 @@
     var helper = zeta.helper;
     var dom = zeta.dom;
     var ui = new zeta.UI('zeta.ui.keyword');
+    var activeInput;
     var callout;
 
     function initCallout() {
@@ -314,12 +315,19 @@
         focusin: function (e) {
             if (!SHOW_DIALOG) {
                 showSuggestions(e.widget);
+            } else if (e.source === 'touch') {
+                showSuggestionDialog(e.widget, activeInput);
             }
         },
         focusout: function (e) {
             if (!SHOW_DIALOG) {
                 callout.hideMenu();
                 insertItem(e.widget, e.typer.extractText());
+            }
+        },
+        click: function (e) {
+            if (SHOW_DIALOG) {
+                showSuggestionDialog(e.widget, activeInput);
             }
         },
         upArrow: function (e) {
@@ -365,13 +373,9 @@
             self.watch('required', function (a, b, c, required) {
                 self.options.required = required;
             });
-            if (SHOW_DIALOG) {
-                self.watch('editor', function (a, b, c, editor) {
-                    editor.on('click', function () {
-                        showSuggestionDialog(editor.getStaticWidget('__preset__'), self);
-                    });
-                });
-            }
+        },
+        focusin: function (e, self) {
+            activeInput = self;
         },
         setValue: function (e, self) {
             var newValue = e.newValue || [];
