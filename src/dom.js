@@ -62,6 +62,14 @@
         return v.isContentEditable || is(v, 'input,textarea,select');
     }
 
+    function rendered(elm) {
+        if (!containsOrEquals(document, elm)) {
+            return false;
+        }
+        for (; elm !== document && getComputedStyle(elm).display !== 'none'; elm = elm.parentNode);
+        return elm === document;
+    }
+
     function parentsAndSelf(element) {
         for (var arr = []; element && element !== document && arr.push(element); element = element.parentNode || element.parent);
         return arr;
@@ -1218,6 +1226,17 @@
                     setFocus(e.target, false, lastEventSource);
                 } else {
                     e.target.blur();
+                }
+            },
+            focusout: function (e) {
+                // browser set focus to body if the focused element is no longer visible
+                // which is not a desirable behavior in many cases
+                // find the first visible element in focusPath to focus
+                if (!e.relatedTarget && !rendered(e.target)) {
+                    var cur = any(focusPath.slice(focusPath.indexOf(e.target) + 1), rendered);
+                    if (cur) {
+                        setFocus(cur, false, lastEventSource);
+                    }
                 }
             }
         }, true);
