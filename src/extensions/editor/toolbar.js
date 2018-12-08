@@ -65,10 +65,12 @@
         var container = document.createElement('div');
         var context = type.render(container, {
             typer: typer,
-            options: options,
-            element: container
+            options: options
         });
-        typer.retainFocus(container);
+        if (!context.element) {
+            context.element = container;
+        }
+        typer.retainFocus(context.element);
         if (options.container && type !== contextmenu) {
             $(container).appendTo(options.container);
         } else {
@@ -105,14 +107,14 @@
         rightClick: function (e) {
             var toolbar = e.widget.contextmenu || (e.widget.contextmenu = createToolbar(e.typer, e.widget.options, contextmenu));
             toolbar.update();
-            helper.position(toolbar.element, {
-                x: e.clientX,
-                y: e.clientY
-            });
             setTimeout(function () {
                 // fix IE11 rendering issue when mousedown on contextmenu
                 // without moving focus beforehand
                 zeta.dom.focus(toolbar.element);
+                toolbar.showMenu({
+                    x: e.clientX,
+                    y: e.clientY
+                });
             });
             e.preventDefault();
         },
