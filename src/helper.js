@@ -650,16 +650,20 @@
     }
 
     function setState(element, className, values) {
-        var re = new RegExp('(^|\\s)\\s*' + className + '(?:-(\\S+)|\\b)|\\s*$', 'ig');
-        var replaced = 0;
-        if (isPlainObject(values)) {
-            values = map(values, function (v, i) {
-                return v ? i : null;
+        var value = element.className || '';
+        each(isPlainObject(className) || kv(className, values), function (i, v) {
+            var re = new RegExp('(^|\\s)\\s*' + i + '(?:-(\\S+)|\\b)|\\s*$', 'ig');
+            var replaced = 0;
+            if (isPlainObject(v)) {
+                v = map(v, function (v, i) {
+                    return v ? i : null;
+                });
+            }
+            value = value.replace(re, function () {
+                return replaced++ || !v || v.length === 0 ? '' : (' ' + i + (v[0] ? [''].concat(v).join(' ' + i + '-') : ''));
             });
-        }
-        element.className = (element.className || '').replace(re, function () {
-            return replaced++ || !values || values.length === 0 ? '' : (' ' + className + (values[0] ? [''].concat(values).join(' ' + className + '-') : ''));
         });
+        element.className = value;
     }
 
     function isVisible(element) {

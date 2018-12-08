@@ -1305,12 +1305,14 @@
                     }
                 });
             });
-            setState(element, 'active', context.active);
-            setState(element, 'loading', context.pending);
-            setState(element, 'error', context.errors);
-            setState(element, 'disabled', !context.enabled);
-            setState(element, 'hidden', !context.visible);
-            setState(element, 'focused', context.focused && context.focusBy);
+            setState(element, {
+                active: context.active,
+                loading: context.pending,
+                error: context.errors,
+                disabled: !context.enabled,
+                hidden: !context.visible,
+                focused: context.focused && context.focusBy
+            });
             element.disabled = !context.enabled;
 
             if (control.controls[1]) {
