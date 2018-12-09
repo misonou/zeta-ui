@@ -29,8 +29,6 @@
 
 // source: src/helper.js
 (function () {
-    var ANIMATION_END = 'animationend oanimationend webkitAnimationEnd';
-    var TRANSITION_END = 'transitionend otransitionend webkitTransitionEnd';
     var FLIP_POS = {
         top: 'bottom',
         left: 'right',
@@ -53,6 +51,7 @@
     var when = jQuery.when;
 
     var root = document.documentElement;
+    var selection = window.getSelection();
     var wsDelimCache = {};
     var originDiv = $('<div style="position:fixed; top:0; left:0;">')[0];
 
@@ -496,6 +495,38 @@
         return (strict && ((value !== 0 && rangeIntersects(a, b)) || (value === 0 && !rangeEquals(a, b)))) ? NaN : value && value / Math.abs(value);
     }
 
+    function makeSelection(b, e) {
+        // for newer browsers that supports setBaseAndExtent
+        // avoid undesirable effects when direction of editor's selection direction does not match native one
+        if (selection.setBaseAndExtent && is(e, Range)) {
+            selection.setBaseAndExtent(b.startContainer, b.startOffset, e.startContainer, e.startOffset);
+            return;
+        }
+
+        var range = createRange(b, e);
+        try {
+            selection.removeAllRanges();
+        } catch (e) {
+            // IE fails to clear ranges by removeAllRanges() in occasions mentioned in
+            // http://stackoverflow.com/questions/22914075
+            var r = document.body.createTextRange();
+            r.collapse();
+            r.select();
+            selection.removeAllRanges();
+        }
+        try {
+            selection.addRange(range);
+        } catch (e) {
+            // IE may throws unspecified error even though the selection is successfully moved to the given range
+            // if the range is not successfully selected retry after selecting other range
+            if (!selection.rangeCount) {
+                selection.addRange(createRange(document.body));
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }
+    }
+
     function getRect(elm, includeMargin) {
         var rect;
         elm = elm || root;
@@ -647,16 +678,20 @@
     }
 
     function setState(element, className, values) {
-        var re = new RegExp('(^|\\s)\\s*' + className + '(?:-(\\S+)|\\b)|\\s*$', 'ig');
-        var replaced = 0;
-        if (isPlainObject(values)) {
-            values = map(values, function (v, i) {
-                return v ? i : null;
+        var value = element.className || '';
+        each(isPlainObject(className) || kv(className, values), function (i, v) {
+            var re = new RegExp('(^|\\s)\\s*' + i + '(?:-(\\S+)|\\b)|\\s*$', 'ig');
+            var replaced = 0;
+            if (isPlainObject(v)) {
+                v = map(v, function (v, i) {
+                    return v ? i : null;
+                });
+            }
+            value = value.replace(re, function () {
+                return replaced++ || !v || v.length === 0 ? '' : (' ' + i + (v[0] ? [''].concat(v).join(' ' + i + '-') : ''));
             });
-        }
-        element.className = (element.className || '').replace(re, function () {
-            return replaced++ || !values || values.length === 0 ? '' : (' ' + className + (values[0] ? [''].concat(values).join(' ' + className + '-') : ''));
         });
+        element.className = value;
     }
 
     function isVisible(element) {
@@ -856,15 +891,14 @@
         }
 
         var deferred = $.Deferred();
-        var ontransitionend = function (e) {
+        var unbind = bind(element, 'animationend transitionend', function (e) {
             var dict = map.get(e.target) || {};
-            delete dict[matchWord(e.type, TRANSITION_END) ? removeVendorPrefix(e.propertyName) : '@' + e.animationName];
+            delete dict[e.propertyName ? removeVendorPrefix(e.propertyName) : '@' + e.animationName];
             if (!keys(dict)[0] && map.delete(e.target) && !map.size) {
-                unbind(element, ANIMATION_END + ' ' + TRANSITION_END, ontransitionend);
-                deferred.resolveWith(element, [element]);
+                unbind();
+                deferred[getState(element, className) ? 'resolve' : 'reject'](element);
             }
-        };
-        bind(element, ANIMATION_END + ' ' + TRANSITION_END, ontransitionend);
+        });
         return deferred.promise();
     }
 
@@ -954,6 +988,7 @@
         rangeEquals: rangeEquals,
         rangeIntersects: rangeIntersects,
         compareRangePosition: compareRangePosition,
+        makeSelection: makeSelection,
         getRect: getRect,
         getRects: getRects,
         toPlainRect: toPlainRect,
@@ -1050,6 +1085,14 @@
         return v.isContentEditable || is(v, 'input,textarea,select');
     }
 
+    function rendered(elm) {
+        if (!containsOrEquals(document, elm)) {
+            return false;
+        }
+        for (; elm !== document && getComputedStyle(elm).display !== 'none'; elm = elm.parentNode);
+        return elm === document;
+    }
+
     function parentsAndSelf(element) {
         for (var arr = []; element && element !== document && arr.push(element); element = element.parentNode || element.parent);
         return arr;
@@ -1058,6 +1101,29 @@
     function getEventSource() {
         var type = window.event && window.event.type;
         return (type && matchWord(type[0] === 'k' ? 'keyboard' : type[0] === 't' ? 'touch' : type[0] === 'm' || matchWord(type, 'wheel click dblclick contextmenu') ? 'mouse' : type, EVENT_SOURCES)) || 'script';
+    }
+
+    function prepEventSource(promise) {
+        var source = eventSource || new ZetaEventSource(focusPath[0]);
+        var wrap = function (callback) {
+            return function () {
+                var prev = eventSource;
+                try {
+                    eventSource = source;
+                    return callback.apply(this, arguments);
+                } finally {
+                    eventSource = prev;
+                }
+            };
+        };
+        return {
+            then: function (a, b) {
+                return promise.then(a && wrap(a), b && wrap(b));
+            },
+            catch: function (a) {
+                return promise.catch(a && wrap(a));
+            }
+        };
     }
 
     function getContainer(element) {
@@ -1105,9 +1171,8 @@
         });
     }
 
-    function triggerFocusEvent(eventName, method, elements, relatedTarget, source) {
+    function triggerFocusEvent(eventName, elements, relatedTarget, source) {
         each(elements, function (i, v) {
-            focusElements[method](v);
             if (containers.has(v)) {
                 triggerDOMEvent(eventName, null, v, {
                     relatedTarget: relatedTarget
@@ -1116,47 +1181,59 @@
         });
     }
 
-    function setFocus(element, focusOnInput, source) {
+    function setFocus(element, focusOnInput, source, path) {
+        if (focusOnInput && !is(element, SELECTOR_FOCUSABLE)) {
+            element = $(SELECTOR_FOCUSABLE, element).filter(':visible:not(:disabled,.disabled)')[0] || element;
+        }
+        path = path || focusPath;
+        if (path[0]) {
+            var within = path !== focusPath ? element : focusable(element);
+            if (!within) {
+                var lockParent = focusLockedWithin(element);
+                element = focused(lockParent) ? path[0] : lockParent;
+                within = focusable(element);
+            }
+            if (!within) {
+                return false;
+            }
+            var removed = path.splice(0, path.indexOf(within));
+            each(removed, function (i, v) {
+                focusElements.delete(v);
+            });
+            triggerFocusEvent('focusout', removed, element, source);
+        }
+        // check whether the element is still attached in ROM
+        // which can be detached while dispatching focusout event above
         if (containsOrEquals(root, element)) {
-            if (focusPath[0]) {
-                var within = focusable(element);
-                if (!within) {
-                    var lockParent = focusLockedWithin(element);
-                    element = focused(lockParent) ? focusPath[0] : lockParent;
-                    within = focusable(element);
+            var added = parentsAndSelf(element).filter(function (v) {
+                return !focusElements.has(v);
+            });
+            var friend = map(added, function (v) {
+                return focusFriends.get(v);
+            })[0];
+            if (friend && !focused(friend)) {
+                var result = setFocus(friend);
+                if (result !== undefined) {
+                    return result && setFocus(element);
                 }
-                if (!within) {
-                    return false;
-                }
-                triggerFocusEvent('focusout', 'delete', focusPath.splice(0, focusPath.indexOf(within)), element, source);
             }
-            // check whether the element is still attached in ROM
-            // which can be detached while dispatching focusout event above
-            if (containsOrEquals(root, element)) {
-                if (focusOnInput && !is(element, SELECTOR_FOCUSABLE)) {
-                    element = $(SELECTOR_FOCUSABLE, element).filter(':visible:not(:disabled,.disabled)')[0] || element;
-                }
-                var added = parentsAndSelf(element).filter(function (v) {
-                    return !focusElements.has(v);
+            if (added[0]) {
+                path.unshift.apply(path, added);
+                each(added, function (i, v) {
+                    focusElements.add(v);
                 });
-                var friend = map(added, function (v) {
-                    return focusFriends.get(v);
-                })[0];
-                if (friend && !focused(friend)) {
-                    var result = setFocus(friend);
-                    if (result !== undefined) {
-                        return result && setFocus(element);
-                    }
-                }
-                if (added[0]) {
-                    focusPath.unshift.apply(focusPath, added);
-                    triggerFocusEvent('focusin', 'add', added, null, source || new ZetaEventSource(added[0], focusPath));
-                }
-                if (!containsOrEquals(focusPath[0], document.activeElement)) {
-                    new ZetaMixin(focusPath[0]).focus();
-                }
-                return true;
+                triggerFocusEvent('focusin', added, null, source || new ZetaEventSource(added[0], path));
             }
+            var activeElement = document.activeElement;
+            if (path[0] !== activeElement) {
+                new ZetaMixin(path[0]).focus();
+                // ensure previously focused element is properly blurred
+                // in case the new element is not focusable
+                if (document.activeElement === activeElement) {
+                    activeElement.blur();
+                }
+            }
+            return true;
         }
     }
 
@@ -1173,12 +1250,14 @@
 
         var deltaX = Math.max(0, rect.right - parentRect.right) || Math.min(rect.left - parentRect.left, 0);
         var deltaY = Math.max(0, rect.bottom - parentRect.bottom) || Math.min(rect.top - parentRect.top, 0);
-        var result = deltaX && deltaY ? mixin.scrollBy(deltaX, deltaY) : OFFSET_ZERO;
+        var result = deltaX || deltaY ? mixin.scrollBy(deltaX, deltaY) : OFFSET_ZERO;
         if (parent !== root) {
             var parentResult = scrollIntoView(parent.parentNode, rect.translate(result.x, result.y));
             if (parentResult) {
-                result.x += parentResult.x;
-                result.y += parentResult.y;
+                result = {
+                    x: result.x + parentResult.x,
+                    y: result.y + parentResult.y
+                };
             }
         }
         return (result.x || result.y) ? result : false;
@@ -1204,32 +1283,38 @@
     function drag(event, within, callback) {
         var deferred = $.Deferred();
         var lastPos = event;
+        var progress = isFunction(callback || within) || helper.noop;
         var scrollParent = getScrollParent(is(within, Node) || event.target);
         var scrollTimeout;
+        var unbind1, unbind2;
+
+        function finish(accept) {
+            clearInterval(scrollTimeout);
+            unbind1();
+            unbind2();
+            deferred[accept ? 'resolve' : 'reject']();
+        }
 
         var handlers = {
             keydown: function (e) {
                 if (e.which === 27) {
-                    deferred.reject();
-                    handlers.mouseup(e);
+                    finish(false);
                 }
             },
             mousemove: function (e) {
-                if (!e.which) {
-                    handlers.mouseup(e);
-                    return;
-                }
-                if (e.clientX !== lastPos.clientX || e.clientY !== lastPos.clientY) {
-                    lastPos = e;
-                    deferred.notify(e.clientX, e.clientY);
-                }
                 e.preventDefault();
+                if (!e.which) {
+                    finish(true);
+                } else if (e.clientX !== lastPos.clientX || e.clientY !== lastPos.clientY) {
+                    lastPos = e;
+                    progress(e.clientX, e.clientY);
+                }
             },
             mouseup: function (e) {
-                clearInterval(scrollTimeout);
-                $(document.body).off(handlers);
-                $(scrollParent).off(scrollParentHandlers);
-                deferred.resolve();
+                finish(true);
+            },
+            touchend: function (e) {
+                finish(true);
             }
         };
         var scrollParentHandlers = {
@@ -1237,7 +1322,7 @@
                 if (!scrollTimeout && (!containsOrEquals(scrollParent, e.relatedTarget) || (scrollParent === root && e.relatedTarget === root))) {
                     scrollTimeout = setInterval(function () {
                         if (scrollIntoView(scrollParent, helper.toPlainRect(lastPos.clientX - 50, lastPos.clientY - 50, lastPos.clientX + 50, lastPos.clientY + 50))) {
-                            deferred.notify(lastPos.clientX, lastPos.clientY);
+                            progress(lastPos.clientX, lastPos.clientY);
                         } else {
                             clearInterval(scrollTimeout);
                             scrollTimeout = null;
@@ -1252,9 +1337,9 @@
                 }
             }
         };
-        $(document.body).on(handlers);
-        $(scrollParent).on(scrollParentHandlers);
-        return deferred.promise().progress(callback || within);
+        unbind1 = bind(window, handlers);
+        unbind2 = bind(scrollParent, scrollParentHandlers);
+        return prepEventSource(deferred);
     }
 
     function ZetaMixin(element) {
@@ -1423,23 +1508,6 @@
                 }
                 eventSource = prevEventSource;
                 contextContainer.event = prevEvent;
-
-                // return focus after execution where focus is likely
-                // temporarily changed to current element by mouse event
-                if (self.handled && self.source === 'mouse') {
-                    var activeElement = focusPath[0];
-                    helper.always(self.handled, function () {
-                        if (activeElement === focusPath[0]) {
-                            var activeContainer = getContainer(activeElement);
-                            for (var i = 1, len = focusPath.length; i < len; i++) {
-                                if (!containsOrEquals(focusPath[i], focusPath[i - 1]) && getContainer(focusPath[i]) !== activeContainer) {
-                                    setFocus(focusPath[i]);
-                                    break;
-                                }
-                            }
-                        }
-                    });
-                }
                 return self.handled;
             };
             if (is(target, ZetaEventHandlerState)) {
@@ -1608,14 +1676,12 @@
             var self = this;
             var target = is(element, Node) || element.element || element;
             var component = is(target, Node) ? containerGetContext(self, target) : containerSetContext(self, element, element);
-            if (!component || component.states[key]) {
-                return false;
+            if (component) {
+                var state = component.states[key] || new ZetaEventHandlerState(target, is(element, Node) ? component.context : element, handlers);
+                component.attached = true;
+                component.states[key] = state;
+                containerRegisterWidgetEvent(self, state, true);
             }
-            var state = new ZetaEventHandlerState(target, is(element, Node) ? component.context : element, handlers);
-            component.attached = true;
-            component.states[key] = state;
-            containerRegisterWidgetEvent(self, state, true);
-            return key;
         },
         delete: function (element, key) {
             var self = this;
@@ -1756,6 +1822,7 @@
 
     var dom = {
         drag: drag,
+        prepEventSource: prepEventSource,
         scrollIntoView: scrollIntoView,
         focused: focused,
         get activeElement() {
@@ -1763,6 +1830,9 @@
         },
         get eventSource() {
             return getEventSource();
+        },
+        getEventSource: function (element) {
+            return new ZetaEventSource(element).source;
         },
         getContext: function (element) {
             return getContainer(element || focusPath[0]).context;
@@ -1783,7 +1853,7 @@
                 setFocus(focusWithin);
             }
             modalElements.set(element, focusPath.splice(0, focusWithin === root || document.body ? focusPath.length : focusPath.indexOf(focusWithin)));
-            setFocus(element, true);
+            setFocus(element);
         },
         lock: function (element, promise, oncancel) {
             var lock = lockedElements.get(element) || new ZetaDOMLock(element);
@@ -1797,24 +1867,6 @@
         cancel: function (element, force) {
             var lock = lockedElements.get(element);
             return lock ? lock.cancel(force) : when();
-        },
-        getEventScope: function (element) {
-            var source = new ZetaEventSource(element);
-            return {
-                source: source.source,
-                sourceKeyName: source.sourceKeyName,
-                wrap: function (callback) {
-                    return function () {
-                        var prev = eventSource;
-                        try {
-                            eventSource = source;
-                            return callback.apply(this, arguments);
-                        } finally {
-                            eventSource = prev;
-                        }
-                    };
-                }
-            };
         },
         emit: function (eventName, element, data, bubbles) {
             return triggerDOMEvent(eventName, null, element, data, bubbles);
@@ -1911,17 +1963,44 @@
     };
 
     $(function () {
+        var selection = window.getSelection();
         var body = document.body;
-        var isComposing;
         var modifierCount;
         var modifiedKeyCode;
         var mousemovedX;
         var mousemovedY;
+        var mousedownFocus;
         var previousPoint;
+        var imeNode;
+        var imeOffset;
+        var imeText;
 
         function getEventName(e, suffix) {
             var mod = ((e.ctrlKey || e.metaKey) ? 'Ctrl' : '') + (e.altKey ? 'Alt' : '') + (e.shiftKey ? 'Shift' : '');
             return mod ? helper.lcfirst(mod + helper.ucfirst(suffix)) : suffix;
+        }
+
+        function updateIMEState() {
+            var element = document.activeElement;
+            if ('selectionEnd' in element) {
+                imeNode = element;
+                imeOffset = element.selectionEnd;
+            } else {
+                imeNode = selection.anchorNode;
+                imeOffset = selection.anchorOffset;
+                if (imeNode.nodeType === 1) {
+                    // IE puts selection at element level
+                    // however it will insert text in the previous text node
+                    var child = imeNode.childNodes[imeOffset - 1];
+                    if (child && child.nodeType === 3) {
+                        imeNode = child;
+                        imeOffset = child.length;
+                    } else {
+                        imeNode = imeNode.childNodes[imeOffset];
+                        imeOffset = 0;
+                    }
+                }
+            }
         }
 
         function triggerKeystrokeEvent(keyName, nativeEvent) {
@@ -1943,6 +2022,11 @@
         }
 
         function unmount(mutations) {
+            var mapRemove = function (map, key) {
+                var value = map.get(key);
+                map.delete(key);
+                return value;
+            };
             // automatically free resources when DOM nodes are removed from document
             each(mutations, function (i, v) {
                 each(v.removedNodes, function (i, v) {
@@ -1951,18 +2035,17 @@
                         if (container && container.autoDestroy && container.element === v) {
                             container.destroy();
                         }
-                        var lock = lockedElements.get(v);
+                        var lock = mapRemove(lockedElements, v);
                         if (lock) {
-                            lockedElements.delete(v);
                             lock.cancel(true);
                         }
-                        var modalPath = modalElements.get(v);
-                        if (modalPath) {
-                            modalElements.delete(v);
-                            if (focused(v)) {
-                                focusPath.push.apply(focusPath, modalPath);
-                                setFocus(modalPath[0]);
-                            }
+                        var modalPath = mapRemove(modalElements, v);
+                        if (modalPath && focused(v)) {
+                            var path = any(modalElements, function (w) {
+                                return w.indexOf(v) >= 0;
+                            }) || focusPath;
+                            path.push.apply(path, modalPath);
+                            setFocus(modalPath[0], false, null, path);
                         }
                         var index = focusPath.indexOf(v);
                         if (index >= 0) {
@@ -1989,12 +2072,12 @@
                     event.initMouseEvent(e.type, e.bubbles, e.cancelable, e.view, e.detail, e.screenX, e.screenY, e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.metaKey, e.button, e.relatedTarget);
                     helper.elementFromPoint(e.clientX, e.clientY).dispatchEvent(event);
                 }
-            });
+            }, true);
         }
 
         // document.activeElement or FocusEvent.relatedTarget does not report non-focusable element
         bind(body, 'mousedown mouseup wheel keydown keyup keypress touchstart touchend cut copy paste drop click dblclick contextmenu', function (e) {
-            var moveFocus = matchWord(e.type, 'mousedown keydown touchend');
+            var moveFocus = matchWord(e.type, 'mousedown keydown');
             lastEventSource = null;
             if (!focusable(e.target)) {
                 e.stopImmediatePropagation();
@@ -2017,18 +2100,62 @@
 
         bind(body, {
             compositionstart: function (e) {
-                isComposing = true;
-                triggerUIEvent('typing', e, focusPath[0]);
+                updateIMEState();
+                imeText = '';
+            },
+            compositionupdate: function (e) {
+                imeText = e.data;
             },
             compositionend: function (e) {
-                isComposing = false;
-                triggerUIEvent('typing', e, focusPath[0]);
-                if (triggerUIEvent('textInput', e, focusPath[0], e.data)) {
+                var isInputElm = 'selectionEnd' in imeNode;
+                var prevText = imeText;
+                var prevOffset = imeOffset;
+                updateIMEState();
+
+                var curText = imeNode.value || imeNode.data || '';
+                imeText = e.data;
+                // some IME lacks inserted character sequence when selecting from phrase candidate list
+                // also legacy Microsoft Changjie IME reports full-width spaces (U+3000) instead of actual characters
+                if (!imeText || /^\u3000+$/.test(imeText)) {
+                    imeText = curText.slice(prevOffset, imeOffset);
+                }
+
+                // some old mobile browsers fire compositionend event before replacing final character sequence
+                // need to compare both to truncate the correct range of characters
+                var o1 = imeOffset - imeText.length;
+                var o2 = imeOffset - prevText.length;
+                var startOffset = curText.slice(o1, imeOffset) === imeText ? o1 : o2;
+                var newText = curText.substr(0, startOffset) + curText.slice(imeOffset);
+                if (isInputElm) {
+                    imeNode.value = newText;
+                    imeNode.setSelectionRange(startOffset, startOffset);
+                } else {
+                    imeNode.data = newText;
+                    helper.makeSelection(imeNode, startOffset);
+                }
+                if (!triggerUIEvent('textInput', e, focusPath[0], imeText)) {
+                    if (isInputElm) {
+                        imeNode.value = curText;
+                        imeNode.setSelectionRange(imeOffset, imeOffset);
+                    } else {
+                        imeNode.data = curText;
+                        helper.makeSelection(imeNode, imeOffset);
+                    }
+                }
+                imeNode = null;
+                setTimeout(function () {
+                    imeText = null;
+                });
+            },
+            textInput: function (e) {
+                // required for older mobile browsers that do not support beforeinput event
+                // ignore in case browser fire textInput before/after compositionend
+                if (!imeNode && (e.data === imeText || triggerUIEvent('textInput', e, focusPath[0], e.data))) {
                     e.preventDefault();
                 }
             },
             keydown: function (e) {
-                if (!isComposing) {
+                if (!imeNode) {
                     var keyCode = e.keyCode;
                     var isModifierKey = (META_KEYS.indexOf(keyCode) >= 0);
                     if (isModifierKey && keyCode !== modifiedKeyCode) {
@@ -2045,7 +2172,7 @@
             },
             keyup: function (e) {
                 var isModifierKey = (META_KEYS.indexOf(e.keyCode) >= 0);
-                if (!isComposing && (isModifierKey || modifiedKeyCode === e.keyCode)) {
+                if (!imeNode && (isModifierKey || modifiedKeyCode === e.keyCode)) {
                     modifiedKeyCode = null;
                     modifierCount--;
                     if (isModifierKey) {
@@ -2055,7 +2182,7 @@
             },
             keypress: function (e) {
                 var data = e.char || e.key || String.fromCharCode(e.charCode);
-                if (!isComposing && !modifierCount && (e.synthetic || !('onbeforeinput' in e.target))) {
+                if (!imeNode && !modifierCount && (e.synthetic || !('onbeforeinput' in e.target))) {
                     if (textInputAllowed(e.target)) {
                         lastEventSource.sourceKeyName = KEYNAMES[modifiedKeyCode] || data;
                         triggerUIEvent('textInput', e, focusPath[0], data);
@@ -2065,22 +2192,36 @@
                 }
             },
             beforeinput: function (e) {
-                if (!isComposing && e.cancelable) {
-                    triggerUIEvent('textInput', e, focusPath[0], e.data);
+                if (!imeNode && e.cancelable) {
+                    switch (e.inputType) {
+                        case 'insertText':
+                            return triggerUIEvent('textInput', e, focusPath[0], e.data);
+                        case 'deleteContent':
+                        case 'deleteContentBackward':
+                            return triggerKeystrokeEvent('backspace', e);
+                        case 'deleteContentForward':
+                            return triggerKeystrokeEvent('delete', e);
+                    }
                 }
             },
             mousedown: function (e) {
                 mousemovedX = 0;
                 mousemovedY = 0;
                 previousPoint = e;
-                if (e.buttons === 1) {
+                if ((e.buttons || e.which) === 1) {
                     triggerMouseEvent('mousedown', e);
                 }
+                mousedownFocus = document.activeElement;
             },
             mousemove: function (e) {
                 if (previousPoint) {
                     mousemovedX = Math.max(mousemovedX, Math.abs(previousPoint.clientX - e.clientX));
                     mousemovedY = Math.max(mousemovedY, Math.abs(previousPoint.clientY - e.clientY));
+                }
+            },
+            mouseup: function (e) {
+                if (mousedownFocus && document.activeElement !== mousedownFocus) {
+                    mousedownFocus.focus();
                 }
             },
             wheel: function (e) {
@@ -2089,15 +2230,6 @@
                     if (triggerUIEvent('mousewheel', e, e.target, dir / Math.abs(dir) * (zeta.IS_MAC ? -1 : 1), true)) {
                         e.preventDefault();
                     }
-                }
-                for (var cur = e.target; cur !== body; cur = cur.parentNode) {
-                    var style = getComputedStyle(cur);
-                    if ((cur.scrollHeight > cur.offsetHeight && (style.overflowY === 'auto' || style.overflowY === 'scroll')) || (cur.scrollWidth > cur.offsetWidth && (style.overflowX === 'auto' || style.overflowX === 'scroll'))) {
-                        break;
-                    }
-                }
-                if (!focusable(cur)) {
-                    e.preventDefault();
                 }
             },
             click: function (e) {
@@ -2118,8 +2250,38 @@
                 } else {
                     e.target.blur();
                 }
+            },
+            focusout: function (e) {
+                // browser set focus to body if the focused element is no longer visible
+                // which is not a desirable behavior in many cases
+                // find the first visible element in focusPath to focus
+                if (!e.relatedTarget && !rendered(e.target)) {
+                    var cur = any(focusPath.slice(focusPath.indexOf(e.target) + 1), rendered);
+                    if (cur) {
+                        setFocus(cur, false, lastEventSource);
+                    }
+                }
             }
         }, true);
+
+        bind(body, 'wheel', function (e) {
+            // scrolling will happen on first scrollable element up the DOM tree
+            // prevent scrolling if interaction on such element should be blocked by modal element
+            var deltaX = -e.deltaX;
+            var deltaY = -e.deltaY;
+            for (var cur = e.target; cur !== body; cur = cur.parentNode) {
+                var style = getComputedStyle(cur);
+                if (cur.scrollWidth > cur.offsetWidth && matchWord(style.overflowX, 'auto scroll') && ((deltaX > 0 && cur.scrollLeft > 0) || (deltaX < 0 && cur.scrollLeft + cur.offsetWidth < cur.scrollWidth))) {
+                    break;
+                }
+                if (cur.scrollHeight > cur.offsetHeight && matchWord(style.overflowY, 'auto scroll') && ((deltaY > 0 && cur.scrollTop > 0) || (deltaY < 0 && cur.scrollTop + cur.offsetHeight < cur.scrollHeight))) {
+                    break;
+                }
+            }
+            if (!focusable(cur)) {
+                e.preventDefault();
+            }
+        });
 
         new MutationObserver(unmount).observe(root, {
             subtree: true,
@@ -2141,10 +2303,7 @@
                 each(snaps, snapToElement);
             });
         }
-        bind(window, 'resize scroll orientationchange', updateSnaps, {
-            passive: true
-        });
-        bind(body, 'mousemove wheel keyup touchend transitionend MSTransitionEnd', updateSnaps, {
+        bind(window, 'resize scroll orientationchange mousemove wheel keyup touchend transitionend', updateSnaps, {
             passive: true
         });
     });
@@ -2294,11 +2453,10 @@
     var selection = window.getSelection();
     var getComputedStyle = window.getComputedStyle;
     var clipboard = {};
-    var composition = {};
+    var composingEditor = null;
     var selectionCache = new WeakMap();
     var detachedElements = new WeakMap();
     var dirtySelections = new Set();
-    var checkNativeUpdate;
 
     function TyperSelection(typer, range) {
         var self = this;
@@ -2481,41 +2639,6 @@
         return is(content, Node) || createDocumentFragment(content);
     }
 
-    function applySelection(sel) {
-        var b = sel.baseCaret.getRange();
-        var e = sel.extendCaret.getRange();
-
-        // for newer browsers that supports setBaseAndExtent
-        // avoid undesirable effects when direction of editor's selection direction does not match native one
-        if (selection.setBaseAndExtent) {
-            selection.setBaseAndExtent(b.startContainer, b.startOffset, e.startContainer, e.startOffset);
-            return;
-        }
-
-        var range = createRange(b, e);
-        try {
-            selection.removeAllRanges();
-        } catch (e) {
-            // IE fails to clear ranges by removeAllRanges() in occasions mentioned in
-            // http://stackoverflow.com/questions/22914075
-            var r = document.body.createTextRange();
-            r.collapse();
-            r.select();
-            selection.removeAllRanges();
-        }
-        try {
-            selection.addRange(range);
-        } catch (e) {
-            // IE may throws unspecified error even though the selection is successfully moved to the given range
-            // if the range is not successfully selected retry after selecting other range
-            if (!selection.rangeCount) {
-                selection.addRange(createRange(document.body));
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-        }
-    }
-
     function getFontMetric(elm) {
         var cache = getFontMetric.cache || (getFontMetric.cache = {});
         var style = getComputedStyle(isElm(elm) || elm.parentNode);
@@ -2575,9 +2698,9 @@
         var staticWidgets = [];
         var undoable = {};
         var currentSelection;
-        var muteChanges;
         var triggerDOMChange;
         var enabled;
+        var muteChanges = true;
         var needNormalize = true;
         var $self = $(topElement);
 
@@ -2762,7 +2885,7 @@
                         }
                     });
                 }
-                if (needNormalize) {
+                if (needNormalize && !muteChanges) {
                     timeout = timeout || setTimeout(snapshotAfterNormalize);
                 }
             }
@@ -3014,7 +3137,7 @@
                 if (containsOrEquals(topElement, content)) {
                     removeNode(content);
                 }
-                content = createDocumentFragment(content).childNodes;
+                content = helper.makeArray(createDocumentFragment(content).childNodes);
                 textOnly = content.length === 1 && !!is(content[0], 'p:not([class])');
             } else {
                 content = $(String(content || '').replace(/\u000d/g, '').replace(/</g, '&lt;').replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>').replace(/.*/, '<p>$&</p>').replace(/\s/g, '\u00a0')).get();
@@ -3064,7 +3187,7 @@
                                         receivedNode: nodeToInsert,
                                         caret: caretPoint.clone()
                                     };
-                                    if (container.emit('receive', widgetNode.widget, prop)) {
+                                    if (container.emit('receive', widgetNode.widget.element, prop)) {
                                         caretPoint = currentSelection.clone();
                                         hasInsertedBlock = true;
                                         return;
@@ -3346,9 +3469,10 @@
                     insertContents(currentSelection, inputText);
                 } else if (inputText) {
                     var curTextNode = currentSelection.startTextNode;
-                    curTextNode.data = curTextNode.data.substr(0, currentSelection.startOffset) + inputText + curTextNode.data.slice(currentSelection.startOffset);
+                    var curOffset = currentSelection.startOffset;
+                    curTextNode.data = curTextNode.data.substr(0, curOffset) + inputText + curTextNode.data.slice(curOffset);
                     normalizeWhitespace(currentSelection.startNode.element);
-                    currentSelection.moveToText(curTextNode, currentSelection.startOffset + inputText.length);
+                    currentSelection.moveToText(curTextNode, curOffset + inputText.length);
                     undoable.snapshot(200);
                 }
             }
@@ -3387,6 +3511,18 @@
             }
 
             container.add(topElement, 'destroy', helper.bind(topElement, {
+                compositionstart: function () {
+                    muteChanges = true;
+                    composingEditor = typer;
+                },
+                compositionend: function () {
+                    muteChanges = false;
+                    composingEditor = false;
+                    // forcibly update the selection
+                    // because selection update is not reflected during composition
+                    currentSelection.focus();
+                    container.emitAsync('stateChange');
+                },
                 cut: handleClipboardExtract,
                 copy: handleClipboardExtract,
                 paste: function (e) {
@@ -3406,6 +3542,9 @@
                         handleDataTransfer(e.dataTransfer);
                     }
                     currentSelection.focus();
+                    e.preventDefault();
+                },
+                dragstart: function (e) {
                     e.preventDefault();
                 }
             }));
@@ -3434,30 +3573,10 @@
             });
 
             var beforeEmit = {
-                typing: function (e) {
-                    var previous = composition;
-                    var range = getActiveRange(topElement);
-                    var node = range.startContainer;
-                    var offset = range.startOffset;
-                    if (isElm(node)) {
-                        node = node.childNodes[offset] || node.lastChild;
-                        offset = node.length;
-                    }
-                    composition = e.originalEvent.type.slice(-1) === 't' && {};
-                    muteChanges = !!composition;
-                    if (composition) {
-                        composition.node = node;
-                        composition.offset = offset;
-                    } else {
-                        var text = e.originalEvent.data || previous.node.data.slice(previous.offset - offset);
-                        createRange(node, offset - text.length, node, offset).deleteContents();
-                        currentSelection.select(node, offset - text.length);
-                    }
-                },
                 keystroke: function (e) {
                     // suppress browser native behavior on content editing shortcut (e.g. bold)
                     // common browser shortcuts that has no effect on content are excluded
-                    if (!/ctrl(?=[acfnprstvwx]|f5|shift[nt]$)/i.test(e.data)) {
+                    if (!/ctrl(?=[acfnprstvwx]|f5|shift[nt]$)|^((shift)?tab|f5|f12)$/i.test(e.data)) {
                         e.preventDefault();
                     }
                 },
@@ -3468,6 +3587,17 @@
                         undoable.snapshot(200);
                         currentSelection.extendCaret.moveToPoint(x, y);
                     });
+                    // browsers update selection range after mousedown event
+                    setTimeout(function () {
+                        currentSelection.focus();
+                    });
+                },
+                click: function (e) {
+                    var node = typer.getNode(e.target);
+                    if (is(node, NODE_WIDGET | NODE_INLINE_WIDGET)) {
+                        currentSelection.select(node.widget.element);
+                    }
+                    currentSelection.focus();
                 },
                 dblclick: function (e) {
                     currentSelection.select('word');
@@ -3489,32 +3619,27 @@
                 textInput: function (e) {
                     handleTextInput(e.data);
                     e.handled();
-                },
-                click: function (e) {
-                    var node = typer.getNode(e.target);
-                    if (is(node, NODE_WIDGET | NODE_INLINE_WIDGET)) {
-                        currentSelection.select(node.widget.element);
-                    } else {
-                        currentSelection.moveToPoint(e.clientX, e.clientY);
-                    }
-                    currentSelection.focus();
-                    undoable.snapshot();
                 }
             };
 
             container.tap(function (e) {
+                var eventName = e.eventName;
+                var target;
                 if (enabled) {
-                    (beforeEmit[e.eventName] || helper.noop)(e);
-                    if (!e.isHandled()) {
-                        var target;
-                        if (helper.matchWord(e.eventName, 'rightClick focusin focusout focusreturn')) {
-                            target = topElement;
-                        } else if (helper.matchWord(e.eventName, 'click')) {
-                            target = e.target;
+                    (beforeEmit[eventName] || helper.noop)(e);
+                    if (helper.matchWord(eventName, 'focusin focusout focusreturn')) {
+                        // only fire focus related events for static widgets
+                        if (e.target !== topElement) {
+                            return;
                         }
-                        if (!container.emit(e, target || currentSelection.focusNode.element)) {
-                            (afterEmit[e.eventName] || helper.noop)(e);
-                        }
+                        target = topElement;
+                    } else if (eventName === 'rightClick') {
+                        target = topElement;
+                    } else if (eventName === 'click') {
+                        target = e.target;
+                    }
+                    if (!container.emit(e, target || currentSelection.focusNode.element)) {
+                        (afterEmit[eventName] || helper.noop)(e);
                     }
                     if (e.originalEvent && e.isHandled()) {
                         e.preventDefault();
@@ -3526,6 +3651,9 @@
         function setEnable(bool) {
             enabled = bool;
             $self.attr('contenteditable', bool ? 'true' : null);
+            if (!bool && getActiveRange(topElement)) {
+                topElement.blur();
+            }
         }
 
         function setWidgetOption(id, base, options) {
@@ -3552,7 +3680,8 @@
             defineHiddenProperty(widgetOptions, WIDGET_UNKNOWN, {
                 // make all other tags that are not considered paragraphs and inlines to be widgets
                 // to avoid unknown behavior while editing
-                element: options.disallowedElement || ':not(' + INNER_PTAG + ',br,b,em,i,u,strike,small,strong,sub,sup,ins,del,mark,span)'
+                element: options.disallowedElement || ':not(' + INNER_PTAG + ',br,b,em,i,u,strike,small,strong,sub,sup,ins,del,mark,span)',
+                allowedIn: ''
             });
             options.textFlow = true;
 
@@ -3734,7 +3863,7 @@
             }
         },
         hasContent: function () {
-            if (containsOrEquals(this.element, composition.node)) {
+            if (this === composingEditor) {
                 return true;
             }
             if (trim(this.element.textContent).length) {
@@ -3752,10 +3881,10 @@
             return true;
         },
         select: function (startNode, startOffset, endNode, endOffset) {
-            this.getSelection().select(startNode, startOffset, endNode, endOffset);
+            return this.getSelection().select(startNode, startOffset, endNode, endOffset);
         },
         selectAll: function () {
-            this.getSelection().selectAll();
+            return this.getSelection().selectAll();
         },
         focus: function () {
             this.getSelection().focus();
@@ -4110,15 +4239,16 @@
             return this.select(this.typer.element, 'contents');
         },
         focus: function () {
-            var topElement = this.typer.element;
-            if (containsOrEquals(document, topElement)) {
-                applySelection(this);
+            var self = this;
+            var topElement = self.typer.element;
+            if (containsOrEquals(document, topElement) && self.typer.enabled() && composingEditor !== self.typer) {
+                helper.makeSelection(self.baseCaret.getRange(), self.extendCaret.getRange());
                 // Firefox does not set focus on the host element automatically
                 // when selection is changed by JavaScript
-                if (!zeta.IS_IE && document.activeElement !== topElement) {
+                if (document.activeElement !== topElement) {
                     topElement.focus();
                 }
-                dom.scrollIntoView(topElement, this.extendCaret.getRect());
+                dom.scrollIntoView(topElement, self.extendCaret.getRect());
             }
         },
         clone: function () {
@@ -4157,7 +4287,7 @@
     });
 
     function caretTextNodeIterator(inst, root, whatToShow) {
-        var iterator = new TyperDOMNodeIterator(new TyperTreeWalker(root || inst.typer.rootNode, NODE_ANY_ALLOWTEXT | NODE_WIDGET), whatToShow | 4);
+        var iterator = new TyperDOMNodeIterator(new TyperTreeWalker(root || inst.typer.rootNode, NODE_ANY_ALLOWTEXT | NODE_WIDGET | NODE_INLINE_WIDGET), whatToShow | 4);
         iterator.currentNode = inst.textNode || inst.element;
         return iterator;
     }
@@ -4213,13 +4343,19 @@
             offset = end ? element.length || 0 : 0;
         }
         var node = inst.typer.getNode(element);
-        if (is(node, NODE_WIDGET)) {
-            textNode = null;
-        } else if (is(node, NODE_INLINE_WIDGET)) {
-            node = node.parentNode;
-            element = node.element;
-            textNode = isText(end ? element.nextSibling : element.previousSibling) || $(createTextNode())[end ? 'insertAfter' : 'insertBefore'](element)[0];
-            offset = 1;
+        if (is(node, NODE_WIDGET | NODE_INLINE_WIDGET)) {
+            element = node.widget.element;
+            if (element !== node.element) {
+                node = inst.typer.getNode(element);
+            }
+            if (is(node.parentNode, NODE_ANY_ALLOWTEXT)) {
+                textNode = isText(end ? element.nextSibling : element.previousSibling) || $(createTextNode())[end ? 'insertAfter' : 'insertBefore'](element)[0];
+                element = textNode.parentNode;
+                offset = end ? 0 : textNode.length;
+                node = node.parentNode;
+            } else {
+                textNode = null;
+            }
         } else if (!is(node, NODE_ANY_ALLOWTEXT)) {
             var child = any(node.childNodes, function (v) {
                 return comparePosition(element, v.element) < 0;
@@ -4532,7 +4668,9 @@
                 }
             }
         } else {
-            findNearsetPoint(container, textNode, (dirX || 1) * (mode & 2 ? -1 : 1), 1);
+            // search backwards from the end if the initial point is beyond the last line
+            var inverse = !dirX && point.top > getAbstractRect(getRect(container.element), mode).bottom;
+            findNearsetPoint(container, textNode, (dirX || 1) * (mode & 2 ? -1 : 1) * (inverse ? -1 : 1), 1);
         }
         if (newPoint) {
             var beforeSoftBreak = dirX > 0 || lastDist < 0;
@@ -4583,8 +4721,8 @@
         },
         moveToPoint: function (x, y) {
             var self = this;
-            var node = self.typer.nodeFromPoint(x, y);
-            return !!node && caretMoveToPoint(self, node.element, toPlainRect(x, y));
+            var node = self.typer.nodeFromPoint(x, y) || self.typer.rootNode;
+            return caretMoveToPoint(self, node.element, toPlainRect(x, y));
         },
         moveToText: function (node, offset) {
             if (node.nodeType !== 3) {
@@ -4650,7 +4788,7 @@
                         if (!node) {
                             return false;
                         }
-                        if (is(self.typer.getNode(node), NODE_WIDGET) && !containsOrEquals(node, self.element)) {
+                        if (is(self.typer.getNode(node), NODE_WIDGET | NODE_INLINE_WIDGET) && !containsOrEquals(node, self.element)) {
                             return self.moveToText(node, 0 * direction) || self.moveTo(node, direction < 0);
                         }
                         overBr |= !!isBR(node);
@@ -4690,8 +4828,14 @@
     }
 
     setInterval(function () {
-        if (!dom.focused(window) && checkNativeUpdate) {
-            checkNativeUpdate();
+        var typer = is(dom.getContext(), Typer);
+        if (typer && !composingEditor && dom.focused(window)) {
+            var selection = typer.getSelection();
+            var activeRange = getActiveRange(typer.element);
+            if (activeRange && !helper.rangeEquals(activeRange, createRange(selection))) {
+                selection.select(activeRange);
+                selection.focus();
+            }
         }
     }, 100);
 
@@ -4715,7 +4859,9 @@
     var helper = zeta.helper;
     var dom = zeta.dom;
     var any = helper.any;
+    var bind = helper.bind;
     var camel = helper.camel;
+    var containsOrEquals = helper.containsOrEquals;
     var createDocumentFragment = helper.createDocumentFragment;
     var defineGetterProperty = helper.defineGetterProperty;
     var defineHiddenProperty = helper.defineHiddenProperty;
@@ -4731,7 +4877,10 @@
     var mapGet = helper.mapGet;
     var matchWord = helper.matchWord;
     var noop = helper.noop;
+    var position = helper.position;
+    var randomId = helper.randomId;
     var reject = helper.reject;
+    var removeNode = helper.removeNode;
     var runCSSTransition = helper.runCSSTransition;
     var setState = helper.setState;
     var tagName = helper.tagName;
@@ -5024,9 +5173,11 @@
         control.errors = null;
     }
 
-    function validateAll(control, focusOnFailed) {
+    function validateAll(control) {
+        var focusOnFailed = dom.getEventSource(control.element) !== 'script';
         var promises = [];
         var failed = [];
+        _(control).container.flushEvents();
         foreachControl(control, function (v) {
             var promise = validate(v);
             if (promise) {
@@ -5274,10 +5425,9 @@
             nodeCount: index
         };
         cacheKeyObj = cacheKeyObj || templates;
-        while (cacheKeyObj !== defaultTemplates && !hasOverrideTemplate(cacheKeyObj, roles)) {
-            cacheKeyObj = getPrototypeOf(cacheKeyObj);
-        }
-        mapGet(parsedTemplates, cacheKeyObj, Object)[template] = result;
+        do {
+            mapGet(parsedTemplates, cacheKeyObj, Object)[template] = result;
+        } while (cacheKeyObj !== defaultTemplates && !hasOverrideTemplate(cacheKeyObj, roles) && (cacheKeyObj = getPrototypeOf(cacheKeyObj)));
         return result;
     }
 
@@ -5292,7 +5442,7 @@
             pos.end = elm.previousSibling;
         }
         pos.count--;
-        $(elm).detach();
+        removeNode(elm);
     }
 
     function appendControlToDOM(control, parent, suppressEvent) {
@@ -5397,9 +5547,6 @@
             var parent = _(parentContext).container;
             parentElement = parent.event && parent.event.context.element;
         }
-        if (parentElement) {
-            dom.retainFocus(parentElement, element);
-        }
 
         var container = new zeta.Container(element);
         container.context = new UIContext(container, values);
@@ -5460,6 +5607,7 @@
                     }
                 }
             });
+            container.flushEvents();
         },
         validate: function () {
             return _(this).container.control.validate();
@@ -5481,11 +5629,11 @@
         i18n: function (language, key, value) {
             addLabels(this.labels, language, key, value);
         },
-        alert: function (message, action, title, description, callback) {
-            return openDefaultDialog(this, 'alert', true, message, new ArgumentIterator([action, title, description, callback]));
+        alert: function (message, action, title, callback) {
+            return openDefaultDialog(this, 'alert', true, message, new ArgumentIterator([action, title, callback]));
         },
-        confirm: function (message, action, title, description, callback) {
-            return openDefaultDialog(this, 'confirm', true, message, new ArgumentIterator([action, title, description, callback]));
+        confirm: function (message, action, title, callback) {
+            return openDefaultDialog(this, 'confirm', true, message, new ArgumentIterator([action, title, callback]));
         },
         prompt: function (message, value, action, title, description, callback) {
             return openDefaultDialog(this, 'prompt', value, message, new ArgumentIterator([action, title, description, callback]));
@@ -5595,6 +5743,7 @@
         var toolsetState = mapGet(_(context).toolsets, v.toolset, function () {
             return new UIToolsetState(container, v.toolset, context);
         });
+        var toolsetEventHandle = randomId();
         var name = controlUniqueName(toolsetState.all, v.name);
 
         var state = {
@@ -5608,16 +5757,16 @@
             values: {},
             initialValues: {},
             exports: [],
-            pending: false,
             toolsetState: toolsetState,
-            toolsetEventHandle: container.add(toolsetState, {
-                stateChange: function () {
-                    clearFlag(self, 5);
-                }
-            })
+            toolsetEventHandle: toolsetEventHandle
         };
         _(self, state);
         mapGet(speciesMap, getPrototypeOf(self), Set).add(self);
+        container.add(toolsetState, toolsetEventHandle, {
+            stateChange: function () {
+                clearFlag(self, 5);
+            }
+        });
 
         self.name = name;
         self.type = v.type;
@@ -5646,7 +5795,7 @@
         self.parentElement = container.parentElement || null;
         self.controls = [];
         self.errors = null;
-        self.id = helper.randomId();
+        self.id = randomId();
         self.all = toolsetState.all;
         self.all[name] = self;
         if (parent) {
@@ -5739,7 +5888,7 @@
             }
         },
         validate: function () {
-            return when(validateAll(this, dom.getEventScope(this.element).source !== 'script'));
+            return when(validateAll(this));
         },
         execute: function (value) {
             var self = this;
@@ -5749,8 +5898,7 @@
             if (value !== undefined) {
                 self.value = value;
             }
-            var scope = dom.getEventScope(self.element);
-            var finish = scope.wrap(function (resolved, data) {
+            var finish = function (resolved, data) {
                 executingControls.delete(self);
                 if (resolved) {
                     triggerEvent(self, 'executed', {
@@ -5763,8 +5911,8 @@
                     }
                 }
                 triggerEvent(self, 'afterExecute', resolved);
-            });
-            var run = scope.wrap(function () {
+            };
+            var run = function () {
                 var promise;
                 triggerEvent(self, 'beforeExecute');
                 executingControls.add(self);
@@ -5783,14 +5931,14 @@
                     promise = dom.lock(self.element, promise, function () {
                         return triggerEvent(self, 'cancel') || reject();
                     });
-                    helper.always(promise, finish);
+                    helper.always(dom.prepEventSource(promise), finish);
                     return promise;
                 }
                 finish(true);
                 return when();
-            });
-            var promise = validateAll(self, scope.source !== 'script');
-            return promise ? promise.then(run) : run();
+            };
+            var promise = validateAll(self);
+            return promise ? dom.prepEventSource(promise).then(run) : run();
         },
         reset: function () {
             foreachControl(this, reset);
@@ -5830,6 +5978,8 @@
                     var arr = self.parent.controls;
                     arr.splice(arr.indexOf(self), 1);
                     removeControlFromDOM(self);
+                    clearFlag(self.parent);
+                    registerStateChange(self.parent);
                 } else {
                     // ensure all other resources can be garbage collected
                     setTimeout(function () {
@@ -6000,12 +6150,14 @@
                     }
                 });
             });
-            setState(element, 'active', context.active);
-            setState(element, 'loading', context.pending);
-            setState(element, 'error', context.errors);
-            setState(element, 'disabled', !context.enabled);
-            setState(element, 'hidden', !context.visible);
-            setState(element, 'focused', context.focused && context.focusBy);
+            setState(element, {
+                active: context.active,
+                loading: context.pending,
+                error: context.errors,
+                disabled: !context.enabled,
+                hidden: !context.visible,
+                focused: context.focused && context.focusBy
+            });
             element.disabled = !context.enabled;
 
             if (control.controls[1]) {
@@ -6245,7 +6397,11 @@
         init: function (e, self) {
             var toolset = new UIToolset(_(self).toolset.name);
             toolset.choiceButton = toolset.button({
-                template: '<z:button class="selected:{{selected}}" show-icon="true" show-text="true"/>'
+                template: '<z:button class="selected:{{selected}}" show-icon="true" show-text="true"/>',
+                execute: function (choice) {
+                    dropdownSetValue(self, choice.value);
+                    self.execute();
+                }
             });
             _(self).ddToolset = toolset;
             self.hintValue = self.value;
@@ -6257,10 +6413,6 @@
             dropdownUpdateChoices(self);
             dropdownSetValue(self, e.newValue);
             e.handled();
-        },
-        childExecuted: function (e, self) {
-            dropdownSetValue(self, e.control.value);
-            self.execute();
         }
     });
 
@@ -6379,12 +6531,23 @@
             self.editorOptions = textboxInitOptions(self.preset || DEFAULT_PRESET, self.options);
             self.watch('editor', function (a, b, c, typer) {
                 self.options = typer.getStaticWidget(PRESET_KEY).options;
+                self.editorOptions.options = extend({}, self.options);
             });
+        },
+        reset: function (e, self) {
+            self.options = self.editor.getStaticWidget(PRESET_KEY).options;
+            extend(self.options, self.editorOptions.options);
         }
     });
 
     defineControlType('textboxlike', {
-        template: '<label class="zeta-textbox keep-placeholder:{{showPlaceholder == always && ! $placeholder}}"><z:label show-text="false" show-icon="auto"/><div class="zeta-textbox-wrapper" data-label="{{? $placeholder label}}"><div class="zeta-textbox-inner"><children/><div class="zeta-textbox-placeholder">{{placeholder || label}}</div><div class="zeta-textbox-error"></div></div></div></label>'
+        template: '<label class="zeta-textbox keep-placeholder:{{showPlaceholder == always && ! $placeholder}}"><z:label show-text="false" show-icon="auto"/><div class="zeta-textbox-wrapper" data-label="{{? $placeholder label}}"><div class="zeta-textbox-inner"><children/><div class="zeta-textbox-placeholder">{{placeholder || label}}</div></div><div class="zeta-textbox-error"></div><div class="zeta-textbox-clear"></div></div></label>',
+        click: function (e, self) {
+            if (is(e.target, '.zeta-textbox-clear')) {
+                self.execute('');
+                self.editor.focus();
+            }
+        }
     }, true);
 
     defineControlType('richtext', {
@@ -6406,7 +6569,8 @@
         init: function (e, self) {
             self.editor = new zeta.Editor(e.target, self.editorOptions);
             self.editor.enable('stateclass', {
-                target: self.element
+                target: self.element,
+                focused: ''
             });
             self.editor.on('contentChange', function () {
                 if (self.setValue(self.editor.getValue())) {
@@ -6414,6 +6578,16 @@
                 }
             });
             textboxSetValue(self, self.value);
+        },
+        stateChange: function (e, self) {
+            if (self.editor.enabled() ^ self.enabled) {
+                self.editor[self.enabled ? 'enable' : 'disable']();
+            }
+        },
+        focusin: function (e, self) {
+            if (!self.editor.focused()) {
+                self.editor.focus();
+            }
         },
         setValue: function (e, self) {
             textboxSetValue(self, e.newValue);
@@ -6515,7 +6689,7 @@
     defineControlType('buttonlist', {
         template: '<div class="zeta-buttonlist"><children show-text="true" show-icon="true" controls/></div>',
         templates: {
-            button: '<z:button><span class="zeta-label zeta-label-description">{{description}}</span><span class="zeta-label zeta-label-description is-shortcut">{{shortcut :zeta-shortcut}}</span></z:button>',
+            button: '<z:button><span class="zeta-label zeta-label-description">{{description ?? [ shortcut :zeta-shortcut ]}}</span></z:button>',
         },
         showIcon: true,
         showText: true,
@@ -6544,7 +6718,7 @@
         var arr = [];
         (function getButtonList(control) {
             each(control.controls, function (i, v) {
-                if (v.hasRole('buttonlist')) {
+                if (v.hasRole('buttonlist') && !v.hasRole('menu')) {
                     getButtonList(v);
                 } else if (v.hasRole('button') && v.enabled) {
                     arr[arr.length] = v;
@@ -6555,65 +6729,117 @@
         return arr[i < 0 ? 0 : i + dir];
     }
 
+    function menuShowCallout(self, to, dir, within) {
+        var callout = self.callout;
+        if (self.parent && containsOrEquals(self.element, callout)) {
+            setState(callout, 'hidden', false);
+            position(callout, self.element, 'right top inset-y');
+        } else {
+            if (self.calloutParent) {
+                dom.snap(callout, self.calloutParent);
+            } else if (is(to, Node)) {
+                dom.snap(callout, to, dir);
+            } else if (to) {
+                position(callout, to, dir, within);
+            }
+            dom.focus(callout);
+            setState(callout, 'open', false);
+            setState(callout, 'closing', false);
+            runCSSTransition(callout, 'open');
+        }
+    }
+
+    function menuHideCallout(self) {
+        var callout = self.callout;
+        if (self.parent && containsOrEquals(self.element, callout)) {
+            setState(callout, 'hidden', true);
+        } else {
+            runCSSTransition(callout, 'closing').then(function () {
+                removeNode(callout);
+            });
+        }
+        self.activeButton = null;
+    }
+
     defineControlType('menu', {
-        template: '<z:float><z:buttonlist/></z:float>',
+        template: '<div class="zeta-ui zeta-menu zeta-float"><z:buttonlist/></div>',
         waitForExecution: false,
         parseOptions: parseControlsAndExecute,
         init: function (e, self) {
-            var suffix = helper.ucfirst(self.name);
-            defineHiddenProperty(self.context, 'show' + suffix, function (to, dir, within) {
-                self.showCallout = true;
-                (is(to, Node) ? dom.snap : helper.position)(self.callout, to, dir, within);
-                dom.focus(self.callout);
+            var callout = e.target;
+            for (var cur = self.parent; cur && cur.hasRole('menu buttonlist'); cur = cur.parent);
+            if (self.parent && !cur) {
+                bind(self.element, 'mouseenter', menuShowCallout.bind(null, self));
+                bind(self.element, 'mouseleave', menuHideCallout.bind(null, self));
+            } else if (!self.parent && callout === self.element) {
+                defineHiddenProperty(self.context, 'showMenu', menuShowCallout.bind(null, self));
+                defineHiddenProperty(self.context, 'hideMenu', menuHideCallout.bind(null, self));
+                defineHiddenProperty(self.context, 'element', callout);
+            } else {
+                self.calloutParent = callout.parentNode;
+                dom.retainFocus(self.element, callout);
+                removeNode(callout);
+            }
+            bind(self.element, 'mousemove', function () {
+                self.activeButton = null;
             });
-            defineHiddenProperty(self.context, 'hide' + suffix, function () {
-                self.showCallout = false;
+            setState(e.target, 'is-' + self.type, true);
+            self.callout = callout;
+            self.activeButton = null;
+            self.watch('activeButton', function (a, b, old, cur) {
+                (old || {}).active = false;
+                (cur || {}).active = true;
+                (cur || self).focus();
             });
+            menuHideCallout(self);
         },
         focusin: function (e, self) {
-            if (e.source === 'keyboard') {
+            if (e.source === 'keyboard' && !self.parent) {
+                menuShowCallout(self);
                 self.activeButton = menuGetNextItem(self, self, 1);
-                if (self.activeButton) {
-                    self.activeButton.active = true;
-                }
             }
         },
         focusout: function (e, self) {
-            if (self.activeButton) {
-                self.activeButton.active = false;
+            self.activeButton = null;
+            if (self.hideCalloutOnBlur) {
+                menuHideCallout(self);
             }
         },
         keystroke: function (e, self) {
             var cur = self.activeButton;
-            switch (e.data) {
-                case 'upArrow':
-                case 'downArrow':
-                    var next = menuGetNextItem(self, cur, e.data[0] === 'u' ? -1 : 1);
-                    if (next) {
-                        (cur || {}).active = false;
-                        next.active = true;
-                        self.activeButton = next;
-                        next.focus();
-                    }
-                    return next || cur;
-                case 'leftArrow':
-                    if (cur && self.parent) {
-                        cur.active = false;
-                        self.activeButton = null;
-                        self.parent.focus();
-                    }
-                    return cur;
-                case 'rightArrow':
-                    var child = cur && cur.controls[0];
-                    if (child && cur.hasRole('menu')) {
-                        cur.showCallout = true;
-                        child.focus();
-                    }
-                    return child;
+            var dir = /^(up|down|left|right)Arrow$/.test(e.data) && RegExp.$1[0];
+            if (dir === 'l') {
+                if (!self.parent) {
+                    e.handled();
+                } else if (cur) {
+                    menuHideCallout(self);
+                    e.handled();
+                }
+            } else if (dir === 'r') {
+                menuShowCallout(self);
+                self.activeButton = cur || menuGetNextItem(self, self, 1);
+                e.handled();
+            } else if (!self.parent || cur) {
+                self.activeButton = menuGetNextItem(self, cur, dir === 'u' ? -1 : 1) || cur;
+                e.handled();
+            }
+        },
+        click: function (e, self) {
+            if (!containsOrEquals(self.callout, e.target)) {
+                menuShowCallout(self);
             }
         },
         childExecuted: function (e, self) {
             self.activeButton = null;
+            for (var cur = e.control; cur && cur !== self.parent; cur = cur.parent) {
+                if (!cur.hideCalloutOnExecute) {
+                    return;
+                }
+            }
+            menuHideCallout(self);
+        },
+        beforeDestroy: function (e, self) {
+            menuHideCallout(self);
         }
     });
 
@@ -6622,7 +6848,7 @@
     }
 
     defineControlType('dialog', {
-        template: '<div class="zeta-ui zeta-dialog is-modal:{{modal}}"><z:anim class="zeta-dialog-inner"><div class="zeta-dialog-content"><h2>{{title}}</h2><z:form><p>{{description}}</p><controls/></z:form></div><div class="zeta-dialog-error error hidden:{{not errorMessage}}">{{errorMessage}}</div><controls of="type == buttonset"/></z:anim></div>',
+        template: '<div class="zeta-ui zeta-dialog"><z:anim class="zeta-float zeta-dialog-inner"><div class="zeta-dialog-content"><h2>{{title}}</h2><z:form><p>{{description}}</p><controls/></z:form></div><div class="zeta-dialog-error error hidden:{{not errorMessage}}">{{errorMessage}}</div><controls of="type == buttonset"/></z:anim></div>',
         templates: {
             buttonset: '<z:buttonset class="zeta-dialog-buttonset"><controls of="danger" show-text="true"/><div class="zeta-buttonset-pad"></div><controls show-text="true"/></z:buttonset>'
         },
@@ -6638,11 +6864,17 @@
             var snapTo = parentElement && self.pinnable && screen.availWidth >= 600 && screen.availHeight >= 600 && UIToolset.hasRole(parentElement, 'button buttonlike') ? parentElement : window;
 
             $(element).appendTo(document.body);
+            if (parentElement) {
+                dom.retainFocus(parentElement, element);
+            }
             if (self.modal) {
                 dom.setModal(element);
             }
             dom.snap(element, snapTo, 'auto');
             helper.setZIndexOver(element, parentElement || document.activeElement);
+            setTimeout(function () {
+                dom.focus(element, true);
+            });
         },
         error: function (e, self) {
             self.errorMessage = (e.error || '').message || e.error || '';
@@ -6675,70 +6907,6 @@
         }
     }, true);
 
-    defineControlType('float', {
-        template: '<div class="zeta-ui zeta-float is:{{type}} hidden:{{not showCallout}}"><children controls/></div>',
-        init: function (e, self) {
-            var callout = e.target;
-            self.showCallout = false;
-            if (!self.parent && callout === self.element) {
-                self.callout = self.element.parentNode;
-                defineHiddenProperty(self.context, 'element', self.callout);
-                self.watch('showCallout', function (a, b, c, value) {
-                    if (!value) {
-                        $(self.callout).detach();
-                    }
-                });
-                $(self.callout).addClass('zeta-float');
-            } else if (!self.parent || !self.parent.hasRole('buttonlist')) {
-                self.callout = callout;
-                self.originalParent = callout.parentNode;
-                dom.retainFocus(self.element, self.callout);
-                self.watch('showCallout', function (a, b, c, value) {
-                    if (value) {
-                        dom.snap(callout, self.originalParent);
-                        dom.focus(callout);
-                    } else {
-                        $(callout).detach();
-                    }
-                });
-                $(callout).detach();
-            } else {
-                helper.bind(self.element, 'mouseover mouseout mousemove', function (e) {
-                    self.showCallout = e.type !== 'mouseout';
-                    if (self.showCallout) {
-                        var winRect = helper.getRect();
-                        var rect = helper.getRect(callout);
-                        var cur = helper.getState(callout, 'float') || [];
-                        setState(callout, 'float', {
-                            top: rect.bottom > winRect.height || (rect.top < 0 ? false : cur.indexOf('top') >= 0),
-                            left: rect.right > winRect.width || (rect.left < 0 ? false : cur.indexOf('left') >= 0)
-                        });
-                    }
-                });
-            }
-        },
-        click: function (e, self) {
-            if (self.originalParent) {
-                self.showCallout = true;
-            }
-        },
-        childExecuted: function (e, self) {
-            for (var cur = e.control; cur && cur !== self.parent; cur = cur.parent) {
-                if (!cur.hideCalloutOnExecute) {
-                    return;
-                }
-            }
-            self.showCallout = true;
-            self.showCallout = false;
-        },
-        focusout: function (e, self) {
-            if (self.hideCalloutOnBlur) {
-                self.showCallout = true;
-                self.showCallout = false;
-            }
-        }
-    }, true);
-
     defineControlType('generic', {
         parseOptions: parseControlsAndExecute
     });
@@ -6749,13 +6917,13 @@
 
     function openDefaultDialog(ui, type, value, message, iter) {
         return ui.import('dialog.prompt').render({
-            prompt: type === 'prompt',
-            cancellable: type !== 'alert',
             value: value,
-            message: message,
+            valueEnabled: type === 'prompt',
+            valueLabel: message,
+            cancelVisible: type !== 'alert',
             action: iter.string(),
             dialogTitle: iter.string(),
-            dialogDescription: iter.string(),
+            dialogDescription: type === 'prompt' ? iter.string() : message,
             callback: iter.fn()
         }).dialog;
     }
@@ -6770,24 +6938,23 @@
         preventLeave: false,
         exports: 'title description errorMessage',
         controls: [
-            ui.label('message'),
-            ui.textbox('value'),
+            ui.textbox('value', {
+                hiddenWhenDisabled: true,
+                exports: 'enabled label'
+            }),
             ui.buttonset(
                 ui.submit('action', 'done', {
                     defaultExport: 'label',
                     exports: 'icon'
                 }),
-                ui.button('cancel', 'cancel', function (self) {
-                    return self.all.dialog.destroy();
+                ui.button('cancel', 'close', {
+                    exports: 'visible',
+                    execute: function (self) {
+                        return self.all.dialog.destroy();
+                    }
                 })
             )
         ],
-        init: function (e, self) {
-            self.all.message.visible = !self.context.prompt;
-            self.all.cancel.visible = self.context.cancellable;
-            self.all.value.visible = self.context.prompt;
-            self.all.value.label = self.context.message;
-        },
         execute: function (self) {
             return (isFunction(self.context.callback) || when)(self.context.value);
         }
@@ -6846,6 +7013,7 @@
 (function ($, zeta) {
     var Editor = zeta.Editor;
     var helper = zeta.helper;
+    var bind = helper.bind;
     var createRange = helper.createRange;
     var each = helper.each;
     var extend = helper.extend;
@@ -6904,7 +7072,7 @@
             return repl[v] || v;
         })).append(container);
 
-        $(container).mousedown(function (e) {
+        bind(container, 'mousedown', function (e) {
             if (e.buttons & 1) {
                 activeHandle = handles.get(e.target);
                 helper.always(zeta.dom.drag(e, activeTyper.element), function () {
@@ -6914,7 +7082,7 @@
                 e.preventDefault();
             }
         });
-        $(document.body).on('mousedown mousemove mouseup', function (e) {
+        bind(window, 'mousedown mousemove mouseup', function (e) {
             state.x = e.clientX;
             state.y = e.clientY;
             hoverNode = activeTyper && activeTyper.nodeFromPoint(state.x, state.y);
@@ -6926,7 +7094,7 @@
                 timeout = setTimeout(refresh, 0, true);
             }
         });
-        $(window).on('scroll resize orientationchange focus', refresh);
+        bind(window, 'scroll resize orientationchange focus', refresh);
     }
 
     function computeFillRects(range) {
@@ -6973,7 +7141,7 @@
     function refresh(force) {
         force = force === true;
         clearTimeout(timeout);
-        if (activeTyper && (force || activeTyper.focused(true))) {
+        if (activeTyper && (force || activeTyper.focused())) {
             var canvas = new TyperCanvas();
             if (force || canvas.editorReflow || canvas.selectionChanged || canvas.pointerMoved) {
                 each(allLayers, function (i, v) {
@@ -7005,7 +7173,8 @@
     function setActive(typer) {
         activeTyper = typer;
         if (typer) {
-            zeta.helper.setZIndexOver(container, typer.element);
+            helper.setZIndexOver(container, typer.element);
+            typer.retainFocus(container);
             refresh(true);
         } else {
             $(container).children().detach();
@@ -7525,7 +7694,7 @@
         },
         receive: function (e) {
             if (helper.sameElementSpec(e.widget.element, e.receivedNode)) {
-                e.preventDefault();
+                e.handled();
                 e.typer.invoke(function (tx) {
                     tx.insertHtml(e.receivedNode.childNodes);
                 });
@@ -7721,7 +7890,11 @@
         simpleCommandButton('justifyLeft', 'formatting'),
         simpleCommandButton('justifyCenter', 'formatting'),
         simpleCommandButton('justifyRight', 'formatting'),
-        simpleCommandButton('justifyFull', 'formatting')
+        simpleCommandButton('justifyFull', 'formatting'), {
+            visible: function (self) {
+                return isEnabled(self, 'inlineStyle');
+            }
+        }
     ));
 
     ui.i18n('en', {
@@ -7850,8 +8023,8 @@
                     return self.parentContext.typer.hasCommand('unlink');
                 }
             }),
-            ui.submit('submit', 'done'),
-            ui.button('cancel', 'cancel', function (self) {
+            ui.submit('ok', 'done'),
+            ui.button('cancel', 'close', function (self) {
                 return self.all.dialog.destroy();
             })
         )
@@ -7934,14 +8107,16 @@
     ));
 
     ui.i18n('en', {
-        'insertLink': 'Insert hyperlink',
-        'editLink': 'Edit hyperlink',
-        'removeLink': 'Remove hyperlink',
-        'remove': 'Remove',
-        'text': 'Text',
-        'href': 'Link URL',
-        'blank': 'Open in new window',
-        'open': 'Open hyperlink'
+        insertLink: 'Insert hyperlink',
+        editLink: 'Edit hyperlink',
+        removeLink: 'Remove hyperlink',
+        remove: 'Remove',
+        text: 'Text',
+        href: 'Link URL',
+        blank: 'Open in new window',
+        open: 'Open hyperlink',
+        cancel: 'Cancel',
+        ok: 'OK',
     });
 
 }(jQuery, zeta));
@@ -8046,8 +8221,10 @@
     var helper = zeta.helper;
 
     function toggleClass(widget, className, value) {
-        var target = widget.options.target;
-        helper.setState(helper.is(target, Node) || $(widget.typer.element).parents(target).addBack()[0], widget.options[className], value);
+        var options = widget.options;
+        if (options[className]) {
+            helper.setState(helper.is(options.target, Node) || $(widget.typer.element).parents(options.target).addBack()[0], options[className], value);
+        }
     }
 
     zeta.Editor.widgets.stateclass = {
@@ -8065,8 +8242,6 @@
         },
         stateChange: function (e) {
             toggleClass(e.widget, 'disabled', !e.typer.enabled());
-        },
-        typing: function (e) {
             toggleClass(e.widget, 'empty', !e.typer.hasContent());
         },
         contentChange: function (e) {
@@ -8552,6 +8727,7 @@
 
 // source: src/extensions/editor/toolbar.js
 (function ($, zeta) {
+    var helper = zeta.helper;
     var toolbar;
     var contextmenu;
     var activeToolbar;
@@ -8561,12 +8737,11 @@
         if (canAccessClipboard === false) {
             callback();
         } else if (!canAccessClipboard) {
-            var handler = function () {
+            var unbind = helper.bind(document, 'paste', function () {
                 canAccessClipboard = true;
-            };
-            $(document).one('paste', handler);
+            });
             setTimeout(function () {
-                $(document).off('paste', handler);
+                unbind();
                 if (!canAccessClipboard) {
                     canAccessClipboard = false;
                     callback();
@@ -8577,7 +8752,7 @@
 
     function positionToolbar(toolbar) {
         var height = $(toolbar.element).height();
-        var rect = zeta.helper.getRect(toolbar.widget || toolbar.typer);
+        var rect = helper.getRect(toolbar.widget || toolbar.typer);
         if (rect.left === 0 && rect.top === 0 && rect.width === 0 && rect.height === 0) {
             // invisible element or IE bug related - https://connect.microsoft.com/IE/feedback/details/881970
             return;
@@ -8599,7 +8774,7 @@
             hideToolbar();
             activeToolbar = toolbar;
             $(toolbar.element).appendTo(document.body);
-            zeta.helper.setZIndexOver(toolbar.element, toolbar.typer.element);
+            helper.setZIndexOver(toolbar.element, toolbar.typer.element);
         }
         positionToolbar(toolbar);
     }
@@ -8616,10 +8791,12 @@
         var container = document.createElement('div');
         var context = type.render(container, {
             typer: typer,
-            options: options,
-            element: container
+            options: options
         });
-        typer.retainFocus(container);
+        if (!context.element) {
+            context.element = container;
+        }
+        typer.retainFocus(context.element);
         if (options.container && type !== contextmenu) {
             $(container).appendTo(options.container);
         } else {
@@ -8642,7 +8819,6 @@
         },
         init: function (e) {
             e.widget.toolbar = createToolbar(e.typer, e.widget.options, toolbar);
-            e.widget.contextmenu = createToolbar(e.typer, e.widget.options, contextmenu);
         },
         focusin: function (e) {
             var toolbar = e.widget.toolbar;
@@ -8655,16 +8831,16 @@
             hideToolbar(e.widget.toolbar);
         },
         rightClick: function (e) {
-            var toolbar = e.widget.contextmenu;
+            var toolbar = e.widget.contextmenu || (e.widget.contextmenu = createToolbar(e.typer, e.widget.options, contextmenu));
             toolbar.update();
-            zeta.helper.position(toolbar.element, {
-                x: e.clientX,
-                y: e.clientY
-            });
             setTimeout(function () {
                 // fix IE11 rendering issue when mousedown on contextmenu
                 // without moving focus beforehand
                 zeta.dom.focus(toolbar.element);
+                toolbar.showMenu({
+                    x: e.clientX,
+                    y: e.clientY
+                });
             });
             e.preventDefault();
         },
@@ -8681,7 +8857,7 @@
         }
     };
 
-    $(window).scroll(function () {
+    helper.bind(window, 'scroll', function () {
         if (activeToolbar) {
             positionToolbar(activeToolbar);
         }
@@ -8693,10 +8869,17 @@
 
     var ui = new zeta.UI('zeta.editor');
 
+    function childExecuted(e, self) {
+        if (e.source === 'mouse') {
+            self.context.typer.focus();
+        }
+    }
+
     toolbar = ui.buttonset(
         ui.callout('insertWidgets', 'widgets', ui.import('zeta.editor.insertMenu')),
         ui.import('zeta.editor.toolbar'), {
-            showText: false
+            showText: false,
+            childExecuted: childExecuted
         });
 
     contextmenu = ui.menu(
@@ -8736,21 +8919,21 @@
             ui.button('cut', 'content_cut', {
                 shortcut: 'ctrlX',
                 execute: function (self) {
-                    self.context.typer.getSelection().focus();
+                    self.context.typer.focus();
                     document.execCommand('cut');
                 }
             }),
             ui.button('copy', 'content_copy', {
                 shortcut: 'ctrlC',
                 execute: function (self) {
-                    self.context.typer.getSelection().focus();
+                    self.context.typer.focus();
                     document.execCommand('copy');
                 }
             }),
             ui.button('paste', 'content_paste', {
                 shortcut: 'ctrlV',
                 execute: function (self) {
-                    self.context.typer.getSelection().focus();
+                    self.context.typer.focus();
                     document.execCommand('paste');
                     detectClipboardInaccessible(function () {
                         ui.alert('clipboardError');
@@ -8758,7 +8941,9 @@
                 }
             })
         ),
-        ui.import('zeta.editor.contextmenu')
+        ui.import('zeta.editor.contextmenu'), {
+            childExecuted: childExecuted
+        }
     );
 
     ui.i18n('en', {
@@ -8830,34 +9015,39 @@
 (function ($, zeta) {
     var helper = zeta.helper;
 
-    if (!zeta.IS_TOUCH) {
-        $(document.documentElement).on('mousedown', '.zeta-ui button, .zeta-ui .has-clickeffect', function (e) {
-            var elm = e.currentTarget;
-            var x = e.clientX;
-            var y = e.clientY;
-            var rect = helper.getRect(elm);
-            var p1 = Math.pow(y - rect.top, 2) + Math.pow(x - rect.left, 2);
-            var p2 = Math.pow(y - rect.top, 2) + Math.pow(x - rect.right, 2);
-            var p3 = Math.pow(y - rect.bottom, 2) + Math.pow(x - rect.left, 2);
-            var p4 = Math.pow(y - rect.bottom, 2) + Math.pow(x - rect.right, 2);
-            var scalePercent = 0.5 + 2 * Math.sqrt(Math.max(p1, p2, p3, p4)) / parseFloat($.css(elm, 'font-size'));
+    function createRipple(elm, x, y, until) {
+        var rect = helper.getRect(elm);
+        var p1 = Math.pow(y - rect.top, 2) + Math.pow(x - rect.left, 2);
+        var p2 = Math.pow(y - rect.top, 2) + Math.pow(x - rect.right, 2);
+        var p3 = Math.pow(y - rect.bottom, 2) + Math.pow(x - rect.left, 2);
+        var p4 = Math.pow(y - rect.bottom, 2) + Math.pow(x - rect.right, 2);
+        var scalePercent = 0.5 + 2 * Math.sqrt(Math.max(p1, p2, p3, p4)) / parseFloat($.css(elm, 'font-size'));
 
-            var $overlay = $('<div class="zeta-clickeffect"><i></i></div>').appendTo(elm);
-            var $anim = $overlay.children().css({
-                top: y - rect.top,
-                left: x - rect.left,
-            });
-            setTimeout(function () {
-                $anim.css('transform', $anim.css('transform') + ' scale(' + scalePercent + ')').addClass('animate-in');
-            });
-            $overlay.css('border-radius', $.css(elm, 'border-radius'));
-            helper.always(zeta.dom.drag(e), function () {
-                helper.runCSSTransition($overlay.children()[0], 'animate-out').then(function () {
-                    $overlay.remove();
-                });
+        var $overlay = $('<div class="zeta-clickeffect"><i></i></div>').appendTo(elm);
+        var $anim = $overlay.children().css({
+            top: y - rect.top,
+            left: x - rect.left,
+        });
+        setTimeout(function () {
+            $anim.css('transform', $anim.css('transform') + ' scale(' + scalePercent + ')').addClass('animate-in');
+        });
+        $overlay.css('border-radius', $.css(elm, 'border-radius'));
+        helper.always(until, function () {
+            helper.runCSSTransition($overlay.children()[0], 'animate-out').then(function () {
+                $overlay.remove();
             });
         });
     }
+
+    helper.bind(window, zeta.IS_TOUCH ? 'touchstart' : 'mousedown', function (e) {
+        var p = (e.touches || [e])[0];
+        for (var elm = e.target; elm; elm = elm.parentNode) {
+            if (helper.is(elm, '.zeta-ui button, .zeta-ui .has-clickeffect')) {
+                createRipple(elm, p.clientX, p.clientY, zeta.dom.drag(e));
+                return;
+            }
+        }
+    });
 
 }(jQuery, zeta));
 
@@ -8927,6 +9117,29 @@
         var date = new Date();
         date.setHours(h, m, 0, 0);
         return date;
+    }
+
+    function toNumericValue(mode, value) {
+        // timestamp values for native controls are based on local time against local time epoch for "datetime-local" and
+        // UTC midnight against UTC epoch for other non-time types; which is exactly the opposite in this library:
+        // local time against UTC epoch and local midnight against UTC epoch respectively
+        switch (mode) {
+            case 'datetime':
+                return +value - TIMEZONE_OFFSET;
+            case 'month':
+                return (getFullYear(value) - 1970) * 12 + getMonth(value);
+        }
+        return +value + TIMEZONE_OFFSET;
+    }
+
+    function fromNumericValue(mode, value) {
+        switch (mode) {
+            case 'datetime':
+                return new Date(value + TIMEZONE_OFFSET);
+            case 'month':
+                return new Date(1970, value);
+        }
+        return new Date(value - TIMEZONE_OFFSET);
     }
 
     function normalizeDate(options, date) {
@@ -9195,8 +9408,10 @@
             }
         },
         mousewheel: function (e, self) {
-            showMonth(self, e.data);
-            e.handled();
+            if (self.context === callout) {
+                showMonth(self, e.data);
+                e.handled();
+            }
         },
         contextChange: function (e, self) {
             showMonth(self, self.currentMonth || self.value || new Date());
@@ -9229,38 +9444,30 @@
             $(repeat('<i></i>', 12)).appendTo($face).each(function (i, v) {
                 $(v).css('transform', 'rotate(' + (i * 30) + 'deg)');
             });
-            $('s', self.element).on('mousedown touchstart', function (e) {
+            helper.bind(self.element, 'mousedown touchstart', function (e) {
                 var elm = e.target;
-                var rect = helper.getRect(elm.parentNode);
-                var isTouch = e.type === 'touchstart';
-                var handlers = {};
-                handlers[isTouch ? 'touchmove' : 'mousemove'] = function (e) {
-                    if (!isTouch && e.which !== 1) {
-                        return handlers.mouseup();
-                    }
-                    var point = isTouch ? e.originalEvent.touches[0] : e;
-                    var rad = Math.atan2(point.clientY - rect.centerY, point.clientX - rect.centerX) / Math.PI;
-                    var curM = getMinutes(self.value);
-                    var curH = getHours(self.value);
-                    if (elm.getAttribute('hand') === 'm') {
-                        var m = (Math.round((rad * 30 + 75) / self.step) * self.step) % 60;
-                        if (m !== curM) {
-                            var deltaH = Math.floor(Math.abs(curM - m) / 30) * (m > curM ? -1 : 1);
-                            self.setValue(makeTime(curH + deltaH, m));
+                if (helper.tagName(elm) === 's' && (e.which === 1 || (e.touches || '').length === 1)) {
+                    var rect = helper.getRect(elm.parentNode);
+                    var promise = dom.drag(e, function (x, y) {
+                        var rad = Math.atan2(y - rect.centerY, x - rect.centerX) / Math.PI;
+                        var curM = getMinutes(self.value);
+                        var curH = getHours(self.value);
+                        if (elm.getAttribute('hand') === 'm') {
+                            var m = (Math.round((rad * 30 + 75) / self.step) * self.step) % 60;
+                            if (m !== curM) {
+                                var deltaH = Math.floor(Math.abs(curM - m) / 30) * (m > curM ? -1 : 1);
+                                self.setValue(makeTime(curH + deltaH, m));
+                            }
+                        } else {
+                            var h = Math.round(rad * 6 + 15) % 12 + (ui.all(self).meridiem.value ? 12 : 0);
+                            if (h !== curH) {
+                                self.setValue(makeTime(h, curM));
+                            }
                         }
-                    } else {
-                        var h = Math.round(rad * 6 + 15) % 12 + (ui.all(self).meridiem.value ? 12 : 0);
-                        if (h !== curH) {
-                            self.setValue(makeTime(h, curM));
-                        }
-                    }
-                };
-                handlers[isTouch ? 'touchend' : 'mouseup'] = function () {
-                    $(document.body).off(handlers);
-                    self.execute();
-                };
-                if (e.which === 1 || (e.originalEvent.touches || '').length === 1) {
-                    $(document.body).on(handlers);
+                    });
+                    promise.then(function () {
+                        self.execute();
+                    });
                 }
             });
             self.setValue(new Date());
@@ -9304,7 +9511,7 @@
                 preset.softSelectedDate = null;
 
                 var text = '';
-                if (date) {
+                if (date && !isNaN(+date)) {
                     var format = function (fn) {
                         return helper.isFunction(fn) && fn(preset.options.mode, date);
                     };
@@ -9319,9 +9526,6 @@
                         callout.calendar = callout.clock = preset.selectedDate || new Date();
                     }
                 }
-            },
-            hasContent: function (preset) {
-                return !!this.extractText();
             },
             validate: function (preset) {
                 if (preset.options.required && !!preset.selectedDate) {
@@ -9407,19 +9611,20 @@
                 var mode = self.options.mode || self.preset.options.mode;
                 self.nativeInput = $('<input type="' + INPUT_TYPES[mode] + '">').appendTo(self.element)[0];
                 helper.bind(self.nativeInput, 'change', function (e) {
-                    // see comments below for conversion
-                    self.setValue(new Date(self.nativeInput.valueAsNumber + (TIMEZONE_OFFSET * (mode === 'datetime' ? 1 : -1))));
+                    self.setValue(fromNumericValue(mode, self.nativeInput.valueAsNumber));
                 });
             }
         },
         focusin: function (e, self) {
             if (zeta.IS_TOUCH) {
-                // input type "datetime-local" does not support valueAsDate so we need to use with valueAsNumber (timestamp)
-                // timestamp values for native controls are based on local time against local time epoch for "datetime-local" and
-                // UTC midnight against UTC epoch for other non-time types; which is exactly the opposite in this library:
-                // local time against UTC epoch and local midnight against UTC epoch respectively
                 var mode = self.options.mode || self.preset.options.mode;
-                self.nativeInput.valueAsNumber = +(self.value || new Date()) - (TIMEZONE_OFFSET * (mode === 'datetime' ? 1 : -1));
+                if (!self.value) {
+                    self.value = new Date();
+                }
+                // input type "datetime-local" does not support valueAsDate so we need to use with valueAsNumber (timestamp)
+                self.nativeInput.valueAsNumber = toNumericValue(mode, self.value);
+                self.nativeInput.focus();
+                e.handled();
             }
         }
     });
@@ -9447,6 +9652,7 @@
     var helper = zeta.helper;
     var dom = zeta.dom;
     var ui = new zeta.UI('zeta.ui.keyword');
+    var activeInput;
     var callout;
 
     function initCallout() {
@@ -9454,8 +9660,8 @@
             ui.dropdown({
                 template: '<z:buttonlist/>',
                 execute: function (self) {
-                    callout.typer.invoke('add', self.value);
-                    callout.typer.getSelection().focus();
+                    insertItem(callout.preset, self.value);
+                    callout.preset.typer.focus();
                 },
                 contextChange: function (e, self) {
                     self.choices = self.context.suggestions;
@@ -9490,10 +9696,6 @@
 
     function sortValues(a, b) {
         return a.value.localeCompare(b.value);
-    }
-
-    function validate(preset, value) {
-        return preset.options.allowFreeInput || preset.knownValues[value];
     }
 
     function valueChanged(x, y) {
@@ -9536,7 +9738,7 @@
         return {
             firstIndex: firstIndex,
             consecutiveMatches: consecutiveMatches,
-            formattedText: formattedText.replace(/<\/b><b>/g, '')
+            formattedText: formattedText.replace(/\*\*(\ *)\*\*/g, '$1')
         };
     }
 
@@ -9579,31 +9781,32 @@
         var value = preset.typer.extractText();
         var promise = getSuggestions(preset, value, preset.typer.getValue());
         promise.then(function (suggestions) {
-            suggestions = processSuggestions(suggestions, value, preset.options.suggestionCount);
-            if (value && preset.options.allowFreeInput) {
-                suggestions.push({
-                    value: value,
-                    label: value,
-                    formattedText: '*' + value + '*'
-                });
-            }
-            callout.suggestions = suggestions.map(function (v) {
-                return {
-                    value: v.value,
-                    label: v.formattedText,
-                    icon: v.icon || ''
-                };
-            });
-            callout.update();
-        });
-        if (!callout) {
-            initCallout();
-        }
-        setTimeout(function () {
             if (preset.typer.focused()) {
+                suggestions = processSuggestions(suggestions, value, preset.options.suggestionCount);
+                if (value && preset.options.allowFreeInput && !suggestions.some(function (v) {
+                    return v.label === value;
+                })) {
+                    suggestions.push({
+                        value: value,
+                        label: value,
+                        formattedText: '*' + value + '*'
+                    });
+                }
+                if (!callout) {
+                    initCallout();
+                }
+                callout.preset = preset;
+                callout.suggestions = suggestions.map(function (v) {
+                    return {
+                        value: v.value,
+                        label: v.formattedText,
+                        icon: v.icon || ''
+                    };
+                });
+                callout.update();
                 dom.retainFocus(preset.typer.element, callout.element);
-                callout.typer = preset.typer;
                 callout.showMenu(preset.typer.element);
+                preset.typer.focus();
             }
         });
     }
@@ -9616,7 +9819,6 @@
             controls: [
                 ui.textbox('newValue', {
                     enter: function (e, self) {
-                        // find existing
                         self.all.list.append(ui.checkbox({
                             label: self.value,
                             entry: self.value,
@@ -9666,7 +9868,7 @@
                             icon: v.icon,
                             entry: v.value,
                             value: checked,
-                            before: checked ? '*': ''
+                            before: checked ? '*' : ''
                         });
                     }));
                 });
@@ -9674,6 +9876,34 @@
         }).render().dialog.then(function (values) {
             preset.typer.setValue(values);
         });
+    }
+
+    function insertItem(preset, value) {
+        if (!value || preset.typer.getValue().indexOf(value.value || value) >= 0) {
+            return;
+        }
+        if (typeof value !== 'object') {
+            value = {
+                value: value,
+                label: preset.knownValues[value] || value
+            };
+        }
+        var span = $('<span class="zeta-keyword" data-value="' + encode(value.value, true) + '">' + encode(value.label) + '<i>delete</i></span>')[0];
+        var lastChild = preset.typer.rootNode.lastChild;
+        preset.typer.invoke(function (tx) {
+            tx.selection.selectAll();
+            if (lastChild) {
+                tx.selection.baseCaret.moveTo(lastChild.element, false);
+            }
+            tx.insertHtml(span);
+        });
+        if (!preset.options.allowFreeInput) {
+            getSuggestions(preset, value.value).then(function () {
+                if (!preset.knownValues[value.value]) {
+                    $(span).addClass('invalid');
+                }
+            });
+        }
     }
 
     var preset = {
@@ -9691,21 +9921,18 @@
                 }).get();
             },
             setValue: function (preset, values) {
-                values = ($.isArray(values) ? values : String(values).split(/\s+/)).filter(function (v) {
+                values = (helper.isArray(values) || String(values).split(/\s+/)).filter(function (v) {
                     return v;
                 });
                 if (valueChanged(values, this.getValue())) {
                     this.invoke(function (tx) {
-                        tx.selection.select(tx.typer.element, 'contents');
+                        tx.selection.selectAll();
                         tx.insertText('');
                         values.forEach(function (v) {
-                            tx.typer.invoke('add', v);
+                            insertItem(preset, v);
                         });
                     });
                 }
-            },
-            hasContent: function () {
-                return !!($('span', this.element)[0] || this.extractText());
             },
             validate: function (preset) {
                 if (preset.options.required && !this.getValue().length) {
@@ -9721,9 +9948,6 @@
                 element: 'span',
                 inline: true,
                 editable: 'none',
-                create: function (tx, value) {
-                    tx.insertHtml('<span class="zeta-keyword" data-value="' + encode(value.value, true) + '">' + encode(value.label) + '<i>delete</i></span>');
-                },
                 click: function (e) {
                     if (e.target !== e.widget.element) {
                         $(e.widget.element).detach();
@@ -9731,48 +9955,26 @@
                 }
             }
         },
-        commands: {
-            add: function (tx, value) {
-                if (!value || tx.typer.getValue().indexOf(value.value || value) >= 0) {
-                    return;
-                }
-                if (typeof value !== 'object') {
-                    value = {
-                        value: value,
-                        label: tx.widget.knownValues[value] || value
-                    };
-                }
-                var lastSpan = $('span:last', tx.typer.element)[0];
-                if (lastSpan) {
-                    tx.selection.select(lastSpan, false);
-                } else {
-                    tx.selection.select(tx.typer.element, 0);
-                }
-                tx.insertWidget('tag', value);
-                lastSpan = $('span:last', tx.typer.element)[0];
-                tx.selection.select(helper.createRange(lastSpan, false), helper.createRange(tx.typer.element, -0));
-                tx.insertText('');
-                if (!validate(tx.widget, value.value)) {
-                    $(lastSpan).addClass('invalid');
-                }
-                if (!SHOW_DIALOG && callout && callout.typer === tx.typer) {
-                    showSuggestions(tx.typer.getStaticWidget('__preset__'));
-                }
-            }
-        },
         init: function (e) {
-            e.typer.getSelection().moveToText(e.typer.element, -0);
+            e.typer.select(e.typer.element, -0);
             e.widget.knownValues = {};
         },
         focusin: function (e) {
             if (!SHOW_DIALOG) {
                 showSuggestions(e.widget);
+            } else if (e.source === 'touch') {
+                showSuggestionDialog(e.widget, activeInput);
             }
         },
         focusout: function (e) {
             if (!SHOW_DIALOG) {
                 callout.hideMenu();
-                e.typer.invoke('add', e.typer.extractText());
+                insertItem(e.widget, e.typer.extractText());
+            }
+        },
+        click: function (e) {
+            if (SHOW_DIALOG) {
+                showSuggestionDialog(e.widget, activeInput);
             }
         },
         upArrow: function (e) {
@@ -9783,20 +9985,21 @@
             dom.focus(callout.element);
             e.handled();
         },
+        textInput: function (e) {
+            var lastChild = e.typer.rootNode.lastChild;
+            if (lastChild && helper.compareRangePosition(e.typer.getSelection(), lastChild.element) < 0) {
+                e.typer.select(e.typer.element, -0);
+            }
+        },
         enter: function (e) {
-            e.typer.invoke('add', e.typer.extractText());
+            var suggestions = callout.suggestions;
+            insertItem(e.widget, suggestions.length === 1 || (suggestions[0] && suggestions[0].label === '**' + e.widget.knownValues[suggestions[0].value] + '**') ? suggestions[0].value : e.typer.extractText());
             e.handled();
         },
         escape: function (e) {
             if (helper.containsOrEquals(document, callout.element)) {
                 callout.hideMenu();
                 e.handled();
-            }
-        },
-        backspace: function (e) {
-            var selection = e.typer.getSelection().clone();
-            if (selection.isCaret && !selection.moveByCharacter(-1)) {
-                $('span:last', e.typer.element).remove();
             }
         },
         contentChange: function (e) {
@@ -9817,35 +10020,44 @@
             self.watch('required', function (a, b, c, required) {
                 self.options.required = required;
             });
-            if (SHOW_DIALOG) {
-                self.watch('editor', function (a, b, c, editor) {
-                    editor.on('click', function () {
-                        showSuggestionDialog(editor.getStaticWidget('__preset__'), self);
-                    });
-                });
+        },
+        focusin: function (e, self) {
+            activeInput = self;
+        },
+        setValue: function (e, self) {
+            var newValue = e.newValue || [];
+            if (valueChanged(e.oldValue, newValue)) {
+                self.setValue(newValue);
+                self.editor.setValue(newValue);
             }
+            e.handled();
         }
     });
 
     ui.i18n('en', {
-        newValue: 'Enter new value'
+        newValue: 'Enter new value',
+        done: 'Done',
+        cancel: 'Cancel'
     });
 
 }(jQuery, zeta));
 
 // source: src/extensions/ui/number.js
 (function ($, zeta) {
-    function setValueAndUpdate(widget, value) {
-        value = +value || 0;
-        var min = widget.options.min;
-        var max = widget.options.max;
-        var loop = widget.options.loop && min !== null && max !== null;
-        if ((loop && value < min) || (!loop && max !== null && value > max)) {
-            value = max;
-        } else if ((loop && value > max) || (!loop && min !== null && value < min)) {
-            value = min;
+    function setValue(widget, value) {
+        if (value === null || value === '' || isNaN(value)) {
+            value = value ? '0' : '';
+        } else {
+            var min = widget.options.min;
+            var max = widget.options.max;
+            var loop = widget.options.loop && min !== null && max !== null;
+            if ((loop && value < min) || (!loop && max !== null && value > max)) {
+                value = max;
+            } else if ((loop && value > max) || (!loop && min !== null && value < min)) {
+                value = min;
+            }
+            value = String(+value | 0);
         }
-        value = String(+value || 0);
         if (widget.options.digits === 'fixed') {
             var numOfDigits = String(+widget.options.max || 0).length;
             value = (new Array(numOfDigits + 1).join('0') + value).substr(-numOfDigits);
@@ -9858,8 +10070,8 @@
         }
     }
 
-    function setValue(widget, delta) {
-        setValueAndUpdate(widget, (widget.typer.getValue() || 0) + (delta || 0) * widget.options.step);
+    function stepValue(widget, delta) {
+        setValue(widget, (widget.typer.getValue() || 0) + delta * widget.options.step);
     }
 
     var preset = {
@@ -9875,36 +10087,28 @@
         },
         overrides: {
             getValue: function (preset) {
-                return parseInt(this.extractText());
+                var value = parseInt(this.extractText());
+                return isNaN(value) ? null : value;
             },
             setValue: function (preset, value) {
-                setValueAndUpdate(preset, value);
-            },
-            hasContent: function () {
-                return !!this.extractText();
-            },
-            validate: function (preset) {
-                return true;
+                setValue(preset, value);
             }
         },
-        focusout: function (e) {
-            setValue(e.widget);
-        },
         mousewheel: function (e) {
-            setValue(e.widget, -e.data);
+            stepValue(e.widget, -e.data);
             e.handled();
         },
         upArrow: function (e) {
-            setValue(e.widget, 1);
+            stepValue(e.widget, 1);
             e.handled();
         },
         downArrow: function (e) {
-            setValue(e.widget, -1);
+            stepValue(e.widget, -1);
             e.handled();
         },
         contentChange: function (e) {
             if (e.source !== 'keyboard') {
-                setValue(e.widget);
+                setValue(e.widget, e.typer.getValue());
             }
         }
     };
@@ -9912,7 +10116,7 @@
     zeta.UI.define('number', {
         template: '<z:textbox/>',
         preventLeave: true,
-        value: 0,
+        value: null,
         preset: preset
     });
 
@@ -9944,7 +10148,7 @@ this.Map = window.Map || (function (shim) {
         },
         set: function (i, v) {
             var self = this;
-            var index = indexOf(self, v);
+            var index = indexOf(self, i);
             self.values[index >= 0 ? index : self.items.push(i) - 1] = v;
             return self;
         },

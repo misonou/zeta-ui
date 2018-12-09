@@ -125,12 +125,6 @@ interface ZetaPrivateStore {
     (target: object, data: any): any;
 }
 
-interface ZetaEventBinder {
-    add(element: EventTarget, event: string, listener: (e: Event) => void, useCapture?: boolean): void;
-    add(element: EventTarget, event: Dictionary<(e: Event) => void>, useCapture?: boolean): Function;
-    off(): void;
-}
-
 interface ZetaStatic {
     /**
      * Whether current browser is Internet Explorer.
@@ -804,6 +798,9 @@ interface ZetaHelper {
     createNodeIterator<T extends number>(root: Element, whatToShow: T): T extends 1 ? Iterator<Element> : T extends 4 ? Iterator<Text> : Iterator<Node>;
 
     getState(element: Element, className: string): boolean | string[];
+
+    setState(element: Element, dict: Dictionary<boolean | string[] | Dictionary<any>>): void;
+
     setState(element: Element, className: string, values: boolean | string[] | Dictionary<any>): void;
 
     /**
@@ -875,8 +872,6 @@ interface ZetaHelper {
     position(element: Element, to: Element | Window, dir: Direction2D, within?: Element | Window): void;
 
     runCSSTransition(element: Element, className: string): Promise<any>;
-
-    bind(): ZetaEventBinder;
 
     /**
      * Adds event listeners to the Window object or other DOM elements.
@@ -1039,10 +1034,6 @@ interface ZetaTextInputEvent extends ZetaEvent {
     readonly data: string;
 }
 
-interface ZetaEventScope {
-    wrap(promise: Promise<any>) : Promise<any>;
-}
-
 interface ZetaDOM {
     readonly activeElement: HTMLElement;
     readonly eventSource: ZetaEventSource;
@@ -1053,7 +1044,7 @@ interface ZetaDOM {
     focused(window: Window): boolean;
     focused(element: Element, strict?: boolean): boolean;
     getContext(element?: Element): any;
-    getEventScope(element: Element): ZetaEventScope;
+    prepEventSource(promise: Promise<any>) : Promise<any>;
     getEventSource(element: Element): ZetaEventSource;
     focus(element: Element, focusOnInput?: boolean): void;
     focus(element: Element[]): void;

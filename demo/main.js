@@ -54,65 +54,70 @@
                 v.innerHTML = v.innerHTML.replace(/`([^`]+)`/g, '<pre><code class="js">$1</code></pre>');
             }
         });
-        $('.example', v).each(function (i, v) {
-            var script = v.textContent.replace(/^\s+|\s+$/g, '').replace(/\n\ {12}/g, '\n');
-            $(v).html('<div class="split"><div class="source"><pre><code class="js"></code></pre></div><div class="result"></div></div><div class="log"></div><div class="input"></div>');
-            $('code', v).text(script);
 
-            var result = $('.result', v)[0];
-            var input = $('.input', v)[0];
-            var log = $('.log', v)[0];
+        var fn = $('.example', v).map(function (i, v) {
+            return function () {
+                var script = v.textContent.replace(/^\s+|\s+$/g, '').replace(/\n\ {12}/g, '\n');
+                $(v).html('<div class="split"><div class="source"><pre><code class="js"></code></pre></div><div class="result"></div></div><div class="log"></div><div class="input"></div>');
+                $('code', v).text(script);
 
-            var variables = [];
-            script.replace(/(?:^|\n)var\s+([$_a-zA-Z][$_a-zA-Z0-9]*)(?=\s|=)/g, function (v, a) {
-                variables.push(a);
-            });
-            script += '\nreturn { ' + variables.map(function (v, i) {
-                return (i ? ' ' : '') + v + ': ' + v;
-            }) + ' };';
+                var result = $('.result', v)[0];
+                var input = $('.input', v)[0];
+                var log = $('.log', v)[0];
 
-            var console = new HTMLConsole(log);
-            var globals = {
-                console: console,
-                div: result,
-                delay: function (ms, data) {
-                    var d = $.Deferred();
-                    setTimeout(function () {
-                        d.resolve(data);
-                    }, ms);
-                    return d.promise();
-                }
-            };
-            try {
-                $.extend(globals, runWithGlobals(script, globals));
-                consoleInput.render(input, {
-                    globals: globals,
-                    console: console
+                var variables = [];
+                script.replace(/(?:^|\n)var\s+([$_a-zA-Z][$_a-zA-Z0-9]*)(?=\s|=)/g, function (v, a) {
+                    variables.push(a);
                 });
-            } catch (e) {
-                console.error(e);
-            }
-        });
-        $('pre code', v).each(function () {
-            hljs.highlightBlock(this);
-        })
-        $('.source .hljs-comment', v).each(function () {
-            if (/([=#]\[([^\]]+)\])/.test(this.innerHTML)) {
-                this.innerHTML = this.innerHTML.replace(RegExp.$1, '<a href="javascript:void 0;" data-mode="' + RegExp.$1[0] + '">' + RegExp.$2 + '</a>');
-                if (RegExp.$1[0] === '=') {
-                    $(this).addClass('try');
-                    this.childNodes[0].data = this.childNodes[0].data.replace(/^\/\/\s*/, '');
-                    $(this.childNodes[0]).wrap('<span>');
+                script += '\nreturn { ' + variables.map(function (v, i) {
+                    return (i ? ' ' : '') + v + ': ' + v;
+                }) + ' };';
+
+                var console = new HTMLConsole(log);
+                var globals = {
+                    console: console,
+                    div: result,
+                    delay: function (ms, data) {
+                        var d = $.Deferred();
+                        setTimeout(function () {
+                            d.resolve(data);
+                        }, ms);
+                        return d.promise();
+                    }
+                };
+                try {
+                    $.extend(globals, runWithGlobals(script, globals));
+                    consoleInput.render(input, {
+                        globals: globals,
+                        console: console
+                    });
+                } catch (e) {
+                    console.error(e);
                 }
-            }
+
+                $('code', v).each(function () {
+                    hljs.highlightBlock(this);
+                });
+                $('.hljs-comment', v).each(function () {
+                    if (/([=]\[([^\]]+)\])/.test(this.innerHTML)) {
+                        this.innerHTML = this.innerHTML.replace(RegExp.$1, '<a href="javascript:void 0;" data-mode="' + RegExp.$1[0] + '">' + RegExp.$2 + '</a>');
+                        if (RegExp.$1[0] === '=') {
+                            $(this).addClass('try');
+                            this.childNodes[0].data = this.childNodes[0].data.replace(/^\/\/\s*/, '');
+                            $(this.childNodes[0]).wrap('<span>');
+                        }
+                    }
+                });
+                $('.try', v).click(function () {
+                    var input = $(this).closest('.example').find('.input')[0];
+                    runInConsole(zeta.dom.getContext(input), $(this).children('a')[0].textContent);
+                });
+                $('#main').scrollable('refresh');
+            };
         });
-        $('.source .try', v).click(function () {
-            var input = $(this).closest('.example').find('.input')[0];
-            runInConsole(zeta.dom.getContext(input), $(this).children('a')[0].textContent);
-        });
-        $('.source a[data-mode="#"]', v).click(function () {
-            goto(this.textContent);
-        });
+        fn.get().reduce(function (v, a) {
+            return v.then(a);
+        }, $.when());
     }
 
     function gotoSection(w) {
@@ -132,6 +137,7 @@
             });
         });
         $('#main,#navigation').scrollable('refresh');
+        $('#main').scrollable('scrollTo', 0, 0);
     }
 
     var c = ui.buttonset('menu', {
@@ -144,7 +150,7 @@
                         $.each(self.all.menu.controls, function (i, v) {
                             v.active = v === self;
                         });
-                        gotoSection(w)
+                        gotoSection(w);
                     }
                 });
             }));

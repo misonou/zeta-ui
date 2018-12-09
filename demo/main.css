@@ -31,6 +31,7 @@ body {
     align-items: stretch;
 }
 #topbar-buttons .zeta-buttonset {
+    display: flex;
     flex-wrap: nowrap;
     color: #311b92;
 }
@@ -58,11 +59,11 @@ body {
 
 #navigation {
     position: fixed;
-    /* top: 0; */
+    top: 0;
     left: 0;
-    /* bottom: 0; */
-    padding: 10px 10px 25px;
-    /* padding-top: 3.67em; */
+    bottom: 0;
+    padding: 10px;
+    margin-top: 2.67em;
     width: 200px;
     box-sizing: border-box;
     overflow: hidden;
@@ -107,16 +108,17 @@ body {
 }
 
 #main {
+    position: relative;
     margin: 0;
     margin-left: 200px;
-    padding-right: 1em;
+    padding: 0 1em;
     height: 100%;
     overflow: hidden;
     box-sizing: border-box;
 }
 @media (max-width: 400px) {
     #main {
-        margin-left: 1em;
+        margin-left: 0;
     }
 }
 

@@ -85,10 +85,8 @@
 
 .zeta-label > span {
     display: inline-block;
-    padding: 0.7em 0;
-    line-height: 1.2;
     white-space: normal;
-    vertical-align: top;
+    vertical-align: text-bottom;
 }
 
 .zeta-label:empty,
@@ -103,7 +101,7 @@
     height: 1em;
     font-size: 18px;
     line-height: 1;
-    vertical-align: text-bottom;
+    vertical-align: top;
     overflow: hidden;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -139,12 +137,12 @@
     border-style: none;
     background-color: transparent;
     background-image: none;
-    line-height: 2.67;
     text-align: left;
     vertical-align: top;
     cursor: pointer;
     color: inherit;
     font-weight: inherit;
+    line-height: inherit;
     text-transform: inherit;
     white-space: nowrap;
     border-radius: 2px;
@@ -164,8 +162,8 @@
 .zeta-ui label.has-clickeffect,
 .zeta-buttonlist label,
 .zeta-buttonset label {
-    padding-left: 0.75em;
-    padding-right: 0.75em;
+    padding: 0.7em 0.75em;
+    min-height: calc(1.4em + 18px);
 }
 
 .zeta-ui label.disabled,
@@ -177,10 +175,19 @@
 .zeta-ui .has-clickeffect:hover,
 .zeta-ui .has-clickeffect.focused-keyboard,
 .zeta-ui .has-clickeffect.active,
+.zeta-ui label.focused-keyboard,
+.zeta-ui label.active,
 .zeta-ui button:hover,
 .zeta-ui button.focused-keyboard,
 .zeta-ui button.active {
-    background-color: rgba(238, 238, 238, 0.5);
+    background-color: rgba(128, 128, 128, 0.2);
+}
+
+@media (any-hover: none) {
+    .zeta-ui .has-clickeffect:hover,
+    .zeta-ui button:hover {
+        background-color: transparent;
+    }
 }
 
 .zeta-ui .has-clickeffect.danger:not(.disabled),
@@ -200,16 +207,8 @@
     margin-left: -0.75em;
 }
 
-button.zeta-checkbox:focus,
-button.zeta-checkbox:hover {
+.zeta-form > button.zeta-checkbox:hover {
     background-color: transparent;
-}
-
-.zeta-buttonlist > button.zeta-checkbox:focus,
-.zeta-buttonlist > button.zeta-checkbox:hover,
-.zeta-buttonset > button.zeta-checkbox:focus,
-.zeta-buttonset > button.zeta-checkbox:hover {
-    background-color: rgba(238, 238, 238, 0.5);
 }
 
 button.zeta-checkbox:before {
@@ -221,7 +220,7 @@ button.zeta-checkbox:before {
     height: 1em;
     border: 2px solid #aaa;
     border-radius: 2px;
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.3);
     color: transparent;
     z-index: 1;
 }
@@ -331,14 +330,31 @@ label.zeta-dropdown.error .zeta-label:after {
 
 .zeta-float {
     position: absolute;
+    border-radius: 2px;
     background-color: white;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 0, 0, 0.3);
     z-index: 1;
 }
 
-.zeta-float > .zeta-float {
-    position: relative;
-    box-shadow: none;
+@supports (-webkit-backdrop-filter: blur(0px)) or (-moz-backdrop-filter: blur(0px)) or (backdrop-filter: blur(0px)) {
+    .zeta-float {
+        background-color: transparent;
+    }
+
+    .zeta-float:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 2px;
+        background-color: rgba(255, 255, 255, 0.7);
+        -webkit-backdrop-filter: blur(20px);
+        -moz-backdrop-filter: blur(20px);
+        backdrop-filter: blur(20px);
+        z-index: -1;
+    }
 }
 
 .zeta-float label,
@@ -346,28 +362,52 @@ label.zeta-dropdown.error .zeta-label:after {
     border-radius: 0;
 }
 
-.zeta-float .zeta-buttonlist {
+.zeta-menu {
+    width: -webkit-max-content;
+    width: -moz-max-content;
+    width: max-content;
+}
+
+body > .zeta-menu {
+    -webkit-transform: translateY(-10px);
+    -moz-transform: translateY(-10px);
+    -ms-transform: translateY(-10px);
+    transform: translateY(-10px);
+    -webkit-transition: 0.1s ease-out;
+    -moz-transition: 0.1s ease-out;
+    -ms-transition: 0.1s ease-out;
+    transition: 0.1s ease-out;
+    -webkit-transition-property: transform, opacity;
+    -moz-transition-property: transform, opacity;
+    -ms-transition-property: transform, opacity;
+    transition-property: transform, opacity;
+    opacity: 0;
+}
+
+.zeta-menu.open {
+    -webkit-transform: none;
+    -moz-transform: none;
+    -ms-transform: none;
+    transform: none;
+    opacity: 1;
+}
+
+.zeta-menu.closing {
+    opacity: 0;
+}
+
+.zeta-menu .zeta-dialog-buttonset {
+    margin: 0.5em;
+}
+
+.zeta-menu .zeta-buttonlist {
     min-width: 7em;
-}
-
-label > .zeta-float {
-    left: 100%;
-    top: 0;
-}
-
-label > .zeta-float.float-top {
-    top: auto;
-    bottom: 0;
-}
-
-label > .zeta-float.float-left {
-    left: auto;
-    right: 100%;
 }
 
 .zeta-buttonlist {
     display: block;
     display: -ms-flexbox;
+    display: -webkit-flex;
     display: flex;
     -ms-flex-direction: column;
     flex-direction: column;
@@ -377,6 +417,7 @@ label > .zeta-float.float-left {
 .zeta-buttonlist button {
     display: block;
     display: -ms-flexbox;
+    display: -webkit-flex;
     display: flex;
     width: 100%;
     align-items: center;
@@ -387,24 +428,17 @@ label > .zeta-float.float-left {
     content: '';
     display: block;
     margin: 0.25em 0;
-    border-top: 1px solid rgba(128, 128, 128, 0.3);
+    border-top: 1px solid rgba(0, 0, 0, 0.15);
 }
 
-.zeta-buttonset {
-    display: -ms-flexbox;
+.zeta-buttonlist > .zeta-buttonset {
     display: -webkit-flex;
+    display: -ms-flexbox;
     display: flex;
-    align-items: stretch;
-    flex-wrap: wrap;
-    min-height: 2.67em;
-}
-
-.zeta-float .zeta-buttonset {
     flex-wrap: nowrap;
 }
 
 .zeta-buttonset-pad {
-    display: block;
     -webkit-flex-grow: 1;
     -ms-flex-positive: 1;
     flex-grow: 1;
@@ -425,7 +459,6 @@ label > .zeta-float.float-left {
 
 .zeta-buttonset > .zeta-buttonset {
     display: inline;
-    display: inline-flex;
 }
 
 
@@ -444,10 +477,12 @@ label > .zeta-float.float-left {
 }
 
 .zeta-textbox-wrapper {
+    display: -webkit-flex;
+    display: -ms-flexbox;
     display: flex;
     position: relative;
-    margin: 0.5em 0.25em 0.42em;
-    padding: 0.17em 0.25em;
+    margin: 0.5em 0.25em;
+    padding: 0 0.25em 0.2em;
     border-bottom: 1px solid #aeb8c2;
     vertical-align: top;
     line-height: 1.33;
@@ -464,9 +499,11 @@ label > .zeta-float.float-left {
 
 .zeta-buttonset .zeta-textbox-wrapper,
 .zeta-buttonlist .zeta-textbox-wrapper {
-    display: inline-block;
-    border-bottom-style: hidden;
-    width: auto;
+    display: -webkit-inline-flex;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    margin: 0 0 -0.25em;
+    border-bottom-style: none;
 }
 
 .zeta-form .zeta-textbox-wrapper {
@@ -555,13 +592,18 @@ label > .zeta-float.float-left {
     box-sizing: border-box;
 }
 
-.zeta-textbox-error {
+.zeta-textbox-error,
+.zeta-textbox-clear {
     display: none;
+    position: relative;
+    left: 0.35em;
+}
+
+.zeta-textbox-error {
     color: #a90007;
 }
 
 .zeta-textbox-clear {
-    display: none;
     cursor: pointer;
 }
 
@@ -724,7 +766,6 @@ label > .zeta-float.float-left {
 
 .zeta-snackbar .zeta-float {
     position: relative;
-    border-radius: 2px;
     -webkit-transform: translateY(-10px);
     -moz-transform: translateY(-10px);
     -ms-transform: translateY(-10px);
@@ -733,7 +774,6 @@ label > .zeta-float.float-left {
     -moz-transition: transform 0.2s, opacity 0.2s;
     -ms-transition: transform 0.2s, opacity 0.2s;
     transition: transform 0.2s, opacity 0.2s;
-    overflow: hidden;
 }
 
 .zeta-snackbar.open .zeta-float {
@@ -748,7 +788,11 @@ label > .zeta-float.float-left {
 }
 
 .zeta-snackbar .zeta-buttonset {
-    padding: 0 0 0 0.75em;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    padding: 0.25em 0.25em 0.25em 0.75em;
+    border-radius: 2px;
     align-items: center;
 }
 
@@ -801,10 +845,8 @@ label > .zeta-float.float-left {
     position: relative;
     max-width: inherit;
     max-height: inherit;
-    background-color: rgba(255, 255, 255, 0.95);
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.5), 0 2px 30px rgba(0, 0, 0, 0.5);
     border-radius: 2px;
-    overflow: hidden;
     -webkit-transition: 0.2s ease-out;
     -moz-transition: 0.2s ease-out;
     -ms-transition: 0.2s ease-out;
@@ -944,10 +986,9 @@ label > .zeta-float.float-left {
     display: -webkit-flex;
     display: flex;
     margin: 0.5em;
-    text-align: right;
-    font-weight: bold;
-    font-size: 80%;
-    text-transform: uppercase;
+    -webkit-flex-shrink: 0;
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
 }
 
 .zeta-dialog-buttonset button.zeta-submit {
@@ -955,79 +996,13 @@ label > .zeta-float.float-left {
     color: white;
 }
 
-.is-menu .zeta-dialog-buttonset {
-    margin: 0.5em;
-}
-
-.loading .zeta-dialog-inner:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    height: 3px;
-    animation-name: dialog-loadingbar;
-    animation-duration: 2s;
-    animation-iteration-count: infinite;
-    animation-timing-function: linear;
-    background-color: #aeb8c2;
-}
-
-@keyframes dialog-loadingbar {
-    0% {
-        left: -50%;
-        right: 100%
-    }
-    25% {
-        left: -50%;
-        right: 25%
-    }
-    50% {
-        left: 25%;
-        right: -50%
-    }
-    100% {
-        left: 100%;
-        right: -50%
-    }
+.zeta-dialog-buttonset > label,
+.zeta-dialog-buttonset > button {
+    border-radius: 2px;
 }
 
 
 /* Animated Effects */
-
-.zeta-float.is-contextmenu {
-    -webkit-transition: 0.1s ease-out;
-    -moz-transition: 0.1s ease-out;
-    -ms-transition: 0.1s ease-out;
-    transition: 0.1s ease-out;
-    -webkit-transition-property: filter, transform, opacity;
-    -moz-transition-property: filter, transform, opacity;
-    -ms-transition-property: filter, transform, opacity;
-    transition-property: filter, transform, opacity;
-    -webkit-filter: blur(2px);
-    -moz-filter: blur(2px);
-    -ms-filter: blur(2px);
-    filter: blur(2px);
-    opacity: 0;
-}
-
-.zeta-float.is-contextmenu.open {
-    -webkit-filter: none;
-    -moz-filter: none;
-    -ms-filter: none;
-    filter: none;
-    opacity: 1;
-}
-
-.zeta-float.is-contextmenu.closing {
-    -webkit-transform: scale(0.75);
-    -moz-transform: scale(0.75);
-    -ms-transform: scale(0.75);
-    transform: scale(0.75);
-    -webkit-filter: blur(20px);
-    -moz-filter: blur(20px);
-    -ms-filter: blur(20px);
-    filter: blur(20px);
-    opacity: 0;
-}
 
 .zeta-ui .has-clickeffect {
     -webkit-tap-highlight-color: transparent;
@@ -1089,7 +1064,7 @@ label > .zeta-float.float-left {
 
 .zeta-grid-cell {
     margin: 1px;
-    border: 1px solid #d3d3d3;
+    border: rgba(0, 0, 0, 0.15);
     background-color: white;
     width: 1em;
     height: 1em;
@@ -1097,7 +1072,7 @@ label > .zeta-float.float-left {
 }
 
 .zeta-grid-cell.active {
-    background-color: #d3d3d3;
+    background-color: rgba(0, 0, 0, 0.15);
 }
 
 .zeta-grid-cell:nth-child(7n+1) {
@@ -1174,7 +1149,7 @@ label > .zeta-float.float-left {
 .zeta-buttonlist .zeta-calendar,
 .zeta-buttonlist .zeta-clock,
 .zeta-calendar-header {
-    border-bottom: 1px solid #d3d3d3;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .zeta-calendar-header label.zeta-dropdown > button {
@@ -1263,7 +1238,7 @@ label > .zeta-float.float-left {
 }
 
 .zeta-calendar + .zeta-clock {
-    border-left: 1px solid #d3d3d3;
+    border-left: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .zeta-clock [contenteditable] {
