@@ -529,10 +529,10 @@
                 binds[j] = v.concat(binds[j] || []);
                 binds[j].context = extend({}, v.context, context);
             });
+            roles[name] = index;
             each(include.roles, function (i, v) {
                 roles[i] = (+v) + index;
             });
-            roles[name] = index;
             index += include.nodeCount;
             return dom;
         }
@@ -1567,6 +1567,10 @@
             self.watch('choices', dropdownUpdateChoices);
             dropdownUpdateChoices(self);
         },
+        click: function (e, self) {
+            menuShowCallout(self);
+            e.handled();
+        },
         setValue: function (e, self) {
             dropdownUpdateChoices(self);
             dropdownSetValue(self, e.newValue);
@@ -1583,6 +1587,10 @@
         parseOptions: function (options, iter) {
             options.icon = iter.string();
             options.controls = iter.nextAll(UIControlSpecies);
+        },
+        click: function (e, self) {
+            menuShowCallout(self);
+            e.handled();
         }
     });
 
@@ -1980,11 +1988,6 @@
             } else if (!self.parent || cur) {
                 self.activeButton = menuGetNextItem(self, cur, dir === 'u' ? -1 : 1) || cur;
                 e.handled();
-            }
-        },
-        click: function (e, self) {
-            if (!containsOrEquals(self.callout, e.target)) {
-                menuShowCallout(self);
             }
         },
         childExecuted: function (e, self) {
