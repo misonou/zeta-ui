@@ -1579,7 +1579,7 @@
     });
 
     defineControlType('callout', {
-        template: '<label class="zeta-callout"><controls of="not parent.alwaysShowCallout && parent.controls where enabled as _enabled && _enabled.length == 1 && _enabled.0.id == id"/><z:button class="hidden:{{[ not alwaysShowCallout ] && controls where enabled length == 1}}"/><z:menu/></button>',
+        template: '<label class="zeta-callout"><controls of="not parent.alwaysShowCallout && parent.controls where enabled as _enabled && _enabled.length == 1 && _enabled.0.id == id"/><z:button class="hidden:{{[ not alwaysShowCallout ] && controls where enabled length == 1}}"/><z:menu/></label>',
         requireChildControls: true,
         hideCalloutOnExecute: true,
         hideCalloutOnBlur: true,
