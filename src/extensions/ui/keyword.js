@@ -7,6 +7,7 @@
     var dom = zeta.dom;
     var ui = new zeta.UI('zeta.ui.keyword');
     var activeInput;
+    var activeDialog;
     var callout;
 
     function initCallout() {
@@ -167,6 +168,7 @@
 
     function showSuggestionDialog(preset, control) {
         var knownValues = getSuggestions(preset);
+        activeDialog = true;
         ui.dialog({
             title: control.label,
             description: control.placeholder,
@@ -226,6 +228,9 @@
                         });
                     }));
                 });
+            },
+            destroy: function (e, self) {
+                activeDialog = false;
             }
         }).render().dialog.then(function (values) {
             preset.typer.setValue(values);
@@ -316,18 +321,18 @@
         focusin: function (e) {
             if (!SHOW_DIALOG) {
                 showSuggestions(e.widget);
-            } else if (e.source === 'touch') {
+            } else {
                 showSuggestionDialog(e.widget, activeInput);
             }
         },
         focusout: function (e) {
+            insertItem(e.widget, e.typer.extractText());
             if (!SHOW_DIALOG) {
                 callout.hideMenu();
-                insertItem(e.widget, e.typer.extractText());
             }
         },
         click: function (e) {
-            if (SHOW_DIALOG) {
+            if (SHOW_DIALOG && !activeDialog) {
                 showSuggestionDialog(e.widget, activeInput);
             }
         },
