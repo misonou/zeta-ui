@@ -332,7 +332,7 @@
     }
 
     function validateAll(control) {
-        var focusOnFailed = dom.getEventSource(control.element) !== 'script';
+        var focusOnFailed = !matchWord(dom.getEventSource(control.element), 'script touch');
         var promises = [];
         var failed = [];
         _(control).container.flushEvents();
