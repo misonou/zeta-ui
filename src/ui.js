@@ -1023,10 +1023,6 @@
                 return v in roles;
             });
         },
-        getRoleContext: function (role) {
-            var dom = _(this).dom;
-            return dom.binds[dom.roles[role]].context;
-        },
         on: function (event, handler) {
             _(this).container.add(this.element, isPlainObject(event) || kv(event, handler));
         },
