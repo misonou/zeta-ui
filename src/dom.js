@@ -58,6 +58,10 @@
     var scrollbarWidth;
     var _ = helper.createPrivateStore();
 
+    function approxMultipleOf(a, b) {
+        return Math.abs(Math.round(a / b) - a / b) < 0.2;
+    }
+
     function textInputAllowed(v) {
         return v.isContentEditable || is(v, 'input,textarea,select');
     }
@@ -141,7 +145,7 @@
                 if (triggerDOMEvent(eventName, nativeEvent, v, data, bubbles)) {
                     return true;
                 }
-                if (eventName === 'keystroke') {
+                if (eventName === 'keystroke' || eventName === 'gesture') {
                     return triggerDOMEvent(data, nativeEvent, v, null, true) || (data === 'space' && textInputAllowed(v) && triggerDOMEvent('textInput', nativeEvent, v, ' ', true));
                 }
             }
@@ -257,9 +261,23 @@
         }
     }
 
+    function measureLine(p1, p2) {
+        var dx = p1.clientX - p2.clientX;
+        var dy = p1.clientY - p2.clientY;
+        return {
+            dx: dx,
+            dy: dy,
+            deg: Math.atan2(dy, dx) / Math.PI * 180,
+            length: Math.sqrt(dx * dx + dy * dy)
+        };
+    }
+
     function drag(event, within, callback) {
         var deferred = $.Deferred();
-        var lastPos = event;
+        var points = event.touches || [event];
+        var lastX = points[0].clientX;
+        var lastY = points[0].clientY;
+        var m0 = points[1] && measureLine(points[0], points[1]);
         var progress = isFunction(callback || within) || helper.noop;
         var scrollParent = getScrollParent(is(within, Node) || event.target);
         var scrollTimeout;
@@ -273,6 +291,8 @@
         }
 
         var handlers = {
+            mouseup: finish,
+            touchend: finish,
             keydown: function (e) {
                 if (e.which === 27) {
                     finish(false);
@@ -280,26 +300,30 @@
             },
             mousemove: function (e) {
                 e.preventDefault();
-                if (!e.which) {
+                if (!e.which && !event.touches) {
                     finish(true);
-                } else if (e.clientX !== lastPos.clientX || e.clientY !== lastPos.clientY) {
-                    lastPos = e;
-                    progress(e.clientX, e.clientY);
+                } else if (e.clientX !== lastX || e.clientY !== lastY) {
+                    lastX = e.clientX;
+                    lastY = e.clientY;
+                    progress(lastX, lastY);
                 }
             },
-            mouseup: function (e) {
-                finish(true);
-            },
-            touchend: function (e) {
-                finish(true);
+            touchmove: function (e) {
+                var points = e.touches;
+                if (m0) {
+                    var m1 = measureLine(points[0], points[1]);
+                    progress((m1.deg - m0.deg + 540) % 360 - 180, m1.length / m0.length, points[0].clientX - lastX + (m0.dx - m1.dx) / 2, points[0].clientY - lastY + (m0.dy - m1.dy) / 2);
+                } else {
+                    progress(points[0].clientX, points[0].clientY);
+                }
             }
         };
         var scrollParentHandlers = {
             mouseout: function (e) {
                 if (!scrollTimeout && (!containsOrEquals(scrollParent, e.relatedTarget) || (scrollParent === root && e.relatedTarget === root))) {
                     scrollTimeout = setInterval(function () {
-                        if (scrollIntoView(scrollParent, helper.toPlainRect(lastPos.clientX - 50, lastPos.clientY - 50, lastPos.clientX + 50, lastPos.clientY + 50))) {
-                            progress(lastPos.clientX, lastPos.clientY);
+                        if (scrollIntoView(scrollParent, helper.toPlainRect(lastX - 50, lastY - 50, lastX + 50, lastY + 50))) {
+                            progress(lastX, lastY);
                         } else {
                             clearInterval(scrollTimeout);
                             scrollTimeout = null;
@@ -944,10 +968,9 @@
         var body = document.body;
         var modifierCount;
         var modifiedKeyCode;
-        var mousemovedX;
-        var mousemovedY;
+        var mouseInitialPoint;
         var mousedownFocus;
-        var previousPoint;
+        var pressTimeout;
         var imeNode;
         var imeOffset;
         var imeText;
@@ -989,13 +1012,24 @@
         }
 
         function triggerMouseEvent(eventName, nativeEvent) {
-            var point = nativeEvent.touches ? nativeEvent.touches[0] : nativeEvent;
+            var point = mouseInitialPoint || nativeEvent;
             return triggerDOMEvent(eventName, nativeEvent, nativeEvent.target, {
                 target: nativeEvent.target,
                 clientX: point.clientX,
                 clientY: point.clientY,
                 metakey: getEventName(nativeEvent)
             });
+        }
+
+        function triggerGestureEvent(gesture, nativeEvent) {
+            mouseInitialPoint = null;
+            return triggerUIEvent('gesture', nativeEvent, focusPath.slice(-1), gesture);
+        }
+
+        function dispatchDOMMouseEvent(eventName, point, e) {
+            var event = document.createEvent('MouseEvent');
+            event.initMouseEvent(eventName, e.bubbles, e.cancelable, e.view, e.detail, point.screenX, point.screenY, point.clientX, point.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.metaKey, e.button, e.relatedTarget);
+            helper.elementFromPoint(point.clientX, point.clientY).dispatchEvent(event);
         }
 
         function unmount(mutations) {
@@ -1045,25 +1079,20 @@
                 if (getComputedStyle(e.target).pointerEvents === 'none') {
                     e.stopPropagation();
                     e.stopImmediatePropagation();
-                    var event = document.createEvent('MouseEvent');
-                    event.initMouseEvent(e.type, e.bubbles, e.cancelable, e.view, e.detail, e.screenX, e.screenY, e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.metaKey, e.button, e.relatedTarget);
-                    helper.elementFromPoint(e.clientX, e.clientY).dispatchEvent(event);
+                    dispatchDOMMouseEvent(e.type, e, e);
                 }
             }, true);
         }
 
         // document.activeElement or FocusEvent.relatedTarget does not report non-focusable element
         bind(body, 'mousedown mouseup wheel keydown keyup keypress touchstart touchend cut copy paste drop click dblclick contextmenu', function (e) {
-            var moveFocus = matchWord(e.type, 'mousedown keydown');
             lastEventSource = null;
             if (!focusable(e.target)) {
                 e.stopImmediatePropagation();
                 e.preventDefault();
-                if (moveFocus) {
+                if (matchWord(e.type, 'touchstart mousedown keydown')) {
                     triggerDOMEvent('focusreturn', null, focusPath.slice(-1)[0]);
                 }
-            } else if (moveFocus) {
-                setFocus(e.target);
             }
             lastEventSource = new ZetaEventSource(e.target);
         }, true);
@@ -1132,6 +1161,7 @@
                 }
             },
             keydown: function (e) {
+                setFocus(e.target);
                 if (!imeNode) {
                     var keyCode = e.keyCode;
                     var isModifierKey = (META_KEYS.indexOf(keyCode) >= 0);
@@ -1181,19 +1211,54 @@
                     }
                 }
             },
+            touchstart: function (e) {
+                mouseInitialPoint = e.touches[0];
+                if (!e.touches[1]) {
+                    if (focused(getContainer(e.target).element)) {
+                        triggerMouseEvent('mousedown', e);
+                    }
+                    pressTimeout = setTimeout(function () {
+                        if (mouseInitialPoint) {
+                            triggerMouseEvent('longPress', e);
+                            mouseInitialPoint = null;
+                        }
+                    }, 1000);
+                }
+            },
+            touchmove: function (e) {
+                clearTimeout(pressTimeout);
+                pressTimeout = null;
+                if (mouseInitialPoint) {
+                    if (!e.touches[1]) {
+                        var line = measureLine(e.touches[0], mouseInitialPoint);
+                        if (line.length > 50 && approxMultipleOf(line.deg, 90)) {
+                            triggerGestureEvent('swipe' + (approxMultipleOf(line.deg, 180) ? (line.dx > 0 ? 'Right' : 'Left') : (line.dy > 0 ? 'Bottom' : 'Top')), e);
+                        }
+                    } else if (!e.touches[2]) {
+                        triggerGestureEvent('pinchZoom', e);
+                    }
+                }
+            },
+            touchend: function (e) {
+                clearTimeout(pressTimeout);
+                if (mouseInitialPoint && pressTimeout) {
+                    setFocus(e.target);
+                    triggerMouseEvent('click', e);
+                    dispatchDOMMouseEvent('click', mouseInitialPoint, e);
+                    e.preventDefault();
+                }
+            },
             mousedown: function (e) {
-                mousemovedX = 0;
-                mousemovedY = 0;
-                previousPoint = e;
+                setFocus(e.target);
                 if ((e.buttons || e.which) === 1) {
                     triggerMouseEvent('mousedown', e);
                 }
+                mouseInitialPoint = e;
                 mousedownFocus = document.activeElement;
             },
             mousemove: function (e) {
-                if (previousPoint) {
-                    mousemovedX = Math.max(mousemovedX, Math.abs(previousPoint.clientX - e.clientX));
-                    mousemovedY = Math.max(mousemovedY, Math.abs(previousPoint.clientY - e.clientY));
+                if (mouseInitialPoint && measureLine(e, mouseInitialPoint).length > 5) {
+                    mouseInitialPoint = null;
                 }
             },
             mouseup: function (e) {
@@ -1210,7 +1275,7 @@
                 }
             },
             click: function (e) {
-                if (mousemovedX <= 5 && mousemovedY <= 5) {
+                if (!zeta.IS_TOUCH && mouseInitialPoint) {
                     triggerMouseEvent('click', e);
                 }
             },
