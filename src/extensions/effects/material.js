@@ -21,7 +21,7 @@
         });
         $overlay.css('border-radius', $.css(elm, 'border-radius'));
         helper.always(until, function () {
-            helper.runCSSTransition($overlay.children()[0], 'animate-out').then(function () {
+            helper.runCSSTransition($overlay.children()[0], 'animate-out', function () {
                 $overlay.remove();
             });
         });

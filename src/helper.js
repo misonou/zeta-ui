@@ -812,13 +812,21 @@
         return name.replace(/^-(webkit|moz|ms|o)-/, '');
     }
 
-    function runCSSTransition(element, className) {
+    function runCSSTransition(element, className, callback) {
+        if (getState(element, className)) {
+            return reject();
+        }
+        callback = callback || noop;
+        if (callback === true) {
+            callback = setState.bind(null, element, className, false);
+        }
         setState(element, className, true);
         var arr = iterateToArray(createNodeIterator(element, 1, function (v) {
             var style = getComputedStyle(v);
             return style.transitionDuration !== '0s' || style.animationName != 'none';
         }));
         if (!arr[0]) {
+            callback();
             return when();
         }
 
@@ -859,6 +867,7 @@
         $(arr).css('transition', '');
         setState(element, className, true);
         if (!map.size) {
+            callback();
             return when();
         }
 
@@ -867,8 +876,12 @@
             var dict = map.get(e.target) || {};
             delete dict[e.propertyName ? removeVendorPrefix(e.propertyName) : '@' + e.animationName];
             if (!keys(dict)[0] && map.delete(e.target) && !map.size) {
+                var accept = getState(element, className);
                 unbind();
-                deferred[getState(element, className) ? 'resolve' : 'reject'](element);
+                if (accept) {
+                    callback();
+                }
+                deferred[accept ? 'resolve' : 'reject'](element);
             }
         });
         return deferred.promise();

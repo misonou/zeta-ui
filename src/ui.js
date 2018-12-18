@@ -1913,8 +1913,10 @@
                 position(callout, to, dir, within);
             }
             dom.focus(callout);
-            setState(callout, 'open', false);
-            setState(callout, 'closing', false);
+            if (helper.getState(callout, 'closing')) {
+                setState(callout, 'open', false);
+                setState(callout, 'closing', false);
+            }
             runCSSTransition(callout, 'open');
         }
     }
@@ -1924,7 +1926,7 @@
         if (self.parent && containsOrEquals(self.element, callout)) {
             setState(callout, 'hidden', true);
         } else {
-            runCSSTransition(callout, 'closing').then(function () {
+            runCSSTransition(callout, 'closing', function () {
                 removeNode(callout);
             });
         }
@@ -2063,9 +2065,7 @@
             runCSSTransition(e.target, 'open');
         },
         focusreturn: function (e, self) {
-            runCSSTransition(e.target, 'pop').then(function () {
-                $(e.target).removeClass('pop');
-            });
+            runCSSTransition(e.target, 'pop', true);
         },
         beforeDestroy: function (e, self) {
             return runCSSTransition(e.target, 'closing');

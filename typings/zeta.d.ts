@@ -871,7 +871,7 @@ interface ZetaHelper {
      */
     position(element: Element, to: Element | Window, dir: Direction2D, within?: Element | Window): void;
 
-    runCSSTransition(element: Element, className: string): Promise<any>;
+    runCSSTransition(element: Element, className: string, callback?: boolean | () => any): Promise<any>;
 
     /**
      * Adds event listeners to the Window object or other DOM elements.
