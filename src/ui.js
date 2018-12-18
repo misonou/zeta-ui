@@ -1438,8 +1438,14 @@
         parseExecute(options, iter);
     }
 
+    function shouldExecuteOnClick(e, role) {
+        var dom = _(e.context).dom;
+        var elm = dom.bindedNode[Object.keys(dom.roles).indexOf(role)];
+        return elm && containsOrEquals(elm, e.target);
+    }
+
     function buttonExecute(e, self) {
-        if (self.type === 'button' || self.type === 'submit') {
+        if (e.eventName !== 'click' || shouldExecuteOnClick(e, 'button')) {
             return self.execute();
         }
     }
@@ -1479,8 +1485,10 @@
     });
 
     function checkboxToggleValue(e, self) {
-        self.value = !self.value;
-        return self.type === 'checkbox' ? self.execute() : undefined;
+        if (e.eventName !== 'click' || shouldExecuteOnClick(e, 'checkbox')) {
+            self.value = !self.value;
+            return self.type === 'checkbox' ? self.execute() : e.handled();
+        }
     }
 
     defineControlType('checkbox', {
