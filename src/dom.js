@@ -1204,7 +1204,7 @@
             wheel: function (e) {
                 if (containsOrEquals(e.target, focusPath[0]) || !textInputAllowed(e.target)) {
                     var dir = e.deltaY || e.detail;
-                    if (triggerUIEvent('mousewheel', e, e.target, dir / Math.abs(dir) * (zeta.IS_MAC ? -1 : 1), true)) {
+                    if (dir && triggerUIEvent('mousewheel', e, e.target, dir / Math.abs(dir) * (zeta.IS_MAC ? -1 : 1), true)) {
                         e.preventDefault();
                     }
                 }
