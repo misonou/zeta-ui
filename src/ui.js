@@ -1026,14 +1026,18 @@
         on: function (event, handler) {
             _(this).container.add(this.element, isPlainObject(event) || kv(event, handler));
         },
-        watch: function (prop, handler) {
-            listenProperty(getPrototypeOf(this), prop);
+        watch: function (prop, handler, fireInit) {
+            var self = this;
+            listenProperty(getPrototypeOf(self), prop);
             if (isFunction(handler)) {
-                this.on('propertyChange', function (e, self) {
+                self.on('propertyChange', function (e) {
                     if (prop in e.oldValues) {
-                        handler.call(self, self, prop, e.oldValues[prop], self[prop]);
+                        handler.call(self, e.newValues[prop], e.oldValues[prop], prop, self);
                     }
                 });
+                if (fireInit) {
+                    handler.call(self, self[prop], null, prop, self);
+                }
             }
         },
         focus: function () {
@@ -1516,10 +1520,10 @@
         }
     }
 
-    function dropdownUpdateChoices(dropdown) {
-        var isArray = helper.isArray(dropdown.choices);
+    function dropdownUpdateChoices(dropdown, choiceObj) {
+        var isArray = helper.isArray(choiceObj);
         var choices = [];
-        each(dropdown.choices, function (i, v) {
+        each(choiceObj, function (i, v) {
             choices[choices.length] = isArray && isPlainObject(v) ? v : {
                 value: isArray ? v : parseConstant(i),
                 label: v
@@ -1568,15 +1572,16 @@
             _(self).ddToolset = toolset;
             self.hintValue = self.value;
             self.selectedText = self.label;
-            self.watch('choices', dropdownUpdateChoices);
-            dropdownUpdateChoices(self);
+            self.watch('choices', function (cur) {
+                dropdownUpdateChoices(self, cur);
+            }, true);
         },
         click: function (e, self) {
             menuShowCallout(self);
             e.handled();
         },
         setValue: function (e, self) {
-            dropdownUpdateChoices(self);
+            dropdownUpdateChoices(self, self.choices);
             dropdownSetValue(self, e.newValue);
             e.handled();
         }
@@ -1699,8 +1704,8 @@
         parseOptions: parseExecute,
         init: function (e, self) {
             self.editorOptions = textboxInitOptions(self.preset || DEFAULT_PRESET, self.options);
-            self.watch('editor', function (a, b, c, typer) {
-                self.options = typer.getStaticWidget(PRESET_KEY).options;
+            self.watch('editor', function (editor) {
+                self.options = editor.getStaticWidget(PRESET_KEY).options;
                 self.editorOptions.options = extend({}, self.options);
             });
         },
@@ -1958,7 +1963,7 @@
             setState(e.target, 'is-' + self.type, true);
             self.callout = callout;
             self.activeButton = null;
-            self.watch('activeButton', function (a, b, old, cur) {
+            self.watch('activeButton', function (cur, old) {
                 (old || {}).active = false;
                 (cur || {}).active = true;
                 (cur || self).focus();

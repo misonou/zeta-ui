@@ -375,10 +375,9 @@
         value: [],
         preset: preset,
         init: function (e, self) {
-            self.options.required = self.required;
-            self.watch('required', function (a, b, c, required) {
+            self.watch('required', function (required) {
                 self.options.required = required;
-            });
+            }, true);
         },
         focusin: function (e, self) {
             activeInput = self;

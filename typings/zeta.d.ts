@@ -2170,7 +2170,7 @@ interface UIControl extends HasElement, UIControlOption {
      * @param prop Name of the property to be observed.
      * @param callback Callback to be fired when there are changes to the specified property.
      */
-    watch(prop: string, callback: (self: this, prop: string, oldValue: any, newValue: any) => void);
+    watch(prop: string, callback?: (newValue: any, oldValue: any, prop: string, self: this) => void, fireInit?: boolean);
 
     /**
      * Executes operation defined by the control.

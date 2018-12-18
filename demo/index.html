@@ -374,7 +374,7 @@
             var ui = new zeta.UI();
             var button = ui.button({
                 init: function (e, self) {
-                    self.watch('customProperty', function (self, prop, oldValue, newValue) {
+                    self.watch('customProperty', function (newValue, oldValue) {
                          console.log('customProperty changed from', oldValue, 'to', newValue);
                     });
                 },
