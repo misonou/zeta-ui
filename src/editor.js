@@ -1151,7 +1151,7 @@
                 e.preventDefault();
             }
 
-            container.add(topElement, 'destroy', helper.bind(topElement, {
+            var domEvents = {
                 compositionstart: function () {
                     muteChanges = true;
                     composingEditor = typer;
@@ -1188,7 +1188,10 @@
                 dragstart: function (e) {
                     e.preventDefault();
                 }
-            }));
+            };
+            container.add(topElement, {
+                destroy: helper.bind(topElement, domEvents)
+            });
 
             var defaultKeystroke = {
                 backspace: deleteNextContent,
