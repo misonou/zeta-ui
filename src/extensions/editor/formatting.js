@@ -265,14 +265,6 @@
     Typer.widgets.formatting = {
         stateChange: updateFormatting,
         contentChange: updateFormatting,
-        enter: function (e) {
-            if (e.typer.widgetEnabled('lineBreak') && helper.is(e.typer.getSelection().startNode, Typer.NODE_EDITABLE_PARAGRAPH)) {
-                e.typer.invoke('insertLineBreak');
-            } else {
-                e.typer.invoke('insertLine');
-            }
-            e.handled();
-        },
         commands: {
             justifyCenter: justifyCommand,
             justifyFull: justifyCommand,
@@ -306,10 +298,6 @@
     };
 
     Typer.widgets.lineBreak = {
-        enter: function (e) {
-            e.typer.invoke('insertLineBreak');
-            e.handled();
-        },
         shiftEnter: function (e) {
             e.typer.invoke('insertLineBreak');
             e.handled();

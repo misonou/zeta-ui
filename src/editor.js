@@ -1195,7 +1195,16 @@
 
             var defaultKeystroke = {
                 backspace: deleteNextContent,
-                delete: deleteNextContent
+                delete: deleteNextContent,
+                enter: function () {
+                    if (is(currentSelection.startNode, NODE_EDITABLE_PARAGRAPH)) {
+                        return typer.invoke('insertLineBreak');
+                    }
+                    if (!typer.invoke('insertLine')) {
+                        insertContents(currentSelection, '\n\n');
+                    }
+                    return true;
+                }
             };
             each({
                 moveByLine: 'upArrow downArrow shiftUpArrow shiftDownArrow',
@@ -1409,14 +1418,16 @@
                     tx.widget = findWidgetWithCommand(command);
                     command = tx.widget && widgetOptions[tx.widget.id].commands[command];
                 }
-                if (isFunction(command)) {
-                    command.call(typer, tx, value);
-                    normalize();
-                    undoable.snapshot();
-                    if (typer.focused(true)) {
-                        currentSelection.focus();
-                    }
+                if (!isFunction(command)) {
+                    return false;
                 }
+                command.call(typer, tx, value);
+                normalize();
+                undoable.snapshot();
+                if (typer.focused(true)) {
+                    currentSelection.focus();
+                }
+                return true;
             }
         });
 
