@@ -1440,7 +1440,7 @@
 
     function shouldExecuteOnClick(e, role) {
         var dom = _(e.context).dom;
-        var elm = dom.bindedNode[Object.keys(dom.roles).indexOf(role)];
+        var elm = dom.bindedNode[Object.keys(dom.binds).indexOf(String(dom.roles[role]))];
         return elm && containsOrEquals(elm, e.target);
     }
 
