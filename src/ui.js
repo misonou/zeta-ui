@@ -1736,6 +1736,11 @@
             self.editorOptions.toolbar = {
                 container: $('.zeta-richtext-toolbar', e.target)[0]
             };
+        },
+        validate: function (e, self) {
+            if (self.required && !self.editor.extractText()) {
+                return reject('required');
+            }
         }
     });
 
