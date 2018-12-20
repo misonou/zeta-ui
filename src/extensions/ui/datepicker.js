@@ -298,7 +298,7 @@
         });
         var okButton = ui.submit('done', 'done', {
             execute: function (self) {
-                $(callout.element).detach();
+                callout.hideMenu();
             }
         });
         callout = ui.menu(
@@ -367,7 +367,7 @@
     });
 
     zeta.UI.define('clock', {
-        template: '<div class="zeta-clock"><div class="zeta-clock-face"><s hand="h"></s><s hand="m"></s></div><z:buttonset/></div>',
+        template: '<div class="zeta-clock"><div class="zeta-clock-face"><s hand="h"></s><s hand="m"></s><i></i><i></i></div><z:buttonset/></div>',
         hideCalloutOnExecute: false,
         step: 1,
         value: null,
@@ -376,49 +376,40 @@
                 initInternalControls();
             }
             self.append([controls.hour, controls.timeSeperator, controls.minute, controls.meridiem]);
-            if (!self.value) {
-                self.value = new Date();
-            }
-            self.watch('step', function () {
-                ui.all(self).minute.options.step = self.step;
-            });
-
-            // only allow minute interval that is a factor of 60
-            // to maintain consistent step over hours
-            if (60 % self.step > 0) {
-                self.step = 1;
-            }
-            var $face = $('.zeta-clock-face', self.element);
-            $(repeat('<i></i>', 12)).appendTo($face).each(function (i, v) {
-                $(v).css('transform', 'rotate(' + (i * 30) + 'deg)');
-            });
-            helper.bind(self.element, 'mousedown touchstart', function (e) {
-                var elm = e.target;
-                if (helper.tagName(elm) === 's' && (e.which === 1 || (e.touches || '').length === 1)) {
-                    var rect = helper.getRect(elm.parentNode);
-                    var promise = dom.drag(e, function (x, y) {
-                        var rad = Math.atan2(y - rect.centerY, x - rect.centerX) / Math.PI;
-                        var curM = getMinutes(self.value);
-                        var curH = getHours(self.value);
-                        if (elm.getAttribute('hand') === 'm') {
-                            var m = (Math.round((rad * 30 + 75) / self.step) * self.step) % 60;
-                            if (m !== curM) {
-                                var deltaH = Math.floor(Math.abs(curM - m) / 30) * (m > curM ? -1 : 1);
-                                self.setValue(makeTime(curH + deltaH, m));
-                            }
-                        } else {
-                            var h = Math.round(rad * 6 + 15) % 12 + (ui.all(self).meridiem.value ? 12 : 0);
-                            if (h !== curH) {
-                                self.setValue(makeTime(h, curM));
-                            }
-                        }
-                    });
-                    promise.then(function () {
-                        self.execute();
-                    });
+            self.watch('step', function (step) {
+                // only allow minute interval that is a factor of 60
+                // to maintain consistent step over hours
+                if (60 % step) {
+                    self.step = 1;
                 }
-            });
+                ui.all(self).minute.options.step = step;
+            }, true);
             self.setValue(new Date());
+        },
+        mousedown: function (e, self) {
+            if (helper.is(e.target, 's')) {
+                var rect = helper.getRect(e.target.parentNode);
+                var promise = dom.drag(e, function (x, y) {
+                    var rad = Math.atan2(y - rect.centerY, x - rect.centerX) / Math.PI;
+                    var curM = getMinutes(self.value);
+                    var curH = getHours(self.value);
+                    if (e.target.getAttribute('hand') === 'm') {
+                        var m = (Math.round((rad * 30 + 75) / self.step) * self.step) % 60;
+                        if (m !== curM) {
+                            var deltaH = Math.floor(Math.abs(curM - m) / 30) * (m > curM ? -1 : 1);
+                            self.setValue(makeTime(curH + deltaH, m));
+                        }
+                    } else {
+                        var h = Math.round(rad * 6 + 15) % 12 + (ui.all(self).meridiem.value ? 12 : 0);
+                        if (h !== curH) {
+                            self.setValue(makeTime(h, curM));
+                        }
+                    }
+                });
+                promise.then(function () {
+                    self.execute();
+                });
+            }
         },
         setValue: function (e, self) {
             var date = e.newValue;
@@ -514,7 +505,7 @@
         },
         escape: function (e) {
             if (helper.containsOrEquals(document, callout.element)) {
-                $(callout.element).detach();
+                callout.hideMenu();
                 e.handled();
             }
         },
@@ -522,7 +513,7 @@
             if (!callout) {
                 initDatepickerCallout();
             }
-            dom.retainFocus(e.typer.element, callout.element);
+            e.typer.retainFocus(callout.element);
             activeTyper = e.typer;
 
             var options = e.widget.options;
@@ -536,7 +527,9 @@
                 clock: value
             });
             callout.update();
-            callout.showMenu(e.typer.element);
+            if (e.source !== 'script') {
+                callout.showMenu(e.typer.element);
+            }
         },
         focusout: function (e) {
             if (e.typer === activeTyper) {
