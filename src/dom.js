@@ -1029,7 +1029,7 @@
         function dispatchDOMMouseEvent(eventName, point, e) {
             var event = document.createEvent('MouseEvent');
             event.initMouseEvent(eventName, e.bubbles, e.cancelable, e.view, e.detail, point.screenX, point.screenY, point.clientX, point.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.metaKey, e.button, e.relatedTarget);
-            helper.elementFromPoint(point.clientX, point.clientY).dispatchEvent(event);
+            return helper.elementFromPoint(point.clientX, point.clientY).dispatchEvent(event);
         }
 
         function unmount(mutations) {
@@ -1075,11 +1075,13 @@
 
         if (zeta.IS_IE10) {
             // polyfill for pointer-events: none for IE10
-            bind(body, 'mousedown mouseup mousemove click', function (e) {
+            bind(body, 'mousedown mouseup mousemove mouseenter mouseleave click dblclick contextmenu wheel', function (e) {
                 if (getComputedStyle(e.target).pointerEvents === 'none') {
                     e.stopPropagation();
                     e.stopImmediatePropagation();
-                    dispatchDOMMouseEvent(e.type, e, e);
+                    if (!e.bubbles || !dispatchDOMMouseEvent(e.type, e, e)) {
+                        e.preventDefault();
+                    }
                 }
             }, true);
         }
