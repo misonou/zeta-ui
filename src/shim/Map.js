@@ -5,7 +5,7 @@ this.Map = window.Map || (function (shim) {
     function Map() {
         var self = this;
         self.items = [];
-        self.values = [];
+        self._values = [];
         self._keys = shim.Set.prototype._keys;
     }
     Map.prototype = {
@@ -17,12 +17,12 @@ this.Map = window.Map || (function (shim) {
         },
         get: function (v) {
             var index = indexOf(this, v);
-            return index >= 0 ? this.values[index] : undefined;
+            return index >= 0 ? this._values[index] : undefined;
         },
         set: function (i, v) {
             var self = this;
             var index = indexOf(self, i);
-            self.values[index >= 0 ? index : self.items.push(i) - 1] = v;
+            self._values[index >= 0 ? index : self.items.push(i) - 1] = v;
             return self;
         },
         delete: function (v) {
@@ -30,7 +30,7 @@ this.Map = window.Map || (function (shim) {
             var index = indexOf(self, v);
             if (index >= 0) {
                 self.items.splice(index, 1);
-                self.values.splice(index, 1);
+                self._values.splice(index, 1);
             }
             return index >= 0;
         },
@@ -52,12 +52,12 @@ this.Map = window.Map || (function (shim) {
         forEach: function (callback, thisArg) {
             var self = this;
             self.items.forEach(function (v, i) {
-                callback.call(thisArg, self.values[i], v, self);
+                callback.call(thisArg, self._values[i], v, self);
             });
         },
         clear: function () {
             this.items.splice(0);
-            this.values.splice(0);
+            this._values.splice(0);
         }
     };
     return Map;
