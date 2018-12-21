@@ -1155,6 +1155,7 @@
                 compositionstart: function () {
                     muteChanges = true;
                     composingEditor = typer;
+                    container.emitAsync('stateChange');
                 },
                 compositionend: function () {
                     muteChanges = false;
@@ -1232,6 +1233,10 @@
                     if (!/ctrl(?=[acfnprstvwx]|f5|shift[nt]$)|^((shift)?tab|f5|f12)$/i.test(e.data)) {
                         e.preventDefault();
                     }
+                },
+                textInput: function (e) {
+                    // unmute so that text input from composition events can trigger contentChange
+                    muteChanges = false;
                 },
                 mousedown: function (e) {
                     (e.metakey === 'shift' ? currentSelection.extendCaret : currentSelection).moveToPoint(e.clientX, e.clientY);

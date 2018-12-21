@@ -1130,9 +1130,17 @@
 
                 // some old mobile browsers fire compositionend event before replacing final character sequence
                 // need to compare both to truncate the correct range of characters
+                // three cases has been observed: XXX{imeText}|, XXX{prevText}| and XXX|{imeText}
                 var o1 = imeOffset - imeText.length;
                 var o2 = imeOffset - prevText.length;
-                var startOffset = curText.slice(o1, imeOffset) === imeText ? o1 : o2;
+                var startOffset = imeOffset;
+                if (curText.slice(o1, imeOffset) === imeText) {
+                    startOffset = o1;
+                } else if (curText.slice(o2, imeOffset) === prevText) {
+                    startOffset = o2;
+                } else if (curText.substr(imeOffset, imeText.length) === imeText) {
+                    imeOffset += imeText.length;
+                }
                 var newText = curText.substr(0, startOffset) + curText.slice(imeOffset);
                 if (isInputElm) {
                     imeNode.value = newText;
