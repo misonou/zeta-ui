@@ -403,6 +403,7 @@
     function ZetaEvent(event, eventName, state, data) {
         var self = extend(this, event.properties);
         self.eventName = eventName;
+        self.type = eventName;
         self.context = state.context;
         self.target = containsOrEquals(event.target, state.element) ? state.element : event.target;
         self.data = null;

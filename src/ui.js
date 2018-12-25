@@ -286,7 +286,7 @@
             return false;
         }
         var currentEvent = state.container.event;
-        var promise = (!currentEvent || currentEvent.eventName !== 'setValue' || currentEvent.context !== control) && triggerEvent(control, 'setValue', {
+        var promise = (!currentEvent || currentEvent.type !== 'setValue' || currentEvent.context !== control) && triggerEvent(control, 'setValue', {
             oldValue: oldValue,
             newValue: newValue
         });
@@ -720,10 +720,10 @@
             var control = container.getContext(e.target) || container.control;
             if (isEnabled(control)) {
                 container.emit(e, e.target === element ? control.element : e.target);
-                if (matchWord(e.eventName, 'focusin focusout')) {
+                if (matchWord(e.type, 'focusin focusout')) {
                     control.focusBy = e.source;
                     registerStateChange(control);
-                } else if (matchWord(e.eventName, 'asyncStart asyncEnd')) {
+                } else if (matchWord(e.type, 'asyncStart asyncEnd')) {
                     foreachControl(control, function (v) {
                         registerStateChange(v);
                     });
@@ -1446,7 +1446,7 @@
     }
 
     function buttonExecute(e, self) {
-        if (e.eventName !== 'click' || shouldExecuteOnClick(e, 'button')) {
+        if (e.type !== 'click' || shouldExecuteOnClick(e, 'button')) {
             return self.execute();
         }
     }
@@ -1486,7 +1486,7 @@
     });
 
     function checkboxToggleValue(e, self) {
-        if (e.eventName !== 'click' || shouldExecuteOnClick(e, 'checkbox')) {
+        if (e.type !== 'click' || shouldExecuteOnClick(e, 'checkbox')) {
             self.value = !self.value;
             return self.type === 'checkbox' ? self.execute() : e.handled();
         }
