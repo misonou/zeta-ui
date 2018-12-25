@@ -787,22 +787,23 @@
         i18n: function (language, key, value) {
             addLabels(this.labels, language, key, value);
         },
-        alert: function (message, action, title, callback) {
-            return openDefaultDialog(this, 'alert', true, message, new ArgumentIterator([action, title, callback]));
+        alert: function (message, action, title, data, callback) {
+            return openDefaultDialog(this, 'alert', true, message, new ArgumentIterator([action, title, data, callback]));
         },
-        confirm: function (message, action, title, callback) {
-            return openDefaultDialog(this, 'confirm', true, message, new ArgumentIterator([action, title, callback]));
+        confirm: function (message, action, title, data, callback) {
+            return openDefaultDialog(this, 'confirm', true, message, new ArgumentIterator([action, title, data, callback]));
         },
-        prompt: function (message, value, action, title, description, callback) {
-            return openDefaultDialog(this, 'prompt', value, message, new ArgumentIterator([action, title, description, callback]));
+        prompt: function (message, value, action, title, description, data, callback) {
+            return openDefaultDialog(this, 'prompt', value, message, new ArgumentIterator([action, title, description, data, callback]));
         },
-        notify: function (message, kind, timeout, within) {
-            var iter = new ArgumentIterator([kind, timeout, within]);
+        notify: function (message, kind, timeout, within, data) {
+            var iter = new ArgumentIterator([kind, timeout, within, data]);
             return this.import('dialog.notify').render({
                 label: message,
                 kind: iter.string() || true,
                 timeout: iter.next('number') && iter.value,
-                within: iter.next(Node) && iter.value
+                within: iter.next(Node) && iter.value,
+                data: iter.next('object') && iter.value
             }).dialog;
         },
         import: function (id, options) {
@@ -2099,6 +2100,7 @@
             action: iter.string(),
             dialogTitle: iter.string(),
             dialogDescription: type === 'prompt' ? iter.string() : message,
+            dialogData: iter.next('object') && iter.value,
             callback: iter.fn()
         }).dialog;
     }
@@ -2111,7 +2113,8 @@
     });
     ui.export('dialog.prompt', ui.dialog({
         preventLeave: false,
-        exports: 'title description errorMessage',
+        data: null,
+        exports: 'title description errorMessage data',
         controls: [
             ui.textbox('value', {
                 hiddenWhenDisabled: true,
@@ -2138,6 +2141,7 @@
     var currentNotify;
     ui.export('dialog.notify', ui.generic({
         template: '<z:anim class="zeta-ui zeta-snackbar notify:{{kind}}"><div class="zeta-float"><z:buttonset><z:label/><z:button icon="close" show-text="false" show-icon="true"/></z:buttonset></div></z:anim>',
+        data: null,
         init: function (e, self) {
             if (currentNotify) {
                 currentNotify.destroy();
