@@ -1106,14 +1106,7 @@
             lastEventSource = new ZetaEventSource(e.target);
         }, true);
 
-        // detect blur to other page
-        bind(window, 'blur', function (e) {
-            if (e.target === window) {
-                windowFocusedOut = true;
-            }
-        }, true);
-
-        bind(body, {
+        bind(window, {
             compositionstart: function (e) {
                 updateIMEState();
                 imeText = '';
@@ -1320,10 +1313,15 @@
                         setFocus(cur, false, lastEventSource);
                     }
                 }
+            },
+            blur: function (e) {
+                if (e.target === window) {
+                    windowFocusedOut = true;
+                }
             }
         }, true);
 
-        bind(body, 'wheel', function (e) {
+        bind(window, 'wheel', function (e) {
             // scrolling will happen on first scrollable element up the DOM tree
             // prevent scrolling if interaction on such element should be blocked by modal element
             var deltaX = -e.deltaX;
