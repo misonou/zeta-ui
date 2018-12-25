@@ -1901,6 +1901,11 @@
         focus: function () {
             var self = this;
             var topElement = self.typer.element;
+            if (zeta.IS_TOUCH && document.activeElement !== topElement && !(dom.event || '').isTrusted) {
+                // virtual keyboard might not appear in non-trusted callstack
+                // experienced difficulty to trigger virtual keyboard by touch afterwards
+                return;
+            }
             if (containsOrEquals(document, topElement) && self.typer.enabled() && composingEditor !== self.typer) {
                 helper.makeSelection(self.baseCaret.getRange(), self.extendCaret.getRange());
                 // Firefox does not set focus on the host element automatically
