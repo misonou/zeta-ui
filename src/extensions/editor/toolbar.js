@@ -106,11 +106,11 @@
         },
         rightClick: function (e) {
             var toolbar = e.widget.contextmenu || (e.widget.contextmenu = createToolbar(e.typer, e.widget.options, contextmenu));
-            toolbar.update();
             setTimeout(function () {
                 // fix IE11 rendering issue when mousedown on contextmenu
                 // without moving focus beforehand
                 zeta.dom.focus(toolbar.element);
+                toolbar.update();
                 toolbar.showMenu({
                     x: e.clientX,
                     y: e.clientY
@@ -120,7 +120,9 @@
         },
         stateChange: function (e) {
             var toolbar = e.widget.toolbar;
-            toolbar.update();
+            setTimeout(function () {
+                toolbar.update();
+            });
             if (activeToolbar === toolbar) {
                 if (e.typer.enabled()) {
                     positionToolbar(toolbar);
