@@ -1222,7 +1222,7 @@
                 }
             },
             touchstart: function (e) {
-                mouseInitialPoint = e.touches[0];
+                mouseInitialPoint = extend({}, e.touches[0]);
                 if (!e.touches[1]) {
                     if (focused(getContainer(e.target).element)) {
                         triggerMouseEvent('mousedown', e);
