@@ -1529,7 +1529,7 @@
             if (trim(this.element.textContent).length) {
                 return true;
             }
-            return !!(new TyperTreeWalker(this.rootNode, ~NODE_PARAGRAPH).nextNode());
+            return !!(new TyperTreeWalker(this.rootNode, ~(NODE_PARAGRAPH | NODE_INLINE)).nextNode());
         },
         setValue: function (value) {
             this.invoke(function (tx) {
