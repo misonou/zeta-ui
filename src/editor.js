@@ -1532,8 +1532,8 @@
             return !!(new TyperTreeWalker(this.rootNode, ~NODE_PARAGRAPH).nextNode());
         },
         setValue: function (value) {
-            this.selectAll();
             this.invoke(function (tx) {
+                createDocumentFragment(tx.typer.element.childNodes);
                 tx.insertHtml(value);
             });
         },
