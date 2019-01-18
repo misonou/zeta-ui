@@ -2002,10 +2002,10 @@
 
     function caretSetPosition(inst, element, offset, beforeSoftBreak) {
         var textNode, end;
-        if (isElm(element)) {
+        while (isElm(element) && element.lastChild) {
             end = offset === element.childNodes.length;
-            element = element.childNodes[offset] || element.lastChild || element;
-            offset = end ? element.length || 0 : 0;
+            element = element.childNodes[offset - end];
+            offset = end ? (element.data || element.childNodes).length || 0 : 0;
         }
         var node = inst.typer.getNode(element);
         if (is(node, NODE_WIDGET | NODE_INLINE_WIDGET)) {
