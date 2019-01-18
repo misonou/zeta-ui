@@ -2363,11 +2363,6 @@
                 // avoid creating range that is outside the content editable area
                 return createRange(node, offset ? 0 : -0);
             }
-            if (offset % node.length === 0) {
-                // set the created range before or after the text node
-                // to reduce chances of empty text node created during manipulation
-                return createRange(node, !offset);
-            }
             return createRange(node, offset);
         },
         clone: function () {
