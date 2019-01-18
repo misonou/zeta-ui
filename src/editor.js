@@ -662,6 +662,9 @@
             triggerDOMChange();
             muteChanges = false;
             needNormalize = false;
+            if (currentSelection) {
+                currentSelection.select(currentSelection);
+            }
         }
 
         function extractContents(range, mode, callback) {
