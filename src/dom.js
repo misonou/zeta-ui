@@ -843,13 +843,6 @@
             return getContainer(element || focusPath[0]).context;
         },
         focus: function (element) {
-            if (helper.isArray(element)) {
-                var minY = Infinity;
-                element = any(element, function (v) {
-                    var rect = getRect(v);
-                    return rect.width && rect.height && (minY = Math.min(minY, rect.top)) === rect.top;
-                });
-            }
             setFocus(element, true);
         },
         setModal: function (element, within) {

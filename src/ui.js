@@ -57,6 +57,7 @@
     var globalContext = {
         language: 'en'
     };
+    var invalidElements;
 
     function copy(dst, src) {
         // use each() instead of extend()
@@ -332,24 +333,34 @@
     }
 
     function validateAll(control) {
-        var focusOnFailed = !matchWord(dom.getEventSource(control.element), 'script touch');
+        var focusOnFailed = !invalidElements && !matchWord(dom.getEventSource(control.element), 'script touch');
+        var failed = invalidElements || (focusOnFailed && (invalidElements = []));
         var promises = [];
-        var failed = [];
         _(control).container.flushEvents();
         foreachControl(control, function (v) {
             var promise = validate(v);
             if (promise) {
                 promise.catch(function () {
-                    failed.push(v.element);
+                    if (failed && !any(failed, function (w) {
+                       return containsOrEquals(v.element, w);
+                    })) {
+                        failed.push(v.element);
+                    }
                 });
                 promises.push(promise);
             }
         }, true);
+        if (focusOnFailed) {
+            invalidElements = null;
+        }
         if (promises[0]) {
             var promise = helper.waitAll(promises);
             promise.catch(function () {
-                if (focusOnFailed) {
-                    dom.focus(failed);
+                if (focusOnFailed && !any(failed, function (v) {
+                    return dom.focused(v);
+                })) {
+                    failed.sort(helper.comparePosition);
+                    dom.focus(failed[0]);
                 }
             });
             return promise;
