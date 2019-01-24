@@ -68,6 +68,7 @@
                 helper.always(zeta.dom.drag(e, activeTyper.element), function () {
                     (activeHandle.done || helper.noop).call(activeHandle);
                     activeHandle = null;
+                    refresh(true);
                 });
                 e.preventDefault();
             }
