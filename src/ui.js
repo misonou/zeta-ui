@@ -1912,7 +1912,7 @@
             each(control.controls, function (i, v) {
                 if (v.hasRole('buttonlist') && !v.hasRole('menu')) {
                     getButtonList(v);
-                } else if (v.hasRole('button') && v.enabled) {
+                } else if (v.hasRole('button') && v.enabled && v.visible) {
                     arr[arr.length] = v;
                 }
             });
@@ -2013,7 +2013,7 @@
                 menuShowCallout(self);
                 self.activeButton = cur || menuGetNextItem(self, self, 1);
                 e.handled();
-            } else if (!self.parent || cur) {
+            } else if (dir && (cur || !self.parent || self.calloutParent)) {
                 self.activeButton = menuGetNextItem(self, cur, dir === 'u' ? -1 : 1) || cur;
                 e.handled();
             }
