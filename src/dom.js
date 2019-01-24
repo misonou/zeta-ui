@@ -1099,7 +1099,7 @@
             lastEventSource = new ZetaEventSource(e.target);
         }, true);
 
-        bind(window, {
+        bind(root, {
             compositionstart: function (e) {
                 updateIMEState();
                 imeText = '';
@@ -1306,30 +1306,32 @@
                         setFocus(cur, false, lastEventSource);
                     }
                 }
+            }
+        }, true);
+
+        bind(window, {
+            wheel: function (e) {
+                // scrolling will happen on first scrollable element up the DOM tree
+                // prevent scrolling if interaction on such element should be blocked by modal element
+                var deltaX = -e.deltaX;
+                var deltaY = -e.deltaY;
+                for (var cur = e.target; cur !== body; cur = cur.parentNode) {
+                    var style = getComputedStyle(cur);
+                    if (cur.scrollWidth > cur.offsetWidth && matchWord(style.overflowX, 'auto scroll') && ((deltaX > 0 && cur.scrollLeft > 0) || (deltaX < 0 && cur.scrollLeft + cur.offsetWidth < cur.scrollWidth))) {
+                        break;
+                    }
+                    if (cur.scrollHeight > cur.offsetHeight && matchWord(style.overflowY, 'auto scroll') && ((deltaY > 0 && cur.scrollTop > 0) || (deltaY < 0 && cur.scrollTop + cur.offsetHeight < cur.scrollHeight))) {
+                        break;
+                    }
+                }
+                if (!focusable(cur)) {
+                    e.preventDefault();
+                }
             },
             blur: function (e) {
                 if (e.target === window) {
                     windowFocusedOut = true;
                 }
-            }
-        }, true);
-
-        bind(window, 'wheel', function (e) {
-            // scrolling will happen on first scrollable element up the DOM tree
-            // prevent scrolling if interaction on such element should be blocked by modal element
-            var deltaX = -e.deltaX;
-            var deltaY = -e.deltaY;
-            for (var cur = e.target; cur !== body; cur = cur.parentNode) {
-                var style = getComputedStyle(cur);
-                if (cur.scrollWidth > cur.offsetWidth && matchWord(style.overflowX, 'auto scroll') && ((deltaX > 0 && cur.scrollLeft > 0) || (deltaX < 0 && cur.scrollLeft + cur.offsetWidth < cur.scrollWidth))) {
-                    break;
-                }
-                if (cur.scrollHeight > cur.offsetHeight && matchWord(style.overflowY, 'auto scroll') && ((deltaY > 0 && cur.scrollTop > 0) || (deltaY < 0 && cur.scrollTop + cur.offsetHeight < cur.scrollHeight))) {
-                    break;
-                }
-            }
-            if (!focusable(cur)) {
-                e.preventDefault();
             }
         });
 
