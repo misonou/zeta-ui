@@ -641,7 +641,7 @@
     }
 
     function getState(element, className) {
-        var re = new RegExp('(?:^|\\s)\\s*' + className + '(?:-(\\S+)|\\b)$', 'ig');
+        var re = new RegExp('(?:^|\\s+)' + className + '(?:-(\\S+)|\\b)', 'ig');
         var t = [false];
         (element.className || '').replace(re, function (v, a) {
             t[a ? t.length : 0] = a || true;
