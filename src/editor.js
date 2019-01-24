@@ -522,7 +522,7 @@
                             needUpdate |= rangeIntersects(range, v.element);
                         });
                         if (needUpdate) {
-                            selectionUpdate(currentSelection);
+                            currentSelection.select(currentSelection);
                         }
                     });
                 }
@@ -1988,15 +1988,14 @@
     }
 
     function caretSetPositionRaw(inst, node, element, textNode, offset, beforeSoftBreak) {
-        var oldNode = inst.textNode || inst.element;
-        var oldOffset = inst.offset;
+        var prev = [inst.node, inst.element, inst.textNode, inst.offset];
+        var updated = prev[0] !== node || prev[1] !== element || prev[2] !== element || prev[3] !== offset;
         inst.node = node;
         inst.element = element;
         inst.textNode = textNode || null;
         inst.offset = offset;
         inst.wholeTextOffset = (textNode ? inst.offset : 0) + getWholeTextOffset(node, textNode || element);
         inst.beforeSoftBreak = !!beforeSoftBreak;
-        var updated = oldNode !== (textNode || element) || oldOffset !== offset;
         if (updated && inst.selection) {
             selectionUpdate(inst.selection);
         }
