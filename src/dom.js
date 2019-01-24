@@ -146,7 +146,7 @@
                     return true;
                 }
                 if (eventName === 'keystroke' || eventName === 'gesture') {
-                    return triggerDOMEvent(data, nativeEvent, v, null, true) || (data === 'space' && textInputAllowed(v) && triggerDOMEvent('textInput', nativeEvent, v, ' ', true));
+                    return triggerDOMEvent(data.data || data, nativeEvent, v, null, true) || (data.char && textInputAllowed(v) && triggerDOMEvent('textInput', nativeEvent, v, data.char, true));
                 }
             }
         });
@@ -1000,9 +1000,13 @@
             }
         }
 
-        function triggerKeystrokeEvent(keyName, nativeEvent) {
+        function triggerKeystrokeEvent(keyName, char, nativeEvent) {
+            var data = {
+                data: keyName,
+                char: char
+            };
             lastEventSource.sourceKeyName = keyName;
-            if (triggerUIEvent('keystroke', nativeEvent, focusPath, keyName, true)) {
+            if (triggerUIEvent('keystroke', nativeEvent, focusPath, data, true)) {
                 nativeEvent.preventDefault();
                 return true;
             }
@@ -1164,7 +1168,6 @@
                 }
             },
             keydown: function (e) {
-                setFocus(e.target);
                 if (!imeNode) {
                     var keyCode = e.keyCode;
                     var isModifierKey = (META_KEYS.indexOf(keyCode) >= 0);
@@ -1176,7 +1179,7 @@
                     modifierCount *= isSpecialKey || ((modifierCount > 2 || (modifierCount > 1 && !e.shiftKey)) && !isModifierKey);
                     modifiedKeyCode = keyCode;
                     if (modifierCount) {
-                        triggerKeystrokeEvent(getEventName(e, KEYNAMES[keyCode] || e.key), e);
+                        triggerKeystrokeEvent(getEventName(e, KEYNAMES[keyCode] || e.key), keyCode === 32 ? ' ' : '', e);
                     }
                 }
             },
@@ -1193,12 +1196,7 @@
             keypress: function (e) {
                 var data = e.char || e.key || String.fromCharCode(e.charCode);
                 if (!imeNode && !modifierCount && (e.synthetic || !('onbeforeinput' in e.target))) {
-                    if (textInputAllowed(e.target)) {
-                        lastEventSource.sourceKeyName = KEYNAMES[modifiedKeyCode] || data;
-                        triggerUIEvent('textInput', e, focusPath[0], data);
-                    } else {
-                        triggerKeystrokeEvent(data, e);
-                    }
+                    triggerKeystrokeEvent(getEventName(e, KEYNAMES[modifiedKeyCode] || data), data, e);
                 }
             },
             beforeinput: function (e) {
@@ -1208,9 +1206,9 @@
                             return triggerUIEvent('textInput', e, focusPath[0], e.data);
                         case 'deleteContent':
                         case 'deleteContentBackward':
-                            return triggerKeystrokeEvent('backspace', e);
+                            return triggerKeystrokeEvent('backspace', '', e);
                         case 'deleteContentForward':
-                            return triggerKeystrokeEvent('delete', e);
+                            return triggerKeystrokeEvent('delete', '', e);
                     }
                 }
             },
