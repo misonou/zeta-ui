@@ -569,26 +569,33 @@
 
         function updateWholeText(node, reduce, transform) {
             var textNodes = iterateToArray(createNodeIterator(node, 4));
-            var wholeText = '';
-            var index = [];
             reduce = reduce || function (v, a) {
                 return v + a;
             };
-            each(textNodes, function (i, v) {
-                wholeText = reduce(wholeText, v.data);
-                index[i] = wholeText.length;
-            });
-            wholeText = transform(wholeText);
-            each(textNodes, function (i, v) {
-                updateTextNodeData(v, wholeText.slice(index[i - 1] || 0, index[i]));
-            });
+            while (textNodes[0]) {
+                for (var i = 1, len = textNodes.length; i <= len; i++) {
+                    if (i === len || textNodes[i].previousSibling !== textNodes[i - 1]) {
+                        var wholeText = '';
+                        var index = [];
+                        each(textNodes.slice(0, i), function (i, v) {
+                            wholeText = reduce(wholeText, v.data);
+                            index[i] = wholeText.length;
+                        });
+                        wholeText = transform(wholeText);
+                        each(textNodes.splice(0, i), function (i, v) {
+                            updateTextNodeData(v, wholeText.slice(index[i - 1] || 0, index[i]));
+                        });
+                        break;
+                    }
+                }
+            }
         }
 
         function normalizeWhitespace(node) {
-            updateWholeText(node, function (v, a) {
-                return (v + a).replace(/\u00a0{2}(?!\u0020?$)/g, '\u00a0 ').replace(/[^\S\u00a0]{2}/g, ' \u00a0').replace(/\u00a0[^\S\u00a0]\u00a0(\S)/g, '\u00a0\u00a0 $1').replace(/(\S)\u00a0(?!$)/g, '$1 ');
-            }, function (v) {
-                return v.replace(/[^\S\u00a0]$/, '\u00a0');
+            updateWholeText(node, null, function (v) {
+                return v.replace(/(\s*)(?:\s$|\s{2}(\S?))/g, function (v, a, b, c) {
+                    return helper.repeat(c ? ' \u00a0' : '\u00a0 ', a.length).slice(0, a.length) + (b ? '\u00a0 ' + b : '\u00a0');
+                });
             });
         }
 
