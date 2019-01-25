@@ -32,6 +32,7 @@
     var dom = zeta.dom;
     var extend = helper.extend;
     var each = helper.each;
+    var is = helper.is;
     var removeNode = helper.removeNode;
 
     var reFormat = /^([a-z\d]*)(?:\.(.+))?/i;
@@ -93,19 +94,19 @@
     }
 
     function replaceElement(oldElement, newElement) {
-        newElement = helper.is(newElement, Node) || createElementWithClassName(newElement);
+        newElement = is(newElement, Node) || createElementWithClassName(newElement);
         return $(newElement).append(oldElement.childNodes).replaceAll(oldElement)[0];
     }
 
     function applyInlineStyle(tx, wrapElm, unwrapSpec, currentState, styleCheck) {
         var selection = tx.selection;
         var paragraphs = selection.getParagraphElements();
+        var textNodes = selection.getSelectedTextNodes();
         if (selection.isCaret && !currentState) {
             tx.insertHtml(wrapElm);
             wrapElm.appendChild(helper.createTextNode());
             selection.moveToText(wrapElm, -0);
-        } else {
-            var textNodes = selection.getSelectedTextNodes();
+        } else if (textNodes[0]) {
             paragraphs.forEach(function (v) {
                 if (!styleCheck || !helper.matchWord(window.getComputedStyle(v)[styleCheck[0]], styleCheck[1])) {
                     if (!currentState) {
@@ -155,7 +156,7 @@
         var tagName = tx.commandName === 'insertOrderedList' || type ? 'ol' : 'ul';
         var html = '<' + tagName + (type || '').replace(/^.+/, ' type="$&"') + '>';
         var filter = function (i, v) {
-            return helper.is(v, tagName) && ($(v).attr('type') || '') === (type || '');
+            return is(v, tagName) && ($(v).attr('type') || '') === (type || '');
         };
         var lists = [];
         each(tx.selection.getParagraphElements(), function (i, v) {
@@ -276,7 +277,7 @@
                     tx.insertWidget('list', m[1] === 'ol' && '1');
                 } else {
                     $(tx.selection.getParagraphElements()).not('li').each(function (i, v) {
-                        if (m[1] && !helper.is(v, m[1]) && compatibleFormatting(m[1], v.tagName)) {
+                        if (m[1] && !is(v, m[1]) && compatibleFormatting(m[1], v.tagName)) {
                             replaceElement(v, createElementWithClassName(m[1] || 'p', m[2]));
                         } else {
                             v.className = m[2] || '';
@@ -331,9 +332,11 @@
         },
         tab: function (e) {
             e.typer.invoke('indent');
+            e.handled();
         },
         shiftTab: function (e) {
             e.typer.invoke('outdent');
+            e.handled();
         },
         init: function (e) {
             $(e.widget.element).filter('ol').attr('type-css-value', LIST_STYLE_TYPE[$(e.widget.element).attr('type')] || 'decimal');
@@ -389,22 +392,29 @@
         }
     });
 
-    function isEnabled(control, widget) {
-        var selection = control.context.typer.getSelection();
-        return !!(widget === 'inlineStyle' ? (selection.startNode.nodeType & (Typer.NODE_PARAGRAPH | Typer.NODE_EDITABLE_PARAGRAPH | Typer.NODE_INLINE)) : selection.getParagraphElements()[0]);
+    function getSelection(control) {
+        return control.context.typer.getSelection();
+    }
+
+    function hasParapgraphContext(control) {
+        var selection = getSelection(control);
+        return !!selection.getParagraphElements()[0];
+    }
+
+    function hasInlineContext(control) {
+        var selection = getSelection(control);
+        return !!is(selection.startNode, Typer.NODE_PARAGRAPH | Typer.NODE_EDITABLE_PARAGRAPH | Typer.NODE_INLINE);
     }
 
     function simpleCommandButton(command, widgetId) {
         return ui.button(command, ICONS[command], {
             realm: widgetId,
             execute: command,
+            enabled: widgetId === 'inlineStyle' ? hasInlineContext : hasParapgraphContext,
             active: function (self) {
                 var widget = self.context.typer.getStaticWidget(widgetId);
                 return widget && widget[command];
             },
-            enabled: function (self) {
-                return isEnabled(self, widgetId);
-            }
         });
     }
 
@@ -417,7 +427,7 @@
                 });
             },
             active: function (self) {
-                var widget = self.context.typer.getSelection().getWidget('list');
+                var widget = getSelection(self).getWidget('list');
                 return widget && $(widget.element).attr('type') === type;
             }
         });
@@ -447,11 +457,11 @@
             realm: 'formatting',
             execute: 'formatting',
             visible: function (self) {
-                return isEnabled(self, 'formatting') && self.controls.length > 0;
+                return hasParapgraphContext(self) && self.controls.length > 0;
             },
             contextChange: function (e, self) {
-                var selection = self.context.typer.getSelection();
-                var widget = self.context.typer.getStaticWidget('formatting');
+                var selection = getSelection(self);
+                var widget = selection.typer.getStaticWidget('formatting');
                 var curElm = (selection.startNode === selection.endNode ? selection.startNode : selection.focusNode).element;
                 var isClassName = helper.any(self.controls, function (v) {
                     return v.value === widget.formattingWithClassName;
@@ -473,7 +483,7 @@
                 self.append(inlineStyleClear);
             },
             visible: function (self) {
-                return isEnabled(self, 'inlineStyle') && self.controls.length > 1;
+                return hasInlineContext(self) && self.controls.length > 1;
             },
             contextChange: function (e, self) {
                 var widget = self.context.typer.getStaticWidget('inlineStyle');
@@ -492,26 +502,34 @@
                 });
             },
             active: function (self) {
-                var widget = self.context.typer.getSelection().getWidget('list');
-                return widget && helper.is(widget.element, 'ul');
+                var widget = getSelection(self).getWidget('list');
+                return widget && is(widget.element, 'ul');
             },
             enabled: function (self) {
-                return isEnabled(self, 'list') && self.context.typer.getSelection().widgetAllowed('list');
+                return hasParapgraphContext(self) && getSelection(self).widgetAllowed('list');
             }
         }),
         ui.callout('orderedList', ICONS.orderedList,
-            orderedListButton('1', '1, 2, 3, 4'),
-            orderedListButton('a', 'a, b, c, d'),
-            orderedListButton('A', 'A, B, C, D'),
-            orderedListButton('i', 'i, ii, iii, iv'),
-            orderedListButton('I', 'I, II, III, IV'), {
+            ui.buttonlist(
+                orderedListButton('1', '1, 2, 3, 4'),
+                orderedListButton('a', 'a, b, c, d'),
+                orderedListButton('A', 'A, B, C, D'),
+                orderedListButton('i', 'i, ii, iii, iv'),
+                orderedListButton('I', 'I, II, III, IV')
+            ),
+            ui.button('clearOrderedList', {
+                execute: 'outdent',
+                visible: function (self) {
+                    return self.parent.active;
+                }
+            }), {
                 realm: 'list',
                 active: function (self) {
-                    var widget = self.context.typer.getSelection().getWidget('list');
-                    return widget && helper.is(widget.element, 'ol');
+                    var widget = getSelection(self).getWidget('list');
+                    return widget && is(widget.element, 'ol');
                 },
                 enabled: function (self) {
-                    return isEnabled(self, 'list') && self.context.typer.getSelection().widgetAllowed('list');
+                    return hasParapgraphContext(self) && getSelection(self).widgetAllowed('list');
                 }
             }),
         simpleCommandButton('indent', 'list'),
@@ -520,9 +538,7 @@
         simpleCommandButton('justifyCenter', 'formatting'),
         simpleCommandButton('justifyRight', 'formatting'),
         simpleCommandButton('justifyFull', 'formatting'), {
-            visible: function (self) {
-                return isEnabled(self, 'inlineStyle');
-            }
+            visible: hasInlineContext
         }
     ));
 
@@ -547,6 +563,7 @@
         upperAlpha: 'Alphabetically ordered list, uppercase',
         lowerRoman: 'Roman numbers, lowercase',
         upperRoman: 'Roman numbers, uppercase',
+        clearOrderedList: 'Remove numbered list',
         format_p: 'Paragraph',
         format_h1: 'Header 1',
         format_h2: 'Header 2',
