@@ -2340,25 +2340,18 @@
             point.left = point.right = getAbstractRect(inst.softPoint, mode).left;
         }
         if (dirY) {
-            var startY = findNearsetPoint(container, textNode, dirY, 2);
-            if (!newPoint) {
-                var iterator = new TyperTreeWalker(inst.typer.rootNode, NODE_ANY_BLOCK);
-                iterator.currentNode = container;
-                var untilY;
-                while ((container = next(iterator, dirY))) {
-                    var containerRect = getAbstractRect(getRect(container.element), mode);
-                    var prop = dirY > 0 ? 'bottom' : 'top';
-                    if (containerRect[FLIP_POS[prop]] * dirY < startY * dirY) {
-                        continue;
-                    }
-                    if (containerRect[FLIP_POS[prop]] * dirY >= untilY * dirY) {
-                        break;
-                    }
-                    findNearsetPoint(container, null, dirY, 1, untilY);
-                    untilY = containerRect[prop];
+            var startY = findNearsetPoint(inst.typer.rootNode, textNode, dirY, 2);
+            // find if there is a block content before next text line
+            var prop = dirY > 0 ? 'bottom' : 'top';
+            var iterator = new TyperTreeWalker(inst.typer.rootNode, NODE_ANY_BLOCK);
+            iterator.currentNode = container;
+            while ((container = next(iterator, dirY))) {
+                var containerRect = getAbstractRect(getRect(container.element), mode);
+                if (containsOrEquals(container.element, textNode) || containerRect[FLIP_POS[prop]] * dirY <= point[prop] * dirY) {
+                    continue;
                 }
-                if (!newPoint && untilY !== undefined) {
-                    return caretSetPosition(inst, iterator.currentNode.element, 0);
+                if (!newPoint || containerRect[prop] * dirY < startY * dirY) {
+                    return caretSetPosition(inst, container.element, 0);
                 }
             }
         } else {
