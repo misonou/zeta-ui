@@ -1989,7 +1989,7 @@
 
     function caretSetPositionRaw(inst, node, element, textNode, offset, beforeSoftBreak) {
         var prev = [inst.node, inst.element, inst.textNode, inst.offset];
-        var updated = prev[0] !== node || prev[1] !== element || prev[2] !== element || prev[3] !== offset;
+        var updated = prev[0] !== node || prev[1] !== element || prev[2] !== textNode || prev[3] !== offset;
         inst.node = node;
         inst.element = element;
         inst.textNode = textNode || null;
