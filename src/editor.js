@@ -587,18 +587,17 @@
             });
         }
 
-        function updateWholeText(node, reduce, transform) {
+        function updateWholeText(node, transform) {
             var textNodes = iterateToArray(createNodeIterator(node, 4));
-            reduce = reduce || function (v, a) {
-                return v + a;
-            };
             while (textNodes[0]) {
                 for (var i = 1, len = textNodes.length; i <= len; i++) {
                     if (i === len || textNodes[i].previousSibling !== textNodes[i - 1]) {
                         var wholeText = '';
                         var index = [];
                         each(textNodes.slice(0, i), function (i, v) {
-                            wholeText = reduce(wholeText, v.data);
+                            if (isTextNodeRendered(v)) {
+                                wholeText += v.data;
+                            }
                             index[i] = wholeText.length;
                         });
                         wholeText = transform(wholeText);
@@ -612,7 +611,7 @@
         }
 
         function normalizeWhitespace(node) {
-            updateWholeText(node, null, function (v) {
+            updateWholeText(node, function (v) {
                 return v.replace(/(\s*)(?:\s$|\s{2}(\S?))/g, function (v, a, b, c) {
                     return helper.repeat(c ? ' \u00a0' : '\u00a0 ', a.length).slice(0, a.length) + (b ? '\u00a0 ' + b : '\u00a0');
                 });
@@ -754,8 +753,9 @@
                                 content = createDocumentFragment(firstChild.childNodes);
                             }
                             if (!handler) {
-                                updateWholeText(content, null, function (v) {
-                                    return transformText(v, $.css(element, 'text-transform'));
+                                var textTransform = getComputedStyle(element).textTransform;
+                                updateWholeText(content, function (v) {
+                                    return transformText(v, textTransform);
                                 });
                             }
                             $(stack[0][1]).append(content);
