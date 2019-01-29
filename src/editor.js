@@ -95,13 +95,13 @@
     var getComputedStyle = window.getComputedStyle;
     var clipboard = {};
     var composingEditor = null;
-    var selectionCache = new WeakMap();
     var detachedElements = new WeakMap();
     var dirtySelections = new Set();
+    var _ = helper.createPrivateStore();
 
     function TyperSelection(typer, range) {
         var self = this;
-        selectionCache.set(self, {});
+        _(self, {});
         self.typer = typer;
         self.baseCaret = new TyperCaret(typer, self);
         self.extendCaret = new TyperCaret(typer, self);
@@ -1771,11 +1771,10 @@
 
     function selectionCreateTreeWalker(inst, whatToShow, filter) {
         var range = createRange(inst);
-        var d = selectionCache.get(inst).d;
         var defaultFilter = function (v) {
             return !rangeIntersects(v.element, range) ? 2 : 1;
         };
-        return new TyperTreeWalker(inst.focusNode, whatToShow & ~NODE_SHOW_HIDDEN, combineNodeFilters(defaultFilter, d && d.acceptNode && d.acceptNode.bind(d), filter));
+        return new TyperTreeWalker(inst.focusNode, whatToShow & ~NODE_SHOW_HIDDEN, combineNodeFilters(defaultFilter, filter));
     }
 
     function selectionIterateTextNodes(inst) {
@@ -1815,11 +1814,10 @@
             dirtySelections.add(inst);
             return;
         }
-        var cache = selectionCache.get(inst);
-        cache.d = null;
+        var cache = _(inst);
         cache.m = 0;
         inst.timestamp = performance.now();
-        inst.direction = helper.compareRangePosition(inst.extendCaret.getRange(), inst.baseCaret.getRange()) || 0;
+        inst.direction = helper.compareRangePosition(inst.extendCaret, inst.baseCaret) || 0;
         inst.isCaret = !inst.direction;
         for (var i = 0, p1 = inst.getCaret('start'), p2 = inst.getCaret('end'); i < 4; i++) {
             inst[selectionUpdate.NAMES[i + 4]] = p1[selectionUpdate.NAMES[i]];
@@ -1920,9 +1918,6 @@
                     result = self.baseCaret.moveTo(range, true) + self.extendCaret.moveTo(range, false) > 0;
                 }
             });
-            if (startNode.acceptNode) {
-                selectionCache.get(self).d = startNode;
-            }
             return result;
         },
         selectAll: function () {
@@ -1953,7 +1948,6 @@
                 inst.baseCaret.moveTo(self.baseCaret);
                 inst.extendCaret.moveTo(self.extendCaret);
             });
-            selectionCache.get(inst).d = selectionCache.get(self).d;
             return inst;
         },
         widgetAllowed: function (id) {
@@ -1972,9 +1966,9 @@
     each('getWidgets getParagraphElements getSelectedElements getSelectedText getSelectedTextNodes', function (i, v) {
         var fn = TyperSelection.prototype[v];
         TyperSelection.prototype[v] = function () {
-            var cache = selectionCache.get(this);
+            var cache = _(this);
             if (!(cache.m & (1 << i))) {
-                cache[v] = cache.d && cache.d[v] ? cache.d[v](this) : fn.apply(this);
+                cache[v] = fn.apply(this);
                 cache.m |= (1 << i);
             }
             return cache[v];
