@@ -189,9 +189,29 @@
         return tagName(v) === 'br' && v;
     }
 
+    function isInlineElm(v) {
+        return /^inline-?/.test(getComputedStyle(v).display) && v;
+    }
+
+    function isTextNodeRendered(node) {
+        if (/\S/.test(node.data)) {
+            return true;
+        }
+        var test = function (node, pSib) {
+            while (!node[pSib]) {
+                node = node.parentNode;
+                if (!node || !isInlineElm(node)) {
+                    return false;
+                }
+            }
+            return isText(node[pSib]) ? isTextNodeRendered(node[pSib]) : isInlineElm(node[pSib]);
+        };
+        return test(node, 'previousSibling') && test(node, 'nextSibling');
+    }
+
     function isTextNodeEnd(v, offset, dir) {
         var str = v.data;
-        return (dir >= 0 && (offset === v.length || str.slice(offset) === ZWSP)) ? 1 : (dir <= 0 && (!offset || str.slice(0, offset) === ZWSP)) ? -1 : 0;
+        return !isTextNodeRendered(v) || ((dir >= 0 && (offset === v.length || str.slice(offset) === ZWSP)) ? 1 : (dir <= 0 && (!offset || str.slice(0, offset) === ZWSP)) ? -1 : 0);
     }
 
     function isRTL(ch, baseRTL) {
@@ -2453,7 +2473,7 @@
             var overBr = false;
             while (true) {
                 if (!node || offset === getOffset(node, 0 * -direction)) {
-                    while (!(node = next(iterator, direction)) || !node.length) {
+                    while (!(node = next(iterator, direction)) || !node.length || !isTextNodeRendered(node)) {
                         if (!node) {
                             return false;
                         }
