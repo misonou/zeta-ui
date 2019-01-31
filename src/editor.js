@@ -193,7 +193,7 @@
         return /^inline-?/.test(getComputedStyle(v).display) && v;
     }
 
-    function isTextNodeRendered(node) {
+    function isTextNodeRendered(node, pSib) {
         if (/\S/.test(node.data)) {
             return true;
         }
@@ -204,9 +204,9 @@
                     return false;
                 }
             }
-            return isText(node[pSib]) ? isTextNodeRendered(node[pSib]) : isInlineElm(node[pSib]);
+            return isText(node[pSib]) ? isTextNodeRendered(node[pSib], pSib) : isInlineElm(node[pSib]);
         };
-        return test(node, 'previousSibling') && test(node, 'nextSibling');
+        return test(node, pSib || 'previousSibling') && !pSib && test(node, 'nextSibling');
     }
 
     function isTextNodeEnd(v, offset, dir) {
