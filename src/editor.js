@@ -2412,7 +2412,7 @@
                 node = iterator.currentNode;
                 offset = node && Math.min(offset + node.length, node.length);
             }
-            return !!node && caretSetPosition(this, node, getOffset(node, offset));
+            return !!isText(node) && caretSetPosition(this, node, getOffset(node, offset));
         },
         moveToLineEnd: function (direction) {
             var self = caretEnsureState(this);
