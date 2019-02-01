@@ -194,7 +194,7 @@
     }
 
     function isTextNodeRendered(node, pSib) {
-        if (/\S/.test(node.data)) {
+        if (/[\S\u00a0]/.test(node.data)) {
             return true;
         }
         var test = function (node, pSib) {
