@@ -238,7 +238,7 @@
                 selection.select(info);
             }
             setEditorStyle(src);
-            e.preventDefault();
+            e.handled();
         },
         tab: function (e) {
             tabNextCell(e.typer.getSelection(), 'next', ':first-child');
