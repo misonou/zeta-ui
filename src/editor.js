@@ -752,12 +752,6 @@
                             } else if (hasThisElement && !reqThisElement) {
                                 content = createDocumentFragment(firstChild.childNodes);
                             }
-                            if (!handler) {
-                                var textTransform = getComputedStyle(element).textTransform;
-                                updateWholeText(content, function (v) {
-                                    return transformText(v, textTransform);
-                                });
-                            }
                             $(stack[0][1]).append(content);
                         }
                         return 2;
