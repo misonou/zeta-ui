@@ -587,35 +587,27 @@
             });
         }
 
-        function updateWholeText(node, transform) {
+        function normalizeWhitespace(node) {
             var textNodes = iterateToArray(createNodeIterator(node, 4));
             while (textNodes[0]) {
-                for (var i = 1, len = textNodes.length; i <= len; i++) {
-                    if (i === len || textNodes[i].previousSibling !== textNodes[i - 1]) {
-                        var wholeText = '';
-                        var index = [];
-                        each(textNodes.slice(0, i), function (i, v) {
-                            if (isTextNodeRendered(v)) {
-                                wholeText += v.data;
-                            }
-                            index[i] = wholeText.length;
-                        });
-                        wholeText = transform(wholeText);
-                        each(textNodes.splice(0, i), function (i, v) {
-                            updateTextNodeData(v, wholeText.slice(index[i - 1] || 0, index[i]));
-                        });
-                        break;
+                var wholeText = '';
+                var index = [];
+                var len = 0;
+                while (++len < textNodes.length && textNodes[len].previousSibling === textNodes[len - 1]);
+                each(textNodes.slice(0, len), function (i, v) {
+                    if (isTextNodeRendered(v)) {
+                        wholeText += v.data;
                     }
-                }
-            }
-        }
-
-        function normalizeWhitespace(node) {
-            updateWholeText(node, function (v) {
-                return v.replace(/(\s*)(?:\s$|\s{2}(\S?))/g, function (v, a, b, c) {
-                    return helper.repeat(c ? ' \u00a0' : '\u00a0 ', a.length).slice(0, a.length) + (b ? '\u00a0 ' + b : '\u00a0');
+                    index[i] = wholeText.length;
                 });
-            });
+                wholeText = wholeText.replace(/(\s+)(\S?)/g, function (v, a, b, c) {
+                    var suffix = !b ? '\u00a0' : a[2] ? '\u00a0 ' : '';
+                    return helper.repeat(c ? ' \u00a0' : '\u00a0 ', a.length).slice(0, a.length - suffix.length) + suffix + b;
+                });
+                each(textNodes.splice(0, len), function (i, v) {
+                    updateTextNodeData(v, wholeText.slice(index[i - 1] || 0, index[i]));
+                });
+            }
         }
 
         function normalize() {
