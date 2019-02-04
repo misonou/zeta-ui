@@ -145,8 +145,8 @@
                 if (triggerDOMEvent(eventName, nativeEvent, v, data, bubbles)) {
                     return true;
                 }
-                if (eventName === 'keystroke' || eventName === 'gesture') {
-                    return triggerDOMEvent(data.data || data, nativeEvent, v, null, true) || (data.char && textInputAllowed(v) && triggerDOMEvent('textInput', nativeEvent, v, data.char, true));
+                if (data.char && textInputAllowed(v)) {
+                    return triggerDOMEvent('textInput', nativeEvent, v, data.char, true);
                 }
             }
         });
@@ -488,6 +488,9 @@
                         return false;
                     }
                     state.lastEvent = handlerName;
+                }
+                if (matchWord(handlerName || eventName, 'keystroke gesture') && callHandler(state, null, data.data, null)) {
+                    return self.handled;
                 }
                 var handler = state.handlers[handlerName || eventName];
                 if (!handler) {
