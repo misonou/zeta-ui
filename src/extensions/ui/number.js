@@ -27,8 +27,8 @@
         }
     }
 
-    function stepValue(widget, delta) {
-        setValue(widget, (widget.typer.getValue() || 0) + delta * widget.options.step);
+    function stepValue(tx) {
+        setValue(tx.widget, (tx.typer.getValue() || 0) + (tx.commandName === 'stepUp' ? 1 : -1) * tx.widget.options.step);
     }
 
     var preset = {
@@ -51,17 +51,9 @@
                 setValue(preset, value);
             }
         },
-        mousewheel: function (e) {
-            stepValue(e.widget, -e.data);
-            e.handled();
-        },
-        upArrow: function (e) {
-            stepValue(e.widget, 1);
-            e.handled();
-        },
-        downArrow: function (e) {
-            stepValue(e.widget, -1);
-            e.handled();
+        commands: {
+            stepUp: stepValue,
+            stepDown: stepValue
         },
         contentChange: function (e) {
             if (e.source !== 'keyboard') {

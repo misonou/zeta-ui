@@ -431,6 +431,12 @@
         }
     });
 
+    function stepValue(tx) {
+        var options = tx.widget.options;
+        var date = stepDate(options.mode === 'datetime' ? 'minute' : options.mode, tx.typer.getValue() || new Date(), tx.commandName === 'stepUp' ? -1 : 1 , options.minuteStep);
+        tx.typer.setValue(date);
+    }
+
     var preset = {
         options: {
             mode: 'day',
@@ -473,11 +479,8 @@
             }
         },
         commands: {
-            step: function (tx, value) {
-                var options = tx.widget.options;
-                var date = stepDate(options.mode === 'datetime' ? 'minute' : options.mode, tx.typer.getValue() || new Date(), value, options.minuteStep);
-                tx.typer.setValue(date);
-            }
+            stepUp: stepValue,
+            stepDown: stepValue
         },
         contentChange: function (e) {
             if (e.typer === activeTyper && e.source !== 'script') {
@@ -492,16 +495,6 @@
             if (e.typer === activeTyper) {
                 callout.showMenu(e.typer.element);
             }
-        },
-        mousewheel: function (e) {
-            e.typer.invoke('step', e.data);
-            e.preventDefault();
-        },
-        upArrow: function (e) {
-            e.typer.invoke('step', -1);
-        },
-        downArrow: function (e) {
-            e.typer.invoke('step', 1);
         },
         escape: function (e) {
             if (helper.containsOrEquals(document, callout.element)) {

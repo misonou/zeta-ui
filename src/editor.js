@@ -42,6 +42,7 @@
     var isFunction = helper.isFunction;
     var iterate = helper.iterate;
     var iterateToArray = helper.iterateToArray;
+    var noop = helper.noop;
     var rangeCovers = helper.rangeCovers;
     var rangeIntersects = helper.rangeIntersects;
     var rectEquals = helper.rectEquals;
@@ -1210,7 +1211,7 @@
                 destroy: helper.bind(topElement, domEvents)
             });
 
-            var defaultKeystroke = {
+            var defaultAction = {
                 backspace: deleteNextContent,
                 delete: deleteNextContent,
                 enter: function () {
@@ -1220,6 +1221,19 @@
                     if (!typer.invoke('insertLine')) {
                         insertContents(currentSelection, '\n\n');
                     }
+                    return true;
+                },
+                upArrow: function () {
+                    return typer.invoke('stepUp');
+                },
+                downArrow: function () {
+                    return typer.invoke('stepDown');
+                },
+                mousewheel: function (e) {
+                    return typer.invoke(e.data < 0 ? 'stepUp' : 'stepDown');
+                },
+                textInput: function (e) {
+                    handleTextInput(e.data);
                     return true;
                 }
             };
@@ -1232,7 +1246,11 @@
                 each(v, function (j, v) {
                     var direction = (j & 1) ? 1 : -1;
                     var extend = !!(j & 2);
-                    defaultKeystroke[v] = function () {
+                    var fn = defaultAction[v];
+                    defaultAction[v] = function () {
+                        if (fn && fn()) {
+                            return true;
+                        }
                         if (!extend && !currentSelection.isCaret) {
                             currentSelection.collapse(direction < 0 ? 'start' : 'end');
                         } else {
@@ -1284,23 +1302,11 @@
                     }
                 }
             };
-            var afterEmit = {
-                keystroke: function (e) {
-                    if (e.data in defaultKeystroke && defaultKeystroke[e.data](e)) {
-                        e.handled();
-                    }
-                },
-                textInput: function (e) {
-                    handleTextInput(e.data);
-                    e.handled();
-                }
-            };
 
             container.tap(function (e) {
                 var eventName = e.eventName;
-                var target;
+                var target = currentSelection.focusNode.element;
                 if (enabled) {
-                    (beforeEmit[eventName] || helper.noop)(e);
                     if (helper.matchWord(eventName, 'focusin focusout focusreturn')) {
                         // only fire focus related events for static widgets
                         if (e.target !== topElement) {
@@ -1312,8 +1318,9 @@
                     } else if (eventName === 'click') {
                         target = e.target;
                     }
-                    if (!container.emit(e, target || currentSelection.focusNode.element)) {
-                        (afterEmit[eventName] || helper.noop)(e);
+                    (beforeEmit[eventName] || noop)(e);
+                    if (container.emit(e, target) || (defaultAction[eventName === 'keystroke' ? e.data : eventName] || noop)(e)) {
+                        e.handled();
                     }
                     if (e.originalEvent && e.isHandled()) {
                         e.preventDefault();
