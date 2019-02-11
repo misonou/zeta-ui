@@ -1949,12 +1949,12 @@
     });
 
     each('moveTo moveToPoint moveToText moveByLine moveToLineEnd moveByWord moveByCharacter', function (i, v) {
-        TyperSelection.prototype[v] = function () {
+        defineHiddenProperty(TyperSelection.prototype, v, function () {
             var self = this;
             return selectionAtomic(function () {
                 return TyperCaret.prototype[v].apply(self.baseCaret, arguments) + self.collapse('base') > 0;
             }, arguments);
-        };
+        });
     });
     each('getWidgets getParagraphElements getSelectedElements getSelectedText getSelectedTextNodes', function (i, v) {
         var fn = TyperSelection.prototype[v];
