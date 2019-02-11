@@ -1988,19 +1988,21 @@
         var element = inst.element;
         var textNode = inst.textNode;
         if (!containsOrEquals(root, textNode || element) || (textNode && (textNode.parentNode !== element || inst.offset > textNode.length))) {
-            if (!inst.node) {
-                inst.moveTo(root, 0);
-            } else if (textNode && containsOrEquals(root, textNode) && inst.offset <= textNode.length) {
-                inst.moveTo(textNode, inst.offset);
+            var result;
+            if (textNode && containsOrEquals(root, textNode) && inst.offset <= textNode.length) {
+                result = inst.moveTo(textNode, inst.offset);
             } else if (containsOrEquals(root, inst.node.element)) {
-                inst.moveToText(inst.node.element, inst.wholeTextOffset);
+                result = inst.moveToText(inst.node.element, inst.wholeTextOffset) || inst.moveTo(inst.node.element, 0);
             } else {
                 var replace = {
                     node: element
                 };
                 inst.typer.getNode(element);
                 for (; !containsOrEquals(root, replace.node) && detachedElements.has(replace.node); replace = detachedElements.get(replace.node));
-                inst.moveTo(replace.node, replace.offset);
+                result = inst.moveTo(replace.node, replace.offset);
+            }
+            if (!result) {
+                inst.moveTo(root, 0);
             }
         }
         return inst;
