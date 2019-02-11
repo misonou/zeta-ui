@@ -1964,7 +1964,7 @@
                 cache[v] = fn.apply(this);
                 cache.m |= (1 << i);
             }
-            return cache[v];
+            return helper.isArray(cache[v]) ? cache[v].slice(0) : cache[v];
         };
     });
 
