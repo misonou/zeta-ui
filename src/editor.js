@@ -1767,7 +1767,7 @@
         var defaultFilter = function (v) {
             return !rangeIntersects(v.element, range) ? 2 : 1;
         };
-        return new TyperTreeWalker(inst.focusNode, whatToShow & ~NODE_SHOW_HIDDEN, combineNodeFilters(defaultFilter, filter));
+        return new TyperTreeWalker(inst.focusNode, whatToShow & ~NODE_SHOW_HIDDEN, combineNodeFilters(defaultFilter, _(inst).acceptNode, filter));
     }
 
     function selectionIterateTextNodes(inst) {
@@ -1809,6 +1809,7 @@
         }
         var cache = _(inst);
         cache.m = 0;
+        cache.acceptNode = null;
         inst.timestamp = performance.now();
         inst.direction = helper.compareRangePosition(inst.extendCaret, inst.baseCaret) || 0;
         inst.isCaret = !inst.direction;
@@ -1911,6 +1912,9 @@
                     result = self.baseCaret.moveTo(range, true) + self.extendCaret.moveTo(range, false) > 0;
                 }
             });
+            if (startNode.acceptNode) {
+                _(self).acceptNode = startNode.acceptNode.bind(startNode);
+            }
             return result;
         },
         selectAll: function () {
@@ -1941,6 +1945,7 @@
                 inst.baseCaret.moveTo(self.baseCaret);
                 inst.extendCaret.moveTo(self.extendCaret);
             });
+            _(inst).acceptNode = _(self).acceptNode;
             return inst;
         },
         widgetAllowed: function (id) {
