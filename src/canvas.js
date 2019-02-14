@@ -177,7 +177,7 @@
         }
     }
 
-    extend(TyperCanvas.prototype, {
+    helper.definePrototype(TyperCanvas, {
         refresh: function () {
             setTimeout(refresh, 0, true);
         },
