@@ -1052,19 +1052,19 @@ body > .zeta-menu {
 
 /* Grid */
 
+.zeta-grid {
+    padding: 0.75em;
+}
+
 .zeta-grid .zeta-label {
     display: block;
     text-align: center;
-}
-
-.zeta-grid .zeta-label span:first-child {
-    padding-left: 0;
-    text-indent: 0;
+    margin-top: 0.5em;
 }
 
 .zeta-grid-cell {
     margin: 1px;
-    border: rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.15);
     background-color: white;
     width: 1em;
     height: 1em;
@@ -1073,19 +1073,6 @@ body > .zeta-menu {
 
 .zeta-grid-cell.active {
     background-color: rgba(0, 0, 0, 0.15);
-}
-
-.zeta-grid-cell:nth-child(7n+1) {
-    clear: left;
-}
-
-.zeta-grid {
-    width: calc(7em + 28px);
-    padding: 0 0.75em;
-}
-
-.zeta-grid-wrapper {
-    margin-top: 0.75em;
 }
 
 .zeta-grid-row:after {

@@ -295,19 +295,22 @@
     };
 
     zeta.UI.define('tableGrid', {
-        template: '<div class="zeta-grid"><div class="zeta-grid-wrapper"></div><z:label/></div>',
+        template: '<div class="zeta-grid"><div class="zeta-grid-wrapper">' + repeat('<div class="zeta-grid-row">' + repeat('<div class="zeta-grid-cell"></div>', 7) + '</div>', 7) + '</div><z:label show-icon="false"/></div>',
+        label: '{{rows or 0}} \u00d7 {{columns or 0}}',
+        rows: 0,
+        columns: 0,
         init: function (e, self) {
-            var $self = $(self.element);
-            $self.find('.zeta-grid-wrapper').append(repeat('<div class="zeta-grid-row">' + repeat('<div class="zeta-grid-cell"></div>', 7) + '</div>', 7));
-            $self.find('.zeta-grid-cell').mouseover(function () {
-                self.value.rows = $(this).parent().index() + 1;
-                self.value.columns = $(this).index() + 1;
-                self.label = self.value.rows + ' \u00d7 ' + self.value.columns;
-                $self.find('.zeta-grid-cell').removeClass('active');
-                $self.find('.zeta-grid-row:lt(' + self.value.rows + ')').find('.zeta-grid-cell:nth-child(' + self.value.columns + ')').prevAll().addBack().addClass('active');
+            var $cells = $('.zeta-grid-cell', self.element);
+            $cells.mouseover(function () {
+                var i = $cells.index(this);
+                var c = i % 7 + 1;
+                var r = (i - c + 1) / 7 + 1;
+                $cells.each(function (i, v) {
+                    $(v).toggleClass('active', i % 7 < c && i / 7 < r);
+                });
+                self.rows = r;
+                self.columns = c;
             });
-            self.label = '0 \u00d7 0';
-            self.value = {};
         },
         click: function (e, self) {
             return self.execute();
@@ -322,12 +325,12 @@
         }
     });
     ui.export('zeta.editor.insertMenu',
-        ui.callout('insertTable',
+        ui.callout('insertTable', 'table_chart',
             ui.tableGrid({
                 realm: 'widgetAllowed',
                 execute: function (self) {
                     self.context.typer.invoke(function (tx) {
-                        tx.insertWidget('table', self.value);
+                        tx.insertWidget('table', self);
                     });
                 }
             })
