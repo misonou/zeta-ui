@@ -93,27 +93,6 @@
         bind(window, 'scroll resize orientationchange focus', refresh);
     }
 
-    function computeFillRects(range) {
-        var start = activeTyper.getAbstractSide('inline-start', range.startContainer);
-        var end = activeTyper.getAbstractSide('inline-end', range.startContainer);
-        var result = [];
-        each(helper.getRects(range), function (i, v) {
-            if (Math.abs(v[start] - v[end]) <= 1) {
-                v[end] += 5;
-            }
-            result.forEach(function (prev) {
-                if (Math.abs(v.left - prev.right) <= 1) {
-                    prev.right = v.left;
-                }
-                if (Math.abs(v.top - prev.bottom) <= 1) {
-                    prev.bottom = v.top;
-                }
-            });
-            result.unshift(v);
-        });
-        return result;
-    }
-
     function addLayer(name, callback) {
         allLayers[name] = [callback, [], {}, true];
     }
@@ -194,25 +173,9 @@
         fill: function (range, color, handle) {
             var style = {};
             style.background = color || 'rgba(0,31,81,0.2)';
-            if (range instanceof Node || 'top' in range) {
-                addObject('f', range, null, style, handle);
-            } else {
-                var arr = [];
-                helper.iterate(activeTyper.createSelection(range).createTreeWalker(-1, function (v) {
-                    if (helper.rangeCovers(range, v.element)) {
-                        arr[arr.length] = getRect(v);
-                        return 2;
-                    }
-                    if (is(v, Editor.NODE_ANY_ALLOWTEXT)) {
-                        arr.push.apply(arr, computeFillRects(createRange(range, createRange(v.element, 'content'))));
-                        return 2;
-                    }
-                    return 1;
-                }));
-                arr.forEach(function (v) {
-                    addObject('f', v, null, style, handle);
-                });
-            }
+            each(helper.makeArray(range), function (i, v) {
+                addObject('f', v, null, style, handle);
+            });
         },
         drawCaret: function (caret) {
             addObject('k', caret, null, {
@@ -258,15 +221,10 @@
 
     addLayer('selection', function (canvas) {
         var selection = canvas.typer.getSelection();
-        var startNode = selection.startNode;
-        if (selection.isCaret) {
-            if ('caretColor' in root.style) {
-                canvas.drawCaret(selection.baseCaret);
-            }
-        } else if (is(startNode, Editor.NODE_WIDGET) === selection.focusNode) {
-            canvas.fill(startNode.element);
-        } else {
-            canvas.fill(selection.getRange());
+        if (!selection.isCaret) {
+            canvas.fill(selection.getRects());
+        } else if ('caretColor' in root.style) {
+            canvas.drawCaret(selection.baseCaret);
         }
     });
 

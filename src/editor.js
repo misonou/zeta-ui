@@ -1764,10 +1764,11 @@
 
     function selectionCreateTreeWalker(inst, whatToShow, filter) {
         var range = createRange(inst);
+        var proxy = _(inst).proxy;
         var defaultFilter = function (v) {
             return !rangeIntersects(v.element, range) ? 2 : 1;
         };
-        return new TyperTreeWalker(inst.focusNode, whatToShow & ~NODE_SHOW_HIDDEN, combineNodeFilters(defaultFilter, _(inst).acceptNode, filter));
+        return new TyperTreeWalker(inst.focusNode, whatToShow & ~NODE_SHOW_HIDDEN, combineNodeFilters(defaultFilter, proxy && proxy.acceptNode && proxy.acceptNode.bind(proxy), filter));
     }
 
     function selectionIterateTextNodes(inst) {
@@ -1809,7 +1810,7 @@
         }
         var cache = _(inst);
         cache.m = 0;
-        cache.acceptNode = null;
+        cache.proxy = null;
         inst.timestamp = performance.now();
         inst.direction = helper.compareRangePosition(inst.extendCaret, inst.baseCaret) || 0;
         inst.isCaret = !inst.direction;
@@ -1853,6 +1854,49 @@
                 return (collapse !== false ? b : e).getRange();
             }
             return createRange(b.getRange(), e.getRange());
+        },
+        getRects: function () {
+            var self = this;
+            var proxy = _(self).proxy;
+            if (proxy && proxy.getRects) {
+                return proxy.getRects();
+            }
+            if (self.isCaret) {
+                return [getRect(self.baseCaret)];
+            }
+            if (is(self.startNode, NODE_WIDGET) === self.focusNode) {
+                return [getRect(self.startNode)];
+            }
+            var range = self.getRange();
+            var arr = [];
+            iterate(selectionCreateTreeWalker(self, -1, function (v) {
+                if (rangeCovers(range, v.element)) {
+                    arr[arr.length] = getRect(v);
+                    return 2;
+                }
+                if (is(v, NODE_ANY_ALLOWTEXT)) {
+                    var side = getAbstractSide('inline-start', v.element);
+                    var result = [];
+                    each(getRects(createRange(range, createRange(v.element, 'contents'))), function (i, v) {
+                        if (Math.abs(v[side] - v[FLIP_POS[side]]) <= 1) {
+                            v[FLIP_POS[side]] += 5;
+                        }
+                        each(result, function (i, w) {
+                            if (Math.abs(v.left - w.right) <= 1) {
+                                w.right = v.left;
+                            }
+                            if (Math.abs(v.top - w.bottom) <= 1) {
+                                w.bottom = v.top;
+                            }
+                        });
+                        result[result.length] = v;
+                    });
+                    arr.push.apply(arr, result);
+                    return 2;
+                }
+                return 1;
+            }));
+            return arr;
         },
         getWidget: function (id) {
             return any(this.getWidgets(), function (v) {
@@ -1913,7 +1957,7 @@
                 }
             });
             if (startNode.acceptNode) {
-                _(self).acceptNode = startNode.acceptNode.bind(startNode);
+                _(self).proxy = startNode;
             }
             return result;
         },
@@ -1945,7 +1989,7 @@
                 inst.baseCaret.moveTo(self.baseCaret);
                 inst.extendCaret.moveTo(self.extendCaret);
             });
-            _(inst).acceptNode = _(self).acceptNode;
+            _(inst).proxy = _(self).proxy;
             return inst;
         },
         widgetAllowed: function (id) {
