@@ -10,7 +10,9 @@
     var MODE_COLUMN = 2;
     var MODE_TABLE = 3;
 
+    var Editor = zeta.Editor;
     var helper = zeta.helper;
+    var getRect = helper.getRect;
     var removeNode = helper.removeNode;
     var repeat = helper.repeat;
     var visualRange;
@@ -25,7 +27,8 @@
         self.maxRow = maxRow;
     }
 
-    function getCellSelection(selection) {
+    function getCellSelection(context) {
+        var selection = context.typer.getSelection();
         var widget = selection.focusNode.widget;
         if (widget.id === 'table') {
             var $c1 = $(selection.startElement).parentsUntil(widget.element).addBack();
@@ -85,8 +88,8 @@
         setEditorStyle(widget);
     }
 
-    function insertRow(widget, index, count, kind, before) {
-        $(getRow(widget, index === 'last' ? countRows(widget) - 1 : index))[before ? 'before' : 'after'](repeat(TR_HTML.replace('%', repeat(kind, countColumns(widget))), count));
+    function insertRow(widget, index, count, before, kind) {
+        $(getRow(widget, index === 'last' ? countRows(widget) - 1 : index))[before ? 'before' : 'after'](repeat(TR_HTML.replace('%', repeat(kind || TD_HTML, countColumns(widget))), count));
         setEditorStyle(widget);
     }
 
@@ -98,14 +101,14 @@
             });
             setEditorStyle(widget);
         } else if (!hasHeader && (value || value === undefined)) {
-            insertRow(widget, 0, 1, TH_HTML, true);
+            insertRow(widget, 0, 1, true, TH_HTML);
         }
     }
 
     function findIndex(widget, isColumn, pos) {
         var $cell = $(isColumn ? TR_SELECTOR + ':first>*' : TR_SELECTOR, widget.element);
         for (var i = $cell.length - 1; i >= 0; i--) {
-            var r = helper.getRect($cell[i]);
+            var r = getRect($cell[i]);
             if ((isColumn ? r.left : r.top) < pos) {
                 return i;
             }
@@ -158,7 +161,7 @@
         }
     };
 
-    zeta.Editor.widgets.table = {
+    Editor.widgets.table = {
         element: 'table',
         editable: 'th,td',
         create: function (tx, options) {
@@ -209,7 +212,7 @@
             var insertAfter = mode === MODE_ROW ? info.minRow === srcRows : info.minCol === srcCols;
 
             if (mode === MODE_COLUMN) {
-                insertRow(dstRows > srcRows ? src : dst, 'last', Math.abs(dstRows - srcRows), TD_HTML, false);
+                insertRow(dstRows > srcRows ? src : dst, 'last', Math.abs(dstRows - srcRows), false);
                 $(TR_SELECTOR, dst).each(function (i, v) {
                     $(v.children)[insertAfter ? 'insertAfter' : 'insertBefore'](getCell(src, i, info.minCol - insertAfter));
                 });
@@ -226,7 +229,7 @@
                     info.maxCol = info.minCol + dstCols - 1;
                     info.maxRow = info.minRow + dstRows - 1;
                     if (info.maxRow > srcRows - 1) {
-                        insertRow(src, 'last', info.maxRow - srcRows + 1, TD_HTML, false);
+                        insertRow(src, 'last', info.maxRow - srcRows + 1, false);
                     }
                     if (info.maxCol > srcCols - 1) {
                         insertColumn(src, 'last', info.maxCol - srcCols + 1, false);
@@ -259,27 +262,27 @@
         },
         commands: {
             addColumnBefore: function (tx) {
-                var info = getCellSelection(tx.selection);
+                var info = getCellSelection(tx);
                 insertColumn(tx.widget, info.minCol, info.numCol, true);
             },
             addColumnAfter: function (tx) {
-                var info = getCellSelection(tx.selection);
+                var info = getCellSelection(tx);
                 insertColumn(tx.widget, info.maxCol, info.numCol, false);
             },
             addRowAbove: function (tx) {
-                var info = getCellSelection(tx.selection);
-                insertRow(tx.widget, info.minRow, info.numRow, TD_HTML, true);
+                var info = getCellSelection(tx);
+                insertRow(tx.widget, info.minRow, info.numRow, true);
             },
             addRowBelow: function (tx) {
-                var info = getCellSelection(tx.selection);
-                insertRow(tx.widget, info.maxRow, info.numRow, TD_HTML, false);
+                var info = getCellSelection(tx);
+                insertRow(tx.widget, info.maxRow, info.numRow, false);
             },
             removeColumn: function (tx) {
-                var info = getCellSelection(tx.selection);
+                var info = getCellSelection(tx);
                 info.remove(MODE_COLUMN);
             },
             removeRow: function (tx) {
-                var info = getCellSelection(tx.selection);
+                var info = getCellSelection(tx);
                 info.remove(MODE_ROW);
             },
             toggleTableHeader: function (tx) {
@@ -380,7 +383,7 @@
                     realm: 'widget',
                     execute: 'addRowAbove',
                     enabled: function (self) {
-                        return !hasTableHeader(self.state.widget) || getCellSelection(self.context.typer.getSelection()).minRow > 0;
+                        return !hasTableHeader(self.state.widget) || getCellSelection(self.context).minRow > 0;
                     }
                 }),
                 ui.button('addRowBelow', {
@@ -402,32 +405,32 @@
     );
 
     ui.i18n('en', {
-        'insertTable': 'Table',
-        'modifyTable': 'Modify table',
-        'showHeader': 'Show header',
-        'style': 'Table style',
-        'styleDefault': 'Default',
-        'addColumnBefore': 'Add column before',
-        'addColumnAfter': 'Add column after',
-        'addRowAbove': 'Add row above',
-        'addRowBelow': 'Add row below',
-        'removeColumn': 'Remove column',
-        'removeRow': 'Remove row',
-        'tableWidth': 'Table width',
-        'fitContent': 'Fit to content',
-        'fullWidth': 'Full width'
+        insertTable: 'Table',
+        modifyTable: 'Modify table',
+        showHeader: 'Show header',
+        style: 'Table style',
+        styleDefault: 'Default',
+        addColumnBefore: 'Add column before',
+        addColumnAfter: 'Add column after',
+        addRowAbove: 'Add row above',
+        addRowBelow: 'Add row below',
+        removeColumn: 'Remove column',
+        removeRow: 'Remove row',
+        tableWidth: 'Table width',
+        fitContent: 'Fit to content',
+        fullWidth: 'Full width'
     });
 
-    var selectHandleX = zeta.Editor.handle('cell');
-    var selectHandleY = zeta.Editor.handle('cell');
+    var selectHandleX = Editor.handle('cell');
+    var selectHandleY = Editor.handle('cell');
     var updateOnMouseup;
 
-    zeta.Editor.addLayer('table', function (canvas) {
+    Editor.addLayer('table', function (canvas) {
         var widget = canvas.hoverNode && canvas.hoverNode.widget;
         if (widget && widget.id === 'table') {
-            var rect = helper.getRect(widget);
-            canvas.drawLine(rect.left, rect.top, rect.right, rect.top, 10, 'transparent', 'solid', selectHandleX);
-            canvas.drawLine(rect.left, rect.top, rect.left, rect.bottom, 10, 'transparent', 'solid', selectHandleY);
+            var rect = getRect(widget);
+            canvas.drawLine(rect, 'top', 10, 'transparent', 'solid', selectHandleX);
+            canvas.drawLine(rect, 'left', 10, 'transparent', 'solid', selectHandleY);
         }
 
         var selection = canvas.typer.getSelection();
@@ -442,7 +445,7 @@
             visualRange[isColumnMode ? 'maxCol' : 'maxRow'] = index;
             updateOnMouseup = true;
         } else if (canvas.selectionChanged) {
-            visualRange = getCellSelection(selection);
+            visualRange = getCellSelection(canvas);
             if (!visualRange || (visualRange.numRow === 1 && visualRange.numCol === 1)) {
                 visualRange = null;
                 updateOnMouseup = false;
@@ -453,7 +456,7 @@
         if (updateOnMouseup && !canvas.mousedown) {
             updateOnMouseup = false;
             if (visualRange.mode === MODE_TABLE) {
-                selection.select(visualRange.element);
+                canvas.typer.select(visualRange.element);
                 visualRange = null;
             } else {
                 selectCells(visualRange.widget, Math.min(visualRange.minRow, visualRange.maxRow), Math.min(visualRange.minCol, visualRange.maxCol), visualRange.numRow, visualRange.numCol);
@@ -463,7 +466,7 @@
         if (visualRange) {
             var c1 = getCell(visualRange, 'min');
             var c2 = getCell(visualRange, 'max');
-            canvas.fill(helper.mergeRect(helper.getRect(c1), helper.getRect(c2)));
+            canvas.fill(helper.mergeRect(getRect(c1), getRect(c2)));
         }
         canvas.toggleLayer('selection', !visualRange);
     });
