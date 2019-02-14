@@ -48,6 +48,7 @@
     function TyperCanvasHandle(cursor, done) {
         this.cursor = cursor || 'pointer';
         this.done = done;
+        this.active = false;
     }
 
     function init() {
@@ -64,9 +65,12 @@
 
         bind(container, 'mousedown', function (e) {
             if (e.buttons & 1) {
+                (activeHandle || {}).active = false;
                 activeHandle = handles.get(e.target);
+                activeHandle.active = true;
                 helper.always(zeta.dom.drag(e, activeTyper.element), function () {
                     (activeHandle.done || helper.noop).call(activeHandle);
+                    activeHandle.active = false;
                     activeHandle = null;
                     activeTyper.focus();
                     refresh(true);
