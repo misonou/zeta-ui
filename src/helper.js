@@ -908,9 +908,10 @@
         get centerY() {
             return (this.top + this.bottom) / 2;
         },
-        collapse: function (side) {
+        collapse: function (side, offset) {
             var rect = this;
-            return side === 'left' || side === 'right' ? toPlainRect(rect[side], rect.top, rect[side], rect.bottom) : toPlainRect(rect.left, rect[side], rect.right, rect[side]);
+            var pos = rect[side] + (offset || 0);
+            return side === 'left' || side === 'right' ? toPlainRect(pos, rect.top, pos, rect.bottom) : toPlainRect(rect.left, pos, rect.right, pos);
         },
         translate: function (x, y) {
             var self = this;
