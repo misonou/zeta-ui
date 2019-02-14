@@ -1961,8 +1961,8 @@
         parseOptions: parseControlsAndExecute,
         init: function (e, self) {
             var callout = e.target;
-            for (var cur = self.parent; cur && cur.hasRole('menu buttonlist'); cur = cur.parent);
-            if (self.parent && !cur) {
+            for (var cur = self.parent; cur && cur.hasRole('buttonlist') && !cur.hasRole('menu'); cur = cur.parent);
+            if (self.parent && (!cur || cur.hasRole('menu'))) {
                 bind(self.element, 'mouseenter', menuShowCallout.bind(null, self));
                 bind(self.element, 'mouseleave', menuHideCallout.bind(null, self));
             } else if (!self.parent && callout === self.element) {
