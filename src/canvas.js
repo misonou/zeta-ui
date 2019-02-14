@@ -228,6 +228,10 @@
             addObject('b', element, null, style);
         },
         drawLine: function (x1, y1, x2, y2, width, color, lineStyle, handle) {
+            if (x1.left !== undefined) {
+                x1 = x1.collapse(y1);
+                return this.drawLine(x1.left, x1.top, x1.right, x1.bottom, x2, y2, width, color);
+            }
             var dx = x2 - x1;
             var dy = y2 - y1;
             var style = {};
