@@ -167,10 +167,12 @@
         var proto = getPrototypeOf(control);
         var values = {};
         if (raw) {
+            var copyValue = function (prop) {
+                values[prop] = control[prop];
+            };
             var state = _(control);
-            getOwnPropertyNames(control).forEach(function (v) {
-                values[v] = control[v];
-            });
+            getOwnPropertyNames(control).forEach(copyValue);
+            getOwnPropertyNames(state.options).forEach(copyValue);
             extend(values, state.values);
             values.value = state.value;
         } else {
