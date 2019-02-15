@@ -219,7 +219,7 @@
     }
 
     function getScrollParent(element) {
-        for (; element !== root && getComputedStyle(element).overflow === 'visible'; element = element.parentNode);
+        for (var s; element !== root && (s = getComputedStyle(element)) && s.overflow === 'visible' && matchWord(s.position, 'static relative'); element = element.parentNode);
         return element;
     }
 
