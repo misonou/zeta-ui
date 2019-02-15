@@ -1,6 +1,6 @@
 {
   "name": "zeta-ui",
-  "version": "1.0.0-pre",
+  "version": "1.0.0-beta",
   "devDependencies": {
     "grunt": "^1.0.1",
     "grunt-contrib-clean": "^1.1.0",

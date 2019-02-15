@@ -14,3 +14,7 @@
 ## Compatibility
 
 The plugin works with IE10+ and other modern browsers and jQuery 3.x.
+
+## Demo
+
+Visit our demo site on https://misonou.github.io/zeta-ui/demo/index.html.

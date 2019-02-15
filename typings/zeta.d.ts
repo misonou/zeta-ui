@@ -65,7 +65,7 @@ interface Rect {
      * @param side A string referring one of the four side of a rect.
      * @returns A new rect object.
      */
-    collapse(side: Direction): Rect;
+    collapse(side: Direction, offset?: number): Rect;
 
     /**
      * Returns a new rect that has the same size but at a different position.
@@ -77,28 +77,56 @@ interface Rect {
 }
 
 interface HasRange {
+    /**
+     * Gets a DOM range represented by or associated with the object.
+     */
     getRange(): Range;
 }
 
 interface HasRect {
+    /**
+     * Gets a region on screen represented by or associated with the object.
+     */
     getRect(): Rect;
 }
 
 interface HasElement {
+    /**
+     * The element represented by or associated with the object.
+     */
     readonly element: HTMLElement;
 }
 
 interface Iterator<T> {
-    previousNode(): T;
-    nextNode(): T;
+    /**
+     * Moves the iterator to previous node. If there is no previous node iterable, the iterator will stay on the same node.
+     * @returns The previous node, or null if there is no such node.
+     */
+    previousNode(): T | null;
+
+    /**
+     * Moves the iterator to next node. If there is no next node iterable, the iterator will stay on the same node.
+     * @returns The next node, or null if there is no such node.
+     */
+    nextNode(): T | null;
 }
 
 interface Dictionary<T> {
+    /**
+     * Gets the value or object associated with the key.
+     */
     [name: string]: T;
 }
 
 interface ArrayLike<T> {
+    /**
+     * Gets the value or object at the specified index.
+     */
     [index: number]: T;
+
+    /**
+     * Gets the number of values or objects in this collection.
+     */
     length: number;
 }
 
@@ -107,8 +135,6 @@ interface ArrayLike<T> {
  */
 
 type MapResultValue<T> = T | T[] | null | undefined;
-type NodeIterable = Iterable<T> | Iterator<T> | TreeWalker | NodeIterator;
-type NodeIterableContext<T> = T extends Iterable<T> ? T : Node;
 type IterateCallbackOrNull<T, R> = null | ((node: T) => MapResultValue<R>);
 
 /**
@@ -155,9 +181,20 @@ interface ZetaStatic {
     readonly Editor: TyperStatic;
     readonly UI: UIToolSetStatic;
 
-    readonly canvas: any;
+    /**
+     * Gets the object containing functions for DOM operations.
+     */
     readonly dom: ZetaDOM;
+
+    /**
+     * Gets the object containing utility functions.
+     */
+
     readonly helper: ZetaHelper;
+
+    /**
+     * Gets the polyfill constructors used by this library.
+     */
     readonly shim: shim;
 }
 
@@ -345,7 +382,7 @@ interface ZetaHelper {
      * or an array containing items in an array-like object or iterable collection like Map or Set;
      * or an array with exactly one item (the input object) if it does not equals to null or undefined; otherwise an empty array.
      */
-    makeArray(obj: any): Array;
+    makeArray<T>(obj: T): T[];
 
     /**
      * Iterates and invoke the given callback for each node.
@@ -353,14 +390,14 @@ interface ZetaHelper {
      * @param [callback] Function to be called on each node.
      * @param [from] If given, invocation of the callback will be skipped until the specified node.
      */
-    iterate<T extends NodeIterable, U extends NodeIterableContext<T>>(iterator: T, callback?: (node: U) => void, from?: U): void;
+    iterate<T>(iterator: Iterator<T>, callback?: (node: T) => void, from?: T): void;
 
     /**
      * Creates an array containing each node in the iterated order.
      * @param iterator Any iterable object with the previousNode and nextNode methods.
      * @returns An array containing all nodes.
      */
-    iterateToArray<T extends NodeIterable, U extends NodeIterableContext<T>>(iterator: T): U[];
+    iterateToArray<T>(iterator: Iterator<T>): T[];
 
     /**
      * Creates an array containing resulting items from each node in the iterated order.
@@ -370,7 +407,7 @@ interface ZetaHelper {
      * @param [until] If given, iteration will be stopped once the specified node is iterated, callback will not be fired for this node.
      * @returns An array containing resulting items.
      */
-    iterateToArray<T extends NodeIterable, U extends NodeIterableContext<T>, R>(iterator: T, callback: IterateCallbackOrNull<U, R>, from?: U, until?: U): IterateCallbackOrNull<T, R> extends null ? U[] : R[];
+    iterateToArray<T, R>(iterator: Iterator<T>, callback: IterateCallbackOrNull<T, R>, from?: T, until?: T): IterateCallbackOrNull<T, R> extends null ? T[] : R[];
 
     /**
      * Gets item associated with the specified key in the given map.
@@ -378,7 +415,7 @@ interface ZetaHelper {
      * @param key A value or object as the key.
      * @returns The item associated with the key if any.
      */
-    mapGet(map: Map<any, any> | WeakMap<any, any>, key: any): any;
+    mapGet<K, V>(map: Map<K, V> | WeakMap<K, V>, key: K): V;
 
     /**
      * Gets item associated with the specified key in the given map, and create one if the key does not exist.
@@ -387,7 +424,7 @@ interface ZetaHelper {
      * @param fn A constructor function, object of this type will be created if the key does not exist in the map.
      * @returns The item associated with the key.
      */
-    mapGet<T>(map: Map<any, any> | WeakMap<any, any>, key: any, fn: typeof T): T;
+    mapGet<K, T>(map: Map<K, T> | WeakMap<K, Ty>, key: K, fn: typeof T): T;
 
     /**
      * Gets item associated with the specified key in the given map, and create one if the key does not exist.
@@ -396,7 +433,7 @@ interface ZetaHelper {
      * @param fn A function that returns the item to be stored in the map when called if the key does not exist in the map.
      * @returns The item associated with the key.
      */
-    mapGet(map: Map<any, any> | WeakMap<any, any>, key: any, fn: () => any): any;
+    mapGet<K, V>(map: Map<K, V> | WeakMap<K, V>, key: K, fn: () => V): V;
 
     /**
      * Creates a data store to associate private data to objects, filling the use case of private variables.
@@ -797,10 +834,27 @@ interface ZetaHelper {
      */
     createNodeIterator<T extends number>(root: Element, whatToShow: T): T extends 1 ? Iterator<Element> : T extends 4 ? Iterator<Text> : Iterator<Node>;
 
+    /**
+     * Gets the state of an element using the given class name.
+     * If the element has class names prefixed with the given name ("class-*"), an array of string is returned.
+     * @param element A DOM element to be tested.
+     * @param className A string specifying the class name.
+     */
     getState(element: Element, className: string): boolean | string[];
 
+    /**
+     * Sets the element to the specified states using class names.
+     * @param element A DOM element.
+     * @param dict An object which its key-value pair represents each state.
+     */
     setState(element: Element, dict: Dictionary<boolean | string[] | Dictionary<any>>): void;
 
+    /**
+     * Sets the element to the specified states using the given class name.
+     * @param element A DOM element.
+     * @param className A string specifying the class name.
+     * @param values If given true, the class name is added to the element.
+     */
     setState(element: Element, className: string, values: boolean | string[] | Dictionary<any>): void;
 
     /**
@@ -871,7 +925,16 @@ interface ZetaHelper {
      */
     position(element: Element, to: Element | Window, dir: Direction2D, within?: Element | Window): void;
 
-    runCSSTransition(element: Element, className: string, callback?: boolean | () => any): Promise<any>;
+    /**
+     * Adds a class to the element and returns a promise that is fulfilled when the CSS animation or transition is completed.
+     * If there is no animation or transition triggered, the promise is immediately fulfilled.
+     * If the class is removed before the animation or transition is completed, the promise will be rejected.
+     * If the element already has the given class, a rejected promise is returned.
+     * @param element A DOM element.
+     * @param className A string specifying the class name which triggers CSS animation or transition.
+     * @param callback A callback that is synchronously called when animation or transition is completed.
+     */
+    runCSSTransition(element: Element, className: string, callback?: boolean | (() => any)): Promise<any>;
 
     /**
      * Adds event listeners to the Window object or other DOM elements.
@@ -880,7 +943,7 @@ interface ZetaHelper {
      * @param listener Function to be called when the specified event(s) is/are dispatched.
      * @param [useCapture] Optionally set the event listeners to be triggered in capture phase.
      */
-    bind(element: EventTarget, event: string, listener: (e: Event) => void, useCapture?: boolean): (() => void);
+    bind(element: EventTarget, event: string, listener: (e: Event) => void, useCapture?: boolean | AddEventListenerOptions): (() => void);
 
     /**
      * Adds event listeners to the Window object or other DOM elements.
@@ -888,7 +951,7 @@ interface ZetaHelper {
      * @param event A dictionary which each property represents a event listener associated to an event.
      * @param [useCapture] Optionally set the event listeners to be triggered in capture phase.
      */
-    bind(element: EventTarget, event: Dictionary<(e: Event) => void>, useCapture?: boolean): (() => void);
+    bind(element: EventTarget, event: Dictionary<(e: Event) => void>, useCapture?: boolean | AddEventListenerOptions): (() => void);
 
     /**
      * Creates a promise object that is resolved by the given value or that is depends on another promise object.
@@ -912,9 +975,34 @@ interface ZetaHelper {
      */
     reject(reason?: any): Promise<any>;
 
-    always(promise: Promise<any>, callback: (resolved: boolean, value: any) => any);
+    /**
+     * Registers a callback to a promise object which is always fired whenever the promise object is fulfilled or rejeccted.
+     * @param promise A promise object.
+     * @param callback A callback function that receives the promise state and the fulfillment value or rejection reason.
+     */
+    always(promise: Promise<any>, callback: (resolved: boolean, value: any) => any): void;
 
-    removeNode(node: Node);
+    /**
+     * Selects a range of contents.
+     * If the ending position is before the starting position, i.e. select contents backwards,
+     * directionality is preserved if browser supports.
+     * @param base Starting position.
+     * @param extent Ending position.
+     */
+    makeSelection(base: Rangeish, extent: Rangeish): void;
+
+    /**
+     * Places a text cursor at the specified position.
+     * @param node A DOM element or text node.
+     * @param offset A number representing the n-th child of an element or the n-th characters of a text node. 
+     */
+    makeSelection(node: Node, offset: number): void;
+
+    /**
+     * Removes the specified DOM node from the DOM tree where it currently belongs to.
+     * @param node A DOM node.
+     */
+    removeNode(node: Node): void;
 }
 
 /**
@@ -936,6 +1024,7 @@ type ZetaEventTypeMap = { [P in ClickName]: ZetaMouseEvent } & {
     mousewheel: ZetaWheelEvent;
     metakeychange: ZetaKeystrokeEvent;
     keystroke: ZetaKeystrokeEvent;
+    gesture: ZetaGestureEvent;
     textInput: ZetaTextInputEvent;
 };
 
@@ -957,6 +1046,11 @@ interface ZetaEvent {
     readonly eventName: string;
 
     /**
+     * Gets the event name.
+     */
+    readonly type: string;
+
+    /**
      * Gets a custom object that represents a functional sub-component.
      */
     readonly context: any;
@@ -976,6 +1070,11 @@ interface ZetaEvent {
      * Gets the key or key combinations if this event is triggered by keyboard.
      */
     readonly sourceKeyName: KeyNameChar | KeyNameSpecial;
+
+    /**
+     * Gets the data associated with this event.
+     */
+    readonly data: any;
 
     /**
      * Gets a high precision timestamp indicating the time at which this event is fired.
@@ -1030,24 +1129,52 @@ interface ZetaKeystrokeEvent extends ZetaEvent {
     readonly data: string;
 }
 
+interface ZetaGestureEvent extends ZetaEvent {
+    readonly data: string;
+}
+
 interface ZetaTextInputEvent extends ZetaEvent {
     readonly data: string;
 }
 
 interface ZetaDOM {
+    /**
+     * Gets the DOM event which triggers the current event loop.
+     */
+    readonly event: Event | null;
+
+    /**
+     * Gets the current active element which is readily receiving user input.
+     */
     readonly activeElement: HTMLElement;
+
+    /**
+     * Gets the type of user interaction that triggers the current event.
+     */
     readonly eventSource: ZetaEventSource;
 
-    drag(e: MouseEvent, callback?: (x: number, y: number) => void): Promise<any>;
-    drag(e: MouseEvent, within: Element, callback?: (x: number, y: number) => void): Promise<any>;
+    /**
+     * Scroll all ancestor container so that the specified element is in view.
+     * @param element Element to be scrolled into view.
+     * @param rect A rect represent a region inside the element to be scrolled into view.
+     */
     scrollIntoView(element: Element, rect?: Rectish): void;
+
+    /**
+     * Determines whether current window is in focus.
+     * @param window Window object.
+     */
     focused(window: Window): boolean;
+
+    /**
+     * Determines whether a given element is in focus.
+     * @param element A DOM element.
+     */
     focused(element: Element, strict?: boolean): boolean;
     getContext(element?: Element): any;
-    prepEventSource(promise: Promise<any>) : Promise<any>;
+    prepEventSource(promise: Promise<any>): Promise<any>;
     getEventSource(element: Element): ZetaEventSource;
-    focus(element: Element, focusOnInput?: boolean): void;
-    focus(element: Element[]): void;
+    focus(element: Element): void;
     lock(element: Element, promise: Promise<any>, oncancel?: () => Promise<any>): Promise<any>;
     lock(element: Element, modal: boolean, promise?: Promise<any>, oncancel?: () => Promise<any>): Promise<any>;
     locked(element: Element, parents?: boolean): boolean;
@@ -1071,6 +1198,8 @@ interface ZetaDOM {
     getShortcut(command: string): KeyNameSpecial[];
     setShortcut(command: string, keys: string): void;
     setShortcut(command: Dictionary<KeyNameSpecial>): void;
+    drag(e: Event, callback?: (x: number, y: number) => void): Promise<any>;
+    drag(e: Event, within: Element, callback?: (x: number, y: number) => void): Promise<any>;
 }
 
 interface ZetaContainerStatic {
@@ -1080,22 +1209,116 @@ interface ZetaContainerStatic {
      * @param context A public-facing object, possibly contains APIs to this component.
      */
     new(element: Element, context?: any): ZetaContainer;
+
+    /**
+     * Gets the prototype object which defines methods of ZetaContainer instances.
+     */
+    readonly prototype: ZetaContainer;
 }
 
 interface ZetaContainer {
-    readonly event: ZetaEvent<any> | null;
+    /**
+     * Gets the event currently being fired within this container.
+     */
+    readonly event: ZetaEvent | null;
 
+    /**
+     * Registers event handlers to a DOM element.
+     * @param element A DOM element.
+     * @param handlers An object which each entry represent the handler to be registered on the event.
+     * @returns A randomly generated key.
+     */
     add(element: Element, handlers: ZetaDOMEventHandlers): string;
+
+    /**
+     * Registers event handlers to a DOM element with a specific key.
+     * @param element A DOM element.
+     * @param key A string to be used as the key.
+     * @param handlers An object which each entry represent the handler to be registered on the event.
+     * @returns The specified key.
+     */
     add(element: Element, key: string, handlers: ZetaDOMEventHandlers): string;
-    delete(element: Element, key?: string): void;
+
+    /**
+     * Removes the element from the container.
+     * Handlers for destroy event will be fired unless handlers are added back immediately using the same key.
+     * @param element A DOM element.
+     */
+    delete(element: Element): void;
+
+    /**
+     * Removes event handlers that is registered using the specified key.
+     * Handlers for destroy event registered using the key will be fired unless handlers are added back immediately using the same key.
+     * @param element A DOM element.
+     * @param key A string to be used as the key.
+     */
+    delete(element: Element, key: string): void;
+
+    /**
+     * Defunct the container. Destroy event will be fired for all registered elements.
+     */
     destroy(): void;
-    emit(event: ZetaEvent<any>, target?: Element, data?: null, bubbles?: boolean): Promise<any> | false;
-    emit(eventName: string, target?: Element, data?: any, bubbles?: boolean): Promise<any> | any;
+
+    /**
+     * Re-emits an event to components.
+     * If the event is handled by component, a promise object is returned.
+     * @param event An instance of ZetaEvent representing the event to be re-emitted.
+     * @param [target] A DOM element which the event should be dispatched on.
+     * @param [data] Any data to be set on ZetaEvent#data property. If an object is given, the properties will be copied to the ZetaEvent object during dispatch.
+     * @param [bubbles] Specifies whether the event should bubble up through the component tree. Default is true.
+     */
+    emit(event: ZetaEvent, target?: Element, data?: any, bubbles?: boolean): Promise<any> | false;
+
+    /**
+     * Emits an event to components synchronously.
+     * If the event is handled by component, a promise object is returned.
+     * @param eventName Event name.
+     * @param [target] A DOM element which the event should be dispatched on.
+     * @param [data] Any data to be set on ZetaEvent#data property. If an object is given, the properties will be copied to the ZetaEvent object during dispatch.
+     * @param [bubbles] Specifies whether the event should bubble up through the component tree. Default is true.
+     */
+    emit(eventName: string, target?: Element, data?: any, bubbles?: boolean): Promise<any> | false;
+
+    /**
+     * Emits an event to components asynchronously.
+     * @param eventName Event name.
+     * @param [target] A DOM element which the event should be dispatched on.
+     * @param [data] Any data to be set on ZetaEvent#data property. If an object is given, the properties will be copied to the ZetaEvent object during dispatch.
+     * @param [bubbles] Specifies whether the event should bubble up through the component tree. Default is true.
+     * @param [mergeData] A callback to aggregates data from the previous undispatched event of the same name on the same target.
+     */
     emitAsync(eventName: string, target?: Element, data?: any, bubbles?: boolean, mergeData?: (v, a) => any): void;
+
+    /**
+     * Gets the custom object that represents the given element,
+     * @param element A DOM element.
+     */
     getContext(element: Element): HasElement;
-    observe(callback, options): void;
+
+    /**
+     * Defines a custom object that represents a DOM component.
+     * @param element A DOM element.
+     * @param context Any object that has the property "element" pointing to the same DOM element.
+     */
     setContext(element: Element, context: HasElement): void;
-    tap(handler: ZetaEventHandler): void;
+
+    /**
+     * Listens DOM mutations in this container.
+     * Mutations from nested containers will not be propagated to parent containers.
+     * @param callback A callback to be fired asynchronously when there are changes.
+     * @param options An object specifying which types of mutations shuold be included.
+     */
+    observe(callback: (mutations: MutationRecord[]) => any, options: MutationObserverInit): void;
+
+    /**
+     * Adds a handler to intercept event being fired within this container.
+     * @param handler An event handler.
+     */
+    tap(handler: ZetaEventHandler<ZetaEvent, ZetaContainer>): void;
+
+    /**
+     * Fire scheduled asynchronous events immediately.
+     */
     flushEvents(): void;
 }
 
@@ -1212,9 +1435,17 @@ interface TyperStatic {
      * Specifies whether widget of the specified name should be effective by default unless overriden by options to individual editor or if default options are suppressed.
      */
     readonly defaultOptions: { [name: string]: boolean };
+
+    /**
+     * Gets the prototype object which defines methods of Typer instance.
+     */
+    readonly prototype: Typer;
+
+    addLayer(name: string, callback: (canvas: TyperCanvas) => void): void;
+    handle(cursor: string, onrelease?: () => void): TyperCanvasHandle;
 }
 
-interface Typer extends TyperDocument, HasElement, TyperSetSelection, TyperInvokeCommand {
+interface Typer extends TyperDocument, HasElement, HasTyperSelection, TyperInvokeCommand {
     /**
      * Gets the root element containing editable content.
      */
@@ -1258,6 +1489,14 @@ interface Typer extends TyperDocument, HasElement, TyperSetSelection, TyperInvok
      * @returns A caret object.
      */
     createCaret(node: Node, offset: number): TyperCaret;
+
+    /**
+     * reates a mutable object that represents an editable location within the editor, like a text cursor, at the specified intial position.
+     * @param element A DOM node.
+     * @param collapse Specify the position: before the start of a node for true; after the end of a node for false.
+     * @returns A caret object.
+     */
+    createCaret(element: Node, collapse: boolean): TyperCaret;
 
     /**
      * Creates a mutable object that represents an editable location or a part of contents within the editor.
@@ -1355,7 +1594,7 @@ interface Typer extends TyperDocument, HasElement, TyperSetSelection, TyperInvok
      * Gets whether the editor is focused.
      * @param [strict]
      */
-    focused(strict?: boolean): void;
+    focused(strict?: boolean): boolean;
 
     /**
      * Gets the physical direction of a box that is the semantic direction with respect to the writing mode of the given node.
@@ -1595,31 +1834,134 @@ interface TyperDocument {
     getNode(node: Node): TyperNode;
 }
 
-interface TyperSetCaret {
+interface TyperExoticSelection extends HasRange {
+    readonly acceptNode: IteratorNodeFilter<TyperNode>;
+    readonly getRects?: () => Rect[];
+}
+
+interface HasTyperCaret {
     /**
-     * Moves the caret to a location indicated by the given range.
+     * Moves the caret to a position indicated by the given range.
      * If the range is not collapsed, the starting point of the range is used.
-     * @param range A DOM range or an object describe a range in ROM.
-     * @returns true the caret is moved to a new location compared to current state.
+     * @param range A DOM range or an object describe a range in DOM.
+     * @returns true if the caret is moved to a new position; false otherwise.
      */
     moveTo(range: Rangeish): boolean;
+
+    /**
+     * Moves the caret to the position before the n-th child of an element or the n-th characters of a text node, or at the end of the given element or text node.
+     * @param node A DOM node.
+     * @param offset A number representing the n-th child of an element or the n-th characters of a text node. If the number is negative, it is counted from the end of the given node. A negative zero (-0) represents the position after the last child or character.
+     * @returns true the caret is moved to a new position; false otherwise.
+     */
     moveTo(node: Node, offset: boolean | 0 | -0 | number): boolean;
+
+    /**
+     * Moves the caret to a nearest possible position to the given coordinates on the screen.
+     * @param x A number representing X-coordiate on the screen.
+     * @param y A number representing Y-coordiate on the screen.
+     * @returns true if  the caret is moved to a new position; false otherwise.
+     */
     moveToPoint(x: number, y: number): boolean;
+
+    /**
+     * Moves the caret tothe position before the n-th character in an element or text node, or at the end of the given element or text node.
+     * @param node A DOM node.
+     * @param offset A number specifying the n-th characters of a text node. If the number is negative, the position is counted backwards from the end. A negative zero (-0) represents the position after the last character.
+     * @returns true if the caret is moved to a new position; false otherwise.
+     */
     moveToText(node: Node, offset: number): boolean;
+
+    /**
+     * Moves the caret to the start or the end of a line.
+     * @param direction Direction is specified by the sign - positive being the forward while negative being backwards.
+     * @returns true if the caret is moved to a new position; false otherwise.
+     */
     moveToLineEnd(direction: number): boolean;
+
+    /**
+     * Moves the caret by the given number of lines in either direction.
+     * @param direction Number of lines to jump over. Direction is specified by the sign - positive being the forward while negative being backwards.
+     * @returns true if the caret is moved to a new position; false otherwise.
+     */
     moveByLine(direction: number): boolean;
+
+    /**
+     * Moves the caret by the given number of words in either direction.
+     * @param direction Number of words to jump over. Direction is specified by the sign - positive being the forward while negative being backwards.
+     * @returns true if the caret is moved to a new position; false otherwise.
+     */
     moveByWord(direction: number): boolean;
+
+    /**
+     * Moves the caret by the given number of characters in either direction.
+     * @param direction Number of characters to jump over. Direction is specified by the sign - positive being the forward while negative being backwards.
+     * @returns true if the caret is moved to a new position; false otherwise.
+     */
     moveByCharacter(direction: number): boolean;
 }
 
-interface TyperSetSelection {
+interface HasTyperSelection {
+    /**
+     * Alters the selection to enclose the nearest word.
+     * @param mode The string "word".
+     * @returns true if the selection is altered.
+     */
     select(mode: SelectMode): boolean;
-    select(range: HasRange): boolean;
-    select(startNode: Node, collapse: boolean | 0 | -0 | number): boolean;
+
+    /**
+     * Alters the selection to the specified range of contents.
+     * @param range A DOM range object or any object that describe a range within the editor.
+     * @returns true if the selection is altered.
+     */
+    select(range: HasRange | TyperExoticSelection): boolean;
+
+    /**
+     * Moves and collapses the selection to the specific position.
+     * @param startNode A DOM node.
+     * @param collapse Indicating the position of resulting range: before the start of a node for true; after the end of a node for false; after the start of a node (0-th child) for 0; and before the end of a node (last child) for -0.
+     * @returns true if the selection is altered.
+     */
+    select(startNode: Node, collapse: boolean | 0 | -0): boolean;
+
+    /**
+     * Moves and collapses the selection to the specific position.
+     * @param startNode A DOM node.
+     * @param startOffset A number representing the n-th child of an element or the n-th characters of a text node.
+     * @returns true if the selection is altered.
+     */
     select(startNode: Node, startOffset: number): boolean;
+
+    /**
+     * Alters the selection to the specified range of contents.
+     * @param startNode A DOM node.
+     * @param startOffset A number representing the n-th child of an element or the n-th characters of a text node.
+     * @param endNode A DOM node.
+     * @param endOffset A number representing the n-th child of an element or the n-th characters of a text node.
+     * @returns true if the selection is altered.
+     */
     select(startNode: Node, startOffset: number, endNode: Node, endOffset: number): boolean;
+
+    /**
+     * Moves and collapses the selection to the specific position.
+     * @param range A DOM range.
+     * @param collapse Includes starting point if true; ending point otherwise.
+     * @returns true if the selection is altered.
+     */
     select(range: Range, collapse: boolean): boolean;
+
+    /**
+     * Alters the selection to the specified range of contents.
+     * @param start A DOM range indicating the starting point.
+     * @param end A DOM range indicating the ending point.
+     * @returns true if the selection is altered.
+     */
     select(start: Range, end: Range): boolean;
+
+    /**
+     * Alters the selection to enclose all contents in the editor.
+     * @returns true if the selection is altered.
+     */
     selectAll(): boolean;
 }
 
@@ -1708,7 +2050,7 @@ interface TyperWidget extends HasElement, Dictionary<any> {
     readonly options: Dictionary<any>;
 }
 
-interface TyperCaret extends HasRange, HasRect, TyperSetCaret {
+interface TyperCaret extends HasRange, HasRect, HasTyperCaret {
     /**
      * Gets the editor object.
      */
@@ -1759,37 +2101,173 @@ interface TyperCaret extends HasRange, HasRect, TyperSetCaret {
     clone(): TyperCaret;
 }
 
-interface TyperSelection extends HasRange, TyperSetSelection, TyperSetCaret {
+interface TyperSelection extends HasRange, HasTyperSelection, HasTyperCaret {
+    /**
+     * Gets the editor object associated with this selection.
+     */
     readonly typer: Typer;
+
+    /**
+     * Gets the caret object that represent the anchor position of this selection.
+     */
     readonly baseCaret: TyperCaret;
+
+    /**
+     * Gets the caret object that represent the focus position of this selection.
+     */
     readonly extendCaret: TyperCaret;
+
+    /**
+     * Gets the innermost node that enclose the current selection.
+     */
     readonly focusNode: TyperNode;
+
+    /**
+     * Gets the relative direction of extent (focus) position to base (anchor) position.
+     * If the selection is collapsed, 0 is returned.
+     */
     readonly direction: -1 | 0 | 1;
+
+    /**
+     * Gets whether the selection is collapsed (caret mode).
+     */
     readonly isCaret: boolean;
+
+    /**
+     * Gets whether the selection is inside a single editable node, i.e. no widgets are partially selected.
+     */
     readonly isSingleEditable: boolean;
+
+    /**
+     * Gets the time when this selection is updated.
+     * @see Performance#now
+     */
     readonly timestamp: number;
 
+    /**
+     * Gets the first block node selected in DOM order.
+     */
     readonly startNode: TyperNode;
+
+    /**
+     * Gets the first DOM element selected in DOM order.
+     */
     readonly startElement: HTMLElement;
+
+    /**
+     * Gets the first text node selected in DOM order.
+     */
     readonly startTextNode: Text | null;
-    readonly startOffset: number;
 
+    /**
+     * Gets the offset in the starting position relative to the element or text node.
+     * A number represents a position before the n-th character in a text node.
+     * If the number equals the length of the text node, it represents a position at the end of that text node.
+     * A boolean true represents a position before an element; while false represents a position after an element.
+     */
+    readonly startOffset: number | boolean;
+
+    /**
+     * Gets the last block node selected in DOM order.
+     */
     readonly endNode: TyperNode;
-    readonly endElement: HTMLElement;
-    readonly endTextNode: Text | null;
-    readonly endOffset: number;
 
+    /**
+     * Gets the last DOM element selected in DOM order.
+     */
+    readonly endElement: HTMLElement;
+
+    /**
+     * Gets the last text node selected in DOM order.
+     */
+    readonly endTextNode: Text | null;
+
+    /**
+     * Gets the offset in the ending position relative to the element or text node.
+     * A number represents a position before the n-th character in a text node.
+     * If the number equals the length of the text node, it represents a position at the end of that text node.
+     * A boolean true represents a position before an element; while false represents a position after an element.
+     */
+    readonly endOffset: number | boolean;
+
+    /**
+     * Returns a copy of this selection.
+     */
     clone(): TyperSelection;
+
+    /**
+     * Creates a tree walker that traverse through the editor node tree.
+     * @param whatToShow A bitmask specifying which types of DOM node should be iterated.
+     * @param [filter] An optional callback that instructs the tree walker to skip a node or all its descandents depending on the returned value.
+     */
     createTreeWalker(whatToShow: number, filter?: IteratorNodeFilter<TyperNode>): TyperTreeWalker;
+
+    /**
+     * Collapses the selection to caret mode at the specific boundary position of this selection.
+     * @param [point] A string represent the position.
+     * @returns true if the selection is altered.
+     */
     collapse(point?: CaretPoint): boolean;
+
+    /**
+     * Moves focus to the associated editor's editing area.
+     */
     focus(): void;
+
+    /**
+     * Gets the caret object at the specific boundary position of this selection.
+     * @param [point] A string represent the position.
+     * @returns A caret object.
+     */
     getCaret(point?: CaretPoint): TyperCaret;
+
+    /**
+     * Gets an array of DOM elements that represents paragraphs being selected.
+     * @returns An array of DOM elements.
+     */
     getParagraphElements(): HTMLElement[];
+
+    /**
+     * Gets a DOM range object that represents the range of contents being selected, or the boundary position of this selection.
+     * @param [collapse] If specified, a collapsed range representing the boundary position will be returned.
+     * @returns A DOM range.
+     */
     getRange(collapse?: boolean): Range;
+
+    /**
+     * Gets the painted area of the selectable contents within the selection.
+     * @returns An array of custom rect object.
+     */
+    getRects(): Rect[];
+
+    /**
+     * Gets an array of DOM elements being selected.
+     * @returns An array of DOM elements.
+     */
     getSelectedElements(): HTMLElement[];
+
+    /**
+     * Gets selected content as plain text.
+     * @returns A string containing text or text-only representation of the selected content.
+     */
     getSelectedText(): string;
+
+    /**
+     * Gets an array of DOM text nodes being selected.
+     * @returns An array of DOM text nodes.
+     */
     getSelectedTextNodes(): Text[];
+
+    /**
+     * Gets an array of widgets being selected.
+     */
     getWidgets(): TyperWidget[];
+
+    /**
+     * Determines whether a specific type of widget is allowed to be inserted in the selected position.
+     * @param widgetName A string specifying the name of widget.
+     * @returns true if such widget is allowed.
+     */
     widgetAllowed(widgetName: string): boolean;
 }
 
@@ -1801,8 +2279,8 @@ interface TyperNode extends HasElement {
     readonly childNodes: TyperNode[];
     readonly previousSibling: TyperNode | null;
     readonly nextSibling: TyperNode | null;
-    readonly firstChild: Node;
-    readonly lastChild: Node;
+    readonly firstChild: TyperNode | null;
+    readonly lastChild: TyperNode | null;
     readonly nodeType: TyperNodeType;
 }
 
@@ -1812,13 +2290,13 @@ interface TyperTreeWalker extends Iterator<TyperNode> {
     readonly root: TyperNode;
     currentNode: TyperNode;
 
-    previousSibling(): TyperNode;
-    nextSibling(): TyperNode;
-    firstChild(): TyperNode;
-    lastChild(): TyperNode;
-    parentNode(): TyperNode;
-    previousNode(): TyperNode;
-    nextNode(): TyperNode;
+    previousSibling(): TyperNode | null;
+    nextSibling(): TyperNode | null;
+    firstChild(): TyperNode | null;
+    lastChild(): TyperNode | null;
+    parentNode(): TyperNode | null;
+    previousNode(): TyperNode | null;
+    nextNode(): TyperNode | null;
 }
 
 interface TyperDOMNodeIterator extends Iterator<Node> {
@@ -1826,8 +2304,48 @@ interface TyperDOMNodeIterator extends Iterator<Node> {
     readonly filter: IteratorNodeFilter<Node>;
     currentNode: Node;
 
-    previousNode(): Node;
-    nextNode(): Node;
+    previousNode(): Node | null;
+    nextNode(): Node | null;
+}
+
+interface TyperCanvas {
+    readonly typer: Typer;
+    readonly pointerX: number;
+    readonly pointerY: number;
+    readonly mousedown: boolean;
+    readonly hoverNode: TyperNode | null;
+    readonly activeHandle: TyperCanvasHandle | null,
+    readonly editorReflow: boolean;
+    readonly pointerMoved: boolean;
+    readonly selectionChanged: boolean;
+    readonly timestamp: number;
+    readonly rect: Rect;
+
+    refresh(): void;
+    toggleLayer(name: string, visible: boolean): void;
+    fill(range: Element | Rectish | (Element | Rectish)[], color?: string, handle?: TyperCanvasHandle): void;
+    drawCaret(caret: TyperCaret): void;
+    drawBorder(element: Element, width: number, color?: string, lineStyle?: string, inset?: boolean): void;
+    drawLine(rect: Rect, side: Direction, width: number, color?: string, lineStyle?: string, handle?: TyperCanvasHandle): void;
+    drawLine(x1: number, y1: number, x2: number, y2: number, width: number, color?: string, lineStyle?: string, handle?: TyperCanvasHandle): void;
+    drawHandle(element: Element, pos: Direction2D, size: number, image?: string, handle?: TyperCanvasHandle): void;
+}
+
+interface TyperCanvasHandle {
+    /**
+     * Gets the cursor icon displayed when the mouse handle is hovered.
+     */
+    readonly cursor: string;
+
+    /**
+     * Gets whether the mouse handle is active.
+     */
+    readonly active: boolean;
+
+    /**
+     * Gets the callback that will be fired when user released the mouse handle.
+     */
+    readonly done: () => any;
 }
 
 /**
@@ -1883,13 +2401,71 @@ interface UISetValueEvent extends UIControlEvent {
     readonly newValue: any;
 }
 
-interface UIToolSetStatic {
+interface UIPromptStatic {
+    /**
+     * Prompts a modal alert box.
+     * @param message Message to be shown in the alert box.
+     * @returns A promise object which will be resolved when user has closed the alert box.
+     */
+    alert(message: string, callback?: () => any): Promise<true>;
+    alert(message: string, data: object, callback?: () => any): Promise<true>;
+    alert(message: string, action: string, callback?: () => any): Promise<true>;
+    alert(message: string, action: string, data: object, callback?: () => any): Promise<true>;
+    alert(message: string, action: string, title: string, callback?: () => any): Promise<true>;
+    alert(message: string, action: string, title: string, data: object, callback?: () => any): Promise<true>;
+
+    /**
+     * Prompts a modal confirm box.
+     * @param message Message to be shown in the confirm box.
+     * @returns A promise object which will be resolved when user has clicked OK; or rejected when use has closed the confirm box.
+     */
+    confirm(message: string, callback?: () => any): Promise<boolean>;
+    confirm(message: string, data: object, callback?: () => any): Promise<boolean>;
+    confirm(message: string, action: string, callback?: () => any): Promise<boolean>;
+    confirm(message: string, action: string, data: object, callback?: () => any): Promise<boolean>;
+    confirm(message: string, action: string, title: string, callback?: () => any): Promise<boolean>;
+    confirm(message: string, action: string, title: string, data: object, callback?: () => any): Promise<boolean>;
+
+    /**
+     * Prompts a modal prompt box.
+     * @param message Message to be shown in the prompt box.
+     * @param [value] An optional initial value.
+     * @returns A promise object which will be resolved when user has clicked OK; or rejected when use has closed the confirm box.
+     */
+    prompt(message: string, callback?: (value: string) => any): Promise<string>;
+    prompt(message: string, data: object, callback?: (value: string) => any): Promise<string>;
+    prompt(message: string, value: string, callback?: (value: string) => any): Promise<string>;
+    prompt(message: string, value: string, data: object, callback?: (value: string) => any): Promise<string>;
+    prompt(message: string, value: string, action: string, callback?: (value: string) => any): Promise<string>;
+    prompt(message: string, value: string, action: string, data: object, callback?: (value: string) => any): Promise<string>;
+    prompt(message: string, value: string, action: string, title: string, callback?: (value: string) => any): Promise<string>;
+    prompt(message: string, value: string, action: string, title: string, data: object, callback?: (value: string) => any): Promise<string>;
+    prompt(message: string, value: string, action: string, title: string, description: string, callback?: (value: string) => any): Promise<string>;
+    prompt(message: string, value: string, action: string, title: string, description: string, data: object, callback?: (value: string) => any): Promise<string>;
+
+    /**
+     * Creates a notification.
+     * @param message Message to be shown.
+     * @param [kind] CSS class to be applied. Built-in supported values includes: "success", "warn" and "error".
+     * @param [timeout] Number of milliseconds before the norification is dismissed. If the value is 0 or unspecified, the notification will not be automatically dismissed.
+     * @param [within] A DOM element in which the notification will be shown.
+     * @param [data] Data to be binded to the message.
+     */
+    notify(message: string, kind?: string, timeout?: number, within?: Node, data?: object): void;
+}
+
+interface UIToolSetStatic extends UIPromptStatic {
     /**
      * Creates a new tool set.
      * @param [name] Name of the tool set.
      * @param [options] A dictionary containing options to define behaviors of the tool set.
      */
     new(name?: string, options?: UIToolsetOption): UIToolSet;
+
+    /**
+     * Gets the prototype object which defines methods of UIToolSet instance.
+     */
+    readonly prototype: UIToolSet;
 
     /**
      * Defines a control or layout type.
@@ -1923,31 +2499,14 @@ interface UIToolSetStatic {
      * @param object A dictionary which each property defines the localized text to a specific message.
      */
     i18n(toolset: string, language: string, object: Dictionary<string>): void;
-
-    /**
-     * Prompts a modal alert box. If multilingual support is needed, use UIToolset#alert instead.
-     * @param message Message to be shown in the alert box.
-     * @returns A promise object which will be resolved when user has closed the alert box.
-     */
-    alert(message: string): Promise<true>;
-
-    /**
-     * Prompts a modal confirm box. If multilingual support is needed, use UIToolset#confirm instead.
-     * @param message Message to be shown in the confirm box.
-     * @returns A promise object which will be resolved when user has clicked OK; or rejected when use has closed the confirm box.
-     */
-    confirm(message: string): Promise<boolean>;
-
-    /**
-     * Prompts a modal prompt box. If multilingual support is needed, use UIToolset#prompt instead.
-     * @param message Message to be shown in the prompt box.
-     * @param [value] An optional initial value.
-     * @returns A promise object which will be resolved when user has clicked OK; or rejected when use has closed the confirm box.
-     */
-    prompt(message: string, value?: string): Promise<string>;
 }
 
-interface UIToolSet extends UIControlSpeciesConstructorMap {
+interface UIToolSet extends UIControlSpeciesConstructorMap, UIPromptStatic {
+    /**
+     * Gets all controls in scope that are defined by this tool set.
+     * @param control A control.
+     * @returns A dictionary containing all controls visible in scope.
+     */
     all(control: UIControl): Dictionary<UIControl>;
 
     /**
@@ -1964,28 +2523,6 @@ interface UIToolSet extends UIControlSpeciesConstructorMap {
      * @param object A dictionary which each property defines the localized text to a specific message.
      */
     i18n(language: string, object: Dictionary<string>): void;
-
-    /**
-     * Prompts a modal alert box.
-     * @param message Message to be shown in the alert box.
-     * @returns A promise object which will be resolved when user has closed the alert box.
-     */
-    alert(message: string): Promise<true>;
-
-    /**
-     * Prompts a modal confirm box.
-     * @param message Message to be shown in the confirm box.
-     * @returns A promise object which will be resolved when user has clicked OK; or rejected when use has closed the confirm box.
-     */
-    confirm(message: string): Promise<boolean>;
-
-    /**
-     * Prompts a modal prompt box.
-     * @param message Message to be shown in the prompt box.
-     * @param [value] An optional initial value.
-     * @returns A promise object which will be resolved when user has clicked OK; or rejected when use has closed the confirm box.
-     */
-    prompt(message: string, value?: string): Promise<string>;
 
     /**
      * Creates a placeholder control which will import all controls exported to the specified ID as if they were directly added to the same location.
@@ -2202,6 +2739,11 @@ interface UIControlOption {
     description?: string;
 
     /**
+     * Sets whether child controls is enabled. This flag will override the enabled property of child controls.
+     */
+    enableChildren?: boolean;
+
+    /**
      * Sets whether the control should be automatically hidden when disabled. Default is false.
      */
     hiddenWhenDisabled?: boolean;
@@ -2215,6 +2757,11 @@ interface UIControlOption {
      * Sets whether the menu should be immediately closed after this control has finished executing. Default is true.
      */
     hideCalloutOnExecute?: boolean;
+
+    /**
+     * Sets whether a child control should be hidden when it is disabled. Default is false.
+     */
+    hideDisabledChild?: boolean;
 
     /**
      * Sets the label for button-like control.
@@ -2297,33 +2844,7 @@ interface UIControlPresetOption extends TyperOptions {
     /**
      * Defines to override default logic to certain editors' methods.
      */
-    overrides?: Record<'getValue' | 'setValue' | 'hasContent' | 'validate', (...args) => any>;
-}
-
-/**
- * Represents a predefined control with specified behavior which can be rendered later.
- */
-interface UIControlSpecies<T extends UIContext> {
-    readonly name: string;
-    readonly type: string;
-
-    render(context?: Dictionary<any>): T;
-    render(element: Element, context?: Dictionary<any>): T;
-}
-
-/**
- * Represents signatures, including shorthands, of the function to create control of certain type.
- * @template O Interface that defines the list of options.
- */
-interface UIControlSpeciesConstructor<O, T extends UIContext> {
-    (): UIControlSpecies<T>;
-    (options: O): UIControlSpecies<T>;
-    (name: string, options?: O): UIControlSpecies<T>;
-}
-
-interface UIControlCollectionSpeciesConstructor<O, T> extends UIControlSpeciesConstructor<O, T> {
-    (...controls: UIControlSpecies<UIContext>[]): UIControlSpecies<T>;
-    (name: string, ...controls: UIControlSpecies<UIContext>[]): UIControlSpecies<T>;
+    overrides?: Partial<Record<'getValue' | 'setValue' | 'hasContent' | 'validate', (...args) => any>>;
 }
 
 interface ArgumentIterator {
@@ -2343,7 +2864,7 @@ interface ArgumentIterator {
      * @param type A string referring a JavaScript primitive type or an constructor.
      * @returns true if next argument matches the type.
      */
-    next(type: 'string' | 'number' | 'boolean' | 'object' | 'function' | Function): boolean;
+    next(type: 'string' | 'number' | 'boolean' | 'object' | 'function' | Function): boolean | undefined;
 
     /**
      * Consumes consecutive arguments that is of the specified type or an instance of the specified constructor.
@@ -2352,9 +2873,64 @@ interface ArgumentIterator {
      */
     nextAll(type: 'string' | 'number' | 'boolean' | 'object' | 'function' | Function): [];
 
-    string(): string?;
+    /**
+     * Tests and consumes the next arguments if it is a string.
+     */
+    string(): string | undefined;
 
-    fn(): Function?;
+    /**
+     * Tests and consumes the next arguments if it is a function.
+     */
+    fn(): Function | undefined;
+}
+
+/**
+ * Represents a predefined control with specified behavior which can be rendered later.
+ */
+interface UIControlSpecies<T extends UIContext> {
+    /**
+     * Name of the control.
+     */
+    readonly name: string;
+
+    /**
+     * Type of the control.
+     */
+    readonly type: string;
+
+    /**
+     * Render the control in a new detached DOM element.
+     * @param context Initial state or context.
+     */
+    render(context?: Dictionary<any>): T;
+
+    /**
+     * Render the control inside the given DOM element.
+     * @param element A DOM element which the control is rendered as its child.
+     * @param context Initial state or context.
+     */
+    render(element: Element, context?: Dictionary<any>): T;
+
+    /**
+     * Clones the control with some options overriden.
+     * @param options A dictionary containing options to override.
+     */
+    clone(options?: Dictionary<any>): UIControlSpecies<T>;
+}
+
+/**
+ * Represents signatures, including shorthands, of the function to create control of certain type.
+ * @template O Interface that defines the list of options.
+ */
+interface UIControlSpeciesConstructor<O, T extends UIContext> {
+    (): UIControlSpecies<T>;
+    (options: O): UIControlSpecies<T>;
+    (name: string, options?: O): UIControlSpecies<T>;
+}
+
+interface UIControlCollectionSpeciesConstructor<O, T> extends UIControlSpeciesConstructor<O, T> {
+    (...controls: (UIControlSpecies<UIContext> | O)[]): UIControlSpecies<T>;
+    (name: string, ...controls: (UIControlSpecies<UIContext> | O)[]): UIControlSpecies<T>;
 }
 
 interface UIControlSpeciesConstructorMap {
@@ -2462,7 +3038,7 @@ interface CalloutOption extends UIControlSpeciesOption<CalloutOption> {
 }
 
 interface CalloutConstructor extends UIControlCollectionSpeciesConstructor<CalloutOption, UIContext> {
-    (name: string, icon: string, ...controls: UIControlSpecies<UIContext>[]): UIControlSpecies<UIContext>;
+    (name: string, icon: string, ...controls: (UIControlSpecies<UIContext> | CalloutOption)[]): UIControlSpecies<UIContext>;
 }
 
 interface DialogOption extends UIControlSpeciesOption<DialogOption> {

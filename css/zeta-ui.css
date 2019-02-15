@@ -215,7 +215,7 @@ button.zeta-checkbox:before {
     content: '\00e876';
     display: inline-block;
     position: relative;
-    margin: -1px -1px 0;
+    margin: -1px;
     width: 1em;
     height: 1em;
     border: 2px solid #aaa;
