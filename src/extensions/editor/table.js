@@ -105,17 +105,6 @@
         }
     }
 
-    function findIndex(widget, isColumn, pos) {
-        var $cell = $(isColumn ? TR_SELECTOR + ':first>*' : TR_SELECTOR, widget.element);
-        for (var i = $cell.length - 1; i >= 0; i--) {
-            var r = getRect($cell[i]);
-            if ((isColumn ? r.left : r.top) < pos) {
-                return i;
-            }
-        }
-        return 0;
-    }
-
     CellSelection.prototype = {
         get numCol() {
             return Math.abs(this.maxCol - this.minCol) + 1;
@@ -139,6 +128,11 @@
         },
         getRange: function () {
             return helper.createRange(getCell(this, 'min'), 0, getCell(this, 'max'), -0);
+        },
+        getRects: function () {
+            var c1 = getCell(this, 'min');
+            var c2 = getCell(this, 'max');
+            return [helper.mergeRect(getRect(c1), getRect(c2))];
         },
         acceptNode: function (node) {
             var result = false;
@@ -426,27 +420,57 @@
 
     var selectHandleX = Editor.handle('cell');
     var selectHandleY = Editor.handle('cell');
+    var addHandle = Editor.handle('pointer', function () {
+        (addHandleState.isColumn ? insertColumn : insertRow)(addHandleState.widget, addHandleState.index, 1, false);
+    });
+    var addHandleState;
     var updateOnMouseup;
+
+    function findNearsetEdge(widget, isColumn, pos) {
+        var arr = $(isColumn ? TR_SELECTOR + ':first>*' : TR_SELECTOR, widget.element);
+        for (var i = arr.length - 1; i >= 0; i--) {
+            var r = getRect(arr[i])[isColumn ? 'right' : 'bottom'];
+            if (Math.abs(r - pos) < 5) {
+                return {
+                    widget: widget,
+                    isColumn: isColumn,
+                    index: i,
+                    pos: r
+                };
+            }
+        }
+    }
+
+    function updateVisualRange(widget, isColumn, pos) {
+        var arr = $(isColumn ? TR_SELECTOR + ':first>*' : TR_SELECTOR, widget.element);
+        for (var i = arr.length - 1; i >= 1 && getRect(arr[i])[isColumn ? 'left' : 'top'] > pos; i--);
+        if (!updateOnMouseup) {
+            visualRange = new CellSelection(widget, 0, 0, countRows(widget) - 1, countColumns(widget) - 1);
+            visualRange[isColumn ? 'minCol' : 'minRow'] = i;
+        }
+        visualRange[isColumn ? 'maxCol' : 'maxRow'] = i;
+        updateOnMouseup = true;
+    }
 
     Editor.addLayer('table', function (canvas) {
         var widget = canvas.hoverNode && canvas.hoverNode.widget;
         if (widget && widget.id === 'table') {
             var rect = getRect(widget);
+            if (!canvas.mousedown || addHandle.active) {
+                addHandleState = findNearsetEdge(widget, true, canvas.pointerX) || findNearsetEdge(widget, false, canvas.pointerY);
+                if (addHandleState) {
+                    var prop = addHandleState.isColumn ? 'left' : 'top';
+                    canvas.drawLine(rect.collapse(prop, addHandleState.pos - rect[prop]), prop, 5, 'transparent', 'solid', addHandle);
+                }
+            }
             canvas.drawLine(rect, 'top', 10, 'transparent', 'solid', selectHandleX);
             canvas.drawLine(rect, 'left', 10, 'transparent', 'solid', selectHandleY);
         }
 
-        var selection = canvas.typer.getSelection();
-        var handle = canvas.activeHandle;
-        if (handle === selectHandleX || handle === selectHandleY) {
-            var isColumnMode = handle === selectHandleX;
-            var index = findIndex(updateOnMouseup ? visualRange : widget, isColumnMode, isColumnMode ? canvas.pointerX : canvas.pointerY);
-            if (!updateOnMouseup) {
-                visualRange = new CellSelection(widget, 0, 0, countRows(widget) - 1, countColumns(widget) - 1);
-                visualRange[isColumnMode ? 'minCol' : 'minRow'] = index;
-            }
-            visualRange[isColumnMode ? 'maxCol' : 'maxRow'] = index;
-            updateOnMouseup = true;
+        if (selectHandleX.active) {
+            updateVisualRange(updateOnMouseup ? visualRange : widget, true, canvas.pointerX);
+        } else if (selectHandleY.active) {
+            updateVisualRange(updateOnMouseup ? visualRange : widget, false, canvas.pointerY);
         } else if (canvas.selectionChanged) {
             visualRange = getCellSelection(canvas);
             if (!visualRange || (visualRange.numRow === 1 && visualRange.numCol === 1)) {
@@ -466,12 +490,10 @@
             }
         }
 
-        if (visualRange) {
-            var c1 = getCell(visualRange, 'min');
-            var c2 = getCell(visualRange, 'max');
-            canvas.fill(helper.mergeRect(getRect(c1), getRect(c2)));
+        canvas.toggleLayer('selection', !updateOnMouseup);
+        if (updateOnMouseup) {
+            canvas.fill(visualRange.getRects());
         }
-        canvas.toggleLayer('selection', !visualRange);
     });
 
 }(jQuery, zeta));
