@@ -81,6 +81,7 @@
                 danger: true,
                 execute: function (self) {
                     self.parentContext.typer.invoke('unlink');
+                    return self.all.dialog.destroy();
                 },
                 visible: function (self) {
                     return self.parentContext.typer.hasCommand('unlink');
