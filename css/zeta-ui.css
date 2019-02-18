@@ -1,8 +1,80 @@
+:root {
+    --zeta-font-family: 'Roboto', system-ui, -apple-system, 'Helvetica Neue', 'Segoe UI', 'Arial';
+    --zeta-font-size: 14px;
+    --zeta-icon-size: 18px;
+    --zeta-line-height: 1.2;
+
+    --zeta-text-color: #333;
+    --zeta-text-color-secondary: #555;
+    --zeta-text-color-disabled: #999;
+    --zeta-text-color-error: #a90007;
+    --zeta-text-color-header: #103492;
+    --zeta-text-color-aux: #aeb8c2;
+    --zeta-separate-border-color: rgba(0, 0, 0, 0.15);
+    --zeta-separate-border-color-secondary: rgba(0, 0, 0, 0.05);
+
+    --zeta-float-background-color: white;
+    --zeta-float-background-color-wbd: rgba(255, 255, 255, 0.7);
+    --zeta-float-shadow-color: rgba(0, 0, 0, 0.5);
+    --zeta-float-shadow-color-aux: rgba(0, 0, 0, 0.3);
+    --zeta-float-roundness: 2px;
+    --zeta-button-background-color: transparent;
+    --zeta-button-background-color-disabled: var(--zeta-button-background-color);
+    --zeta-button-background-color-active: rgba(128, 128, 128, 0.2);
+    --zeta-button-background-color-busy: #d3d3d3;
+    --zeta-button-background-color-danger: var(--zeta-button-background-color);
+    --zeta-button-text-color: inherit;
+    --zeta-button-text-color-disabled: var(--zeta-text-color-disabled);
+    --zeta-button-text-color-active: var(--zeta-button-text-color);
+    --zeta-button-text-color-busy: var(--zeta-button-text-color);
+    --zeta-button-text-color-danger: #a90007;
+    --zeta-button-submit-background-color: rgba(16, 52, 146, 0.7);
+    --zeta-button-submit-text-color: white;
+    --zeta-button-roundness: 2px;
+    --zeta-dropdown-arrow-color: #666;
+    --zeta-dropdown-arrow-color-disabled: #999;
+    --zeta-textbox-text-color: #212121;
+    --zeta-textbox-label-color: #103492;
+    --zeta-textbox-placeholder-color: #aeb8c2;
+    --zeta-textbox-frame-color: #aeb8c2;
+    --zeta-textbox-frame-color-error: #a90007;
+    --zeta-textbox-frame-color-focus: #103492;
+    --zeta-textbox-frame-shadow-color: rgba(128, 128, 128, 0.5);
+    --zeta-textbox-frame-roundness: 2px;
+    --zeta-checkbox-frame-color: #aaa;
+    --zeta-checkbox-frame-color-hover: #aeb8c2;
+    --zeta-checkbox-frame-color-disabled: #d3d3d3;
+    --zeta-checkbox-frame-color-active: rgba(16, 52, 146, 0.75);
+    --zeta-checkbox-frame-color-error: rgba(169, 0, 7, 0.75);
+    --zeta-checkbox-frame-roundness: 2px;
+    --zeta-checkbox-tick-color: #212121;
+    --zeta-checkbox-background-color: rgba(255, 255, 255, 0.3);
+    --zeta-calendar-header-color: #999;
+    --zeta-calendar-date-text-color-aux: rgba(16, 52, 146, 0.5);
+    --zeta-calendar-date-background-color-active: rgba(16, 52, 146, 0.2);
+    --zeta-clock-hand-color: #999;
+    --zeta-clock-mark-color: #aeb8c2;
+    --zeta-grid-cell-background-color: white;
+    --zeta-grid-cell-background-color-active: rgba(0, 0, 0, 0.15);
+    --zeta-grid-cell-border: rgba(0, 0, 0, 0.15);
+    --zeta-dialog-header-color: #103492;
+    --zeta-dialog-shadow-color: rgba(0, 0, 0, 0.5);
+    --zeta-notify-warn-color: #c18401;
+    --zeta-notify-success-color: #50a14f;
+    --zeta-notify-info-color: #4078f2;
+    --zeta-ripple-color-init: #fafafa;
+    --zeta-ripple-color-end: black;
+}
+
 .zeta-ui {
     font-family: 'Roboto', system-ui, -apple-system, 'Helvetica Neue', 'Segoe UI', 'Arial';
+    font-family: var(--zeta-font-family);
     font-size: 14px;
+    font-size: var(--zeta-font-size);
     color: #333;
+    color: var(--zeta-text-color);
     line-height: 1.2;
+    line-height: var(--zeta-line-height);
     -webkit-text-size-adjust: none;
 }
 
@@ -100,6 +172,7 @@
     width: 1em;
     height: 1em;
     font-size: 18px;
+    font-size: var(--zeta-icon-size);
     line-height: 1;
     vertical-align: top;
     overflow: hidden;
@@ -121,6 +194,7 @@
     position: relative;
     padding-left: 4em;
     color: #aeb8c2;
+    color: var(--zeta-text-color-aux);
     font-weight: normal;
     text-align: right;
 }
@@ -136,16 +210,19 @@
     padding: 0;
     border-style: none;
     background-color: transparent;
+    background-color: var(--zeta-button-background-color);
     background-image: none;
     text-align: left;
     vertical-align: top;
     cursor: pointer;
     color: inherit;
+    color: var(--zeta-button-text-color);
     font-weight: inherit;
     line-height: inherit;
     text-transform: inherit;
     white-space: nowrap;
     border-radius: 2px;
+    border-radius: var(--zeta-button-roundness);
     box-sizing: border-box;
     overflow: visible;
     -webkit-transition: opacity 0.1s ease-out, background-color 0.1s ease-out;
@@ -164,12 +241,15 @@
 .zeta-buttonset label {
     padding: 0.7em 0.75em;
     min-height: calc(1.4em + 18px);
+    min-height: calc(1.4em + var(--zeta-icon-size));
 }
 
 .zeta-ui label.disabled,
 .zeta-ui button.disabled {
     background-color: transparent;
+    background-color: var(--zeta-button-background-color-disabled);
     color: #999;
+    color: var(--zeta-button-text-color-disabled);
 }
 
 .zeta-ui .has-clickeffect:hover,
@@ -181,25 +261,36 @@
 .zeta-ui button.focused-keyboard,
 .zeta-ui button.active {
     background-color: rgba(128, 128, 128, 0.2);
+    background-color: var(--zeta-button-background-color-active);
+    color: inherit;
+    color: var(--zeta-button-text-color-active);
 }
 
 @media (any-hover: none) {
     .zeta-ui .has-clickeffect:hover,
     .zeta-ui button:hover {
         background-color: transparent;
+        background-color: var(--zeta-button-background-color);
+        color: inherit;
+        color: var(--zeta-button-text-color);
     }
 }
 
 .zeta-ui .has-clickeffect.danger:not(.disabled),
 .zeta-ui button.danger:not(.disabled) {
+    background-color: transparent;
+    background-color: var(--zeta-button-background-color-danger);
     color: #a90007;
+    color: var(--zeta-button-text-color-danger);
 }
 
 .zeta-ui .has-clickeffect.loading,
 .zeta-ui button.loading {
     background-color: #d3d3d3;
-    cursor: progress;
+    background-color: var(--zeta-button-background-color-busy);
     color: inherit;
+    color: var(--zeta-button-text-color-busy);
+    cursor: progress;
 }
 
 .zeta-form > button.zeta-checkbox,
@@ -209,6 +300,7 @@
 
 .zeta-form > button.zeta-checkbox:hover {
     background-color: transparent;
+    background-color: var(--zeta-button-background-color);
 }
 
 button.zeta-checkbox:before {
@@ -219,31 +311,39 @@ button.zeta-checkbox:before {
     width: 1em;
     height: 1em;
     border: 2px solid #aaa;
+    border: 2px solid var(--zeta-checkbox-frame-color);
     border-radius: 2px;
+    border-radius: var(--zeta-checkbox-frame-roundness);
     background-color: rgba(255, 255, 255, 0.3);
+    background-color: var(--zeta-checkbox-background-color);
     color: transparent;
     z-index: 1;
 }
 
 button.zeta-checkbox:hover:before {
     border-color: #aeb8c2;
+    border-color: var(--zeta-checkbox-frame-color-hover);
 }
 
 button.zeta-checkbox.disabled:before {
     border-color: #d3d3d3;
+    border-color: var(--zeta-checkbox-frame-color-disabled);
 }
 
 button.zeta-checkbox.checked:before {
     color: #212121;
+    color: var(--zeta-checkbox-tick-color);
 }
 
 button.zeta-checkbox:focus:before,
 button.zeta-checkbox:active:before {
     border-color: rgba(16, 52, 146, 0.75);
+    border-color: var(--zeta-checkbox-frame-color-active);
 }
 
 button.zeta-checkbox.error:before {
-    border-color: rgba(169, 0, 7, 0.749);
+    border-color: rgba(169, 0, 7, 0.75);
+    border-color: var(--zeta-checkbox-frame-color-error);
 }
 
 button.zeta-checkbox.disabled:before {
@@ -284,6 +384,7 @@ label.zeta-dropdown > button:after {
     height: 0;
     margin: -0.4em 0.5em 0 0;
     border-left: 0.5em solid #666;
+    border-left: 0.5em solid var(--zeta-dropdown-arrow-color);
     border-top: 0.4em solid transparent;
     border-bottom: 0.4em solid transparent;
     border-right: none;
@@ -292,10 +393,12 @@ label.zeta-dropdown > button:after {
 
 label.zeta-dropdown.disabled:after {
     border-top-color: #999;
+    border-top-color: var(--zeta-dropdown-arrow-color-disabled);
 }
 
 label.zeta-dropdown.error {
-    color: #a00009;
+    color: #a90007;
+    color: var(--zeta-text-color-error);
 }
 
 label.zeta-dropdown.error .zeta-label:after {
@@ -331,8 +434,11 @@ label.zeta-dropdown.error .zeta-label:after {
 .zeta-float {
     position: absolute;
     border-radius: 2px;
+    border-radius: var(--zeta-float-roundness);
     background-color: white;
+    background-color: var(--zeta-float-background-color);
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 2px var(--zeta-float-shadow-color), 0 0 10px var(--zeta-float-shadow-color-aux);
     z-index: 1;
 }
 
@@ -349,7 +455,9 @@ label.zeta-dropdown.error .zeta-label:after {
         right: 0;
         bottom: 0;
         border-radius: 2px;
+        border-radius: var(--zeta-float-roundness);
         background-color: rgba(255, 255, 255, 0.7);
+        background-color: var(--zeta-float-background-color-wbd);
         -webkit-backdrop-filter: blur(20px);
         -moz-backdrop-filter: blur(20px);
         backdrop-filter: blur(20px);
@@ -429,6 +537,7 @@ body > .zeta-menu {
     display: block;
     margin: 0.25em 0;
     border-top: 1px solid rgba(0, 0, 0, 0.15);
+    border-top: 1px solid var(--zeta-separate-border-color);
 }
 
 .zeta-buttonlist > .zeta-buttonset {
@@ -484,6 +593,7 @@ body > .zeta-menu {
     margin: 0.5em 0.25em;
     padding: 0 0.25em 0.2em;
     border-bottom: 1px solid #aeb8c2;
+    border-bottom: 1px solid var(--zeta-textbox-frame-color);
     vertical-align: top;
     line-height: 1.33;
     -webkit-transition: padding 0.2s;
@@ -513,10 +623,12 @@ body > .zeta-menu {
 
 .zeta-textbox.focused .zeta-textbox-wrapper {
     border-bottom-color: #103492;
+    border-bottom-color: var(--zeta-textbox-frame-color-focus);
 }
 
 .zeta-textbox.error .zeta-textbox-wrapper {
     border-bottom-color: #a90007;
+    border-bottom-color: var(--zeta-textbox-frame-color-error);
 }
 
 .zeta-textbox-wrapper[data-label]:before {
@@ -526,6 +638,7 @@ body > .zeta-menu {
     top: 0;
     font-size: 95%;
     color: #103492;
+    color: var(--zeta-textbox-label-color);
 }
 
 .zeta-textbox-wrapper:after {
@@ -536,12 +649,14 @@ body > .zeta-menu {
     bottom: -1px;
     height: 2px;
     background-color: #103492;
+    background-color: var(--zeta-textbox-frame-color-focus);
     transform: scaleX(0);
     transition: transform 0.2s;
 }
 
 .zeta-textbox.error .zeta-textbox-wrapper:after {
     background-color: #a90007;
+    background-color: var(--zeta-textbox-frame-color-error);
 }
 
 .zeta-textbox.focused .zeta-textbox-wrapper:after {
@@ -561,6 +676,7 @@ body > .zeta-menu {
     background: url('data:image/gif:,');
     vertical-align: top;
     color: #212121;
+    color: var(--zeta-textbox-text-color);
     white-space: normal;
     word-wrap: break-word;
     word-break: break-word;
@@ -585,6 +701,7 @@ body > .zeta-menu {
     margin-left: -100%;
     width: 100%;
     color: #aeb8c2;
+    color: var(--zeta-textbox-placeholder-color);
     vertical-align: top;
     pointer-events: none;
     white-space: normal;
@@ -601,6 +718,7 @@ body > .zeta-menu {
 
 .zeta-textbox-error {
     color: #a90007;
+    color: var(--zeta-text-color-error);
 }
 
 .zeta-textbox-clear {
@@ -650,6 +768,7 @@ body > .zeta-menu {
 
 .zeta-textbox.keep-placeholder:not(.empty) .zeta-textbox-placeholder {
     color: #103492;
+    color: var(--zeta-textbox-label-color);
     font-size: 95%;
 }
 
@@ -659,17 +778,22 @@ body > .zeta-menu {
 
 .zeta-richtext {
     margin: 0.67em -1px;
-    border: 1px solid #d3d3d3;
+    border: 1px solid #aeb8c2;
+    border: 1px solid var(--zeta-textbox-frame-color);
     border-radius: 2px;
+    border-radius: var(--zeta-textbox-frame-roundness);
 }
 
 .zeta-richtext.focused {
     border-color: #103492;
+    border-color: var(--zeta-textbox-frame-color-focus);
     box-shadow: inset 0 0 2px rgba(128, 128, 128, 0.5), 0 0 2px #103492;
+    box-shadow: inset 0 0 2px var(--zeta-textbox-frame-shadow-color), 0 0 2px var(--zeta-textbox-frame-color-focus);
 }
 
 .zeta-richtext-toolbar {
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--zeta-separate-border-color-secondary);
 }
 
 .zeta-richtext .zeta-textbox {
@@ -709,6 +833,7 @@ body > .zeta-menu {
 .zeta-fieldset-title p {
     margin: 0.25em 0 1em;
     color: #555;
+    color: var(--zeta-text-color-secondary);
 }
 
 .zeta-fieldset-title p:empty {
@@ -740,6 +865,7 @@ body > .zeta-menu {
     font-size: 90%;
     font-weight: bold;
     color: #103492;
+    color: var(--zeta-text-color-header);
     text-transform: uppercase;
 }
 
@@ -777,7 +903,7 @@ body > .zeta-menu {
 }
 
 .zeta-snackbar.open .zeta-float {
-    -webkit-transform: : translateY(0);
+    -webkit-transform: translateY(0);
     -moz-transform: translateY(0);
     -ms-transform: translateY(0);
     transform: translateY(0);
@@ -793,23 +919,28 @@ body > .zeta-menu {
     display: flex;
     padding: 0.25em 0.25em 0.25em 0.75em;
     border-radius: 2px;
+    border-radius: var(--zeta-float-roundness);
     align-items: center;
 }
 
 .zeta-snackbar.notify-info .zeta-buttonset {
     border-left: 5px solid #4078f2;
+    border-left: 5px solid var(--zeta-notify-info-color);
 }
 
 .zeta-snackbar.notify-success .zeta-buttonset {
     border-left: 5px solid #50a14f;
+    border-left: 5px solid var(--zeta-notify-success-color);
 }
 
 .zeta-snackbar.notify-warn .zeta-buttonset {
     border-left: 5px solid #c18401;
+    border-left: 5px solid var(--zeta-notify-warn-color);
 }
 
 .zeta-snackbar.notify-error .zeta-buttonset {
     border-left: 5px solid #a90007;
+    border-left: 5px solid var(--zeta-text-color-error);
 }
 
 .zeta-snackbar button {
@@ -846,7 +977,9 @@ body > .zeta-menu {
     max-width: inherit;
     max-height: inherit;
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.5), 0 2px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 2px var(--zeta-dialog-shadow-color), 0 2px 30px var(--zeta-dialog-shadow-color);
     border-radius: 2px;
+    border-radius: var(--zeta-float-roundness);
     -webkit-transition: 0.2s ease-out;
     -moz-transition: 0.2s ease-out;
     -ms-transition: 0.2s ease-out;
@@ -954,6 +1087,7 @@ body > .zeta-menu {
 .zeta-dialog-content > h2 {
     margin: 0.5em 0;
     color: #103492;
+    color: var(--zeta-dialog-header-color);
     font-size: 100%;
     font-weight: bold;
     text-transform: uppercase;
@@ -979,6 +1113,7 @@ body > .zeta-menu {
 .zeta-dialog-error {
     margin: 0 1em;
     color: #a90007;
+    color: var(--zeta-text-color-error);
 }
 
 .zeta-dialog-buttonset {
@@ -993,12 +1128,15 @@ body > .zeta-menu {
 
 .zeta-dialog-buttonset button.zeta-submit {
     background-color: rgba(16, 52, 146, 0.7);
+    background-color: var(--zeta-button-submit-background-color);
     color: white;
+    color: var(--zeta-button-submit-text-color);
 }
 
 .zeta-dialog-buttonset > label,
 .zeta-dialog-buttonset > button {
     border-radius: 2px;
+    border-radius: var(--zeta-button-roundness);
 }
 
 
@@ -1022,6 +1160,7 @@ body > .zeta-menu {
 .zeta-clickeffect i {
     position: absolute !important;
     background-color: #fafafa;
+    background-color: var(--zeta-ripple-color-init);
     width: 1em;
     height: 1em;
     border-radius: 1em;
@@ -1042,6 +1181,7 @@ body > .zeta-menu {
 
 .zeta-clickeffect i.animate-in {
     background-color: black;
+    background-color: var(--zeta-ripple-color-end);
     opacity: 0.2;
 }
 
@@ -1065,7 +1205,9 @@ body > .zeta-menu {
 .zeta-grid-cell {
     margin: 1px;
     border: 1px solid rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--zeta-grid-cell-border);
     background-color: white;
+    background-color: var(--zeta-grid-cell-background-color);
     width: 1em;
     height: 1em;
     float: left;
@@ -1073,6 +1215,7 @@ body > .zeta-menu {
 
 .zeta-grid-cell.active {
     background-color: rgba(0, 0, 0, 0.15);
+    background-color: var(--zeta-grid-cell-background-color-active);
 }
 
 .zeta-grid-row:after {
@@ -1097,7 +1240,7 @@ body > .zeta-menu {
 }
 
 .zeta-keyword.invalid {
-    background: bottom repeat-x url(data:image/gif;base64,R0lGODdhBAADAPcAAAAAAAAAVQAAqgAA/wAkAAAkVQAkqgAk/wBJAABJVQBJqgBJ/wBtAABtVQBtqgBt/wCSAACSVQCSqgCS/wC2AAC2VQC2qgC2/wDbAADbVQDbqgDb/wD/AAD/VQD/qgD//yQAACQAVSQAqiQA/yQkACQkVSQkqiQk/yRJACRJVSRJqiRJ/yRtACRtVSRtqiRt/ySSACSSVSSSqiSS/yS2ACS2VSS2qiS2/yTbACTbVSTbqiTb/yT/ACT/VST/qiT//0kAAEkAVUkAqkkA/0kkAEkkVUkkqkkk/0lJAElJVUlJqklJ/0ltAEltVUltqklt/0mSAEmSVUmSqkmS/0m2AEm2VUm2qkm2/0nbAEnbVUnbqknb/0n/AEn/VUn/qkn//20AAG0AVW0Aqm0A/20kAG0kVW0kqm0k/21JAG1JVW1Jqm1J/21tAG1tVW1tqm1t/22SAG2SVW2Sqm2S/222AG22VW22qm22/23bAG3bVW3bqm3b/23/AG3/VW3/qm3//5IAAJIAVZIAqpIA/5IkAJIkVZIkqpIk/5JJAJJJVZJJqpJJ/5JtAJJtVZJtqpJt/5KSAJKSVZKSqpKS/5K2AJK2VZK2qpK2/5LbAJLbVZLbqpLb/5L/AJL/VZL/qpL//7YAALYAVbYAqrYA/7YkALYkVbYkqrYk/7ZJALZJVbZJqrZJ/7ZtALZtVbZtqrZt/7aSALaSVbaSqraS/7a2ALa2Vba2qra2/7bbALbbVbbbqrbb/7b/ALb/Vbb/qrb//9sAANsAVdsAqtsA/9skANskVdskqtsk/9tJANtJVdtJqttJ/9ttANttVdttqttt/9uSANuSVduSqtuS/9u2ANu2Vdu2qtu2/9vbANvbVdvbqtvb/9v/ANv/Vdv/qtv///8AAP8AVf8Aqv8A//8kAP8kVf8kqv8k//9JAP9JVf9Jqv9J//9tAP9tVf9tqv9t//+SAP+SVf+Sqv+S//+2AP+2Vf+2qv+2///bAP/bVf/bqv/b////AP//Vf//qv///yH5BAAAAAAALAAAAAAEAAMAQAgMAP8JBPePYMFvBAMCADs=)
+    background: bottom repeat-x url(data:image/gif;base64,R0lGODdhBAADAPcAAAAAAAAAVQAAqgAA/wAkAAAkVQAkqgAk/wBJAABJVQBJqgBJ/wBtAABtVQBtqgBt/wCSAACSVQCSqgCS/wC2AAC2VQC2qgC2/wDbAADbVQDbqgDb/wD/AAD/VQD/qgD//yQAACQAVSQAqiQA/yQkACQkVSQkqiQk/yRJACRJVSRJqiRJ/yRtACRtVSRtqiRt/ySSACSSVSSSqiSS/yS2ACS2VSS2qiS2/yTbACTbVSTbqiTb/yT/ACT/VST/qiT//0kAAEkAVUkAqkkA/0kkAEkkVUkkqkkk/0lJAElJVUlJqklJ/0ltAEltVUltqklt/0mSAEmSVUmSqkmS/0m2AEm2VUm2qkm2/0nbAEnbVUnbqknb/0n/AEn/VUn/qkn//20AAG0AVW0Aqm0A/20kAG0kVW0kqm0k/21JAG1JVW1Jqm1J/21tAG1tVW1tqm1t/22SAG2SVW2Sqm2S/222AG22VW22qm22/23bAG3bVW3bqm3b/23/AG3/VW3/qm3//5IAAJIAVZIAqpIA/5IkAJIkVZIkqpIk/5JJAJJJVZJJqpJJ/5JtAJJtVZJtqpJt/5KSAJKSVZKSqpKS/5K2AJK2VZK2qpK2/5LbAJLbVZLbqpLb/5L/AJL/VZL/qpL//7YAALYAVbYAqrYA/7YkALYkVbYkqrYk/7ZJALZJVbZJqrZJ/7ZtALZtVbZtqrZt/7aSALaSVbaSqraS/7a2ALa2Vba2qra2/7bbALbbVbbbqrbb/7b/ALb/Vbb/qrb//9sAANsAVdsAqtsA/9skANskVdskqtsk/9tJANtJVdtJqttJ/9ttANttVdttqttt/9uSANuSVduSqtuS/9u2ANu2Vdu2qtu2/9vbANvbVdvbqtvb/9v/ANv/Vdv/qtv///8AAP8AVf8Aqv8A//8kAP8kVf8kqv8k//9JAP9JVf9Jqv9J//9tAP9tVf9tqv9t//+SAP+SVf+Sqv+S//+2AP+2Vf+2qv+2///bAP/bVf/bqv/b////AP//Vf//qv///yH5BAAAAAAALAAAAAAEAAMAQAgMAP8JBPePYMFvBAMCADs=);
 }
 
 .zeta-keyword i {
@@ -1137,6 +1280,7 @@ body > .zeta-menu {
 .zeta-buttonlist .zeta-clock,
 .zeta-calendar-header {
     border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid var(--zeta-separate-border-color);
 }
 
 .zeta-calendar-header label.zeta-dropdown > button {
@@ -1162,6 +1306,7 @@ body > .zeta-menu {
 .zeta-calendar th {
     padding: 0.75em 0.5em 0.5em 0;
     color: #999;
+    color: var(--zeta-calendar-header-color);
     font-weight: normal;
     text-align: right;
     cursor: default;
@@ -1188,13 +1333,15 @@ body > .zeta-menu {
     padding-right: 0.5em;
 }
 
-.zeta-calendar td.prev,
-.zeta-calendar td.next {
+.zeta-calendar td.prev button,
+.zeta-calendar td.next button {
     color: rgba(16, 52, 146, 0.5);
+    color: var(--zeta-calendar-date-text-color-aux);
 }
 
 .zeta-calendar td.selected {
     background-color: rgba(16, 52, 146, 0.2);
+    background-color: var(--zeta-calendar-date-background-color-active);
 }
 
 .zeta-calendar td button {
@@ -1202,6 +1349,7 @@ body > .zeta-menu {
     padding: 0.5em;
     width: 2.2em;
     min-height: 0;
+    background-color: transparent !important;
     line-height: 1.2;
     text-align: right;
 }
@@ -1226,6 +1374,7 @@ body > .zeta-menu {
 
 .zeta-calendar + .zeta-clock {
     border-left: 1px solid rgba(0, 0, 0, 0.15);
+    border-left: 1px solid var(--zeta-separate-border-color);
 }
 
 .zeta-clock [contenteditable] {
@@ -1238,6 +1387,7 @@ body > .zeta-menu {
     width: 10em;
     height: 10em;
     color: #aeb8c2;
+    color: var(--zeta-clock-mark-color);
     -webkit-flex-grow: 1;
     -ms-flex-positive: 1;
     flex-grow: 1;
@@ -1287,6 +1437,7 @@ body > .zeta-menu {
     left: 50%;
     margin-left: -2px;
     color: #999;
+    color: var(--zeta-clock-hand-color);
     -webkit-transform-origin: 2px center;
     -moz-transform-origin: 2px center;
     -ms-transform-origin: 2px center;
