@@ -4,11 +4,9 @@
     var Editor = zeta.Editor;
     var helper = zeta.helper;
     var bind = helper.bind;
-    var createRange = helper.createRange;
     var each = helper.each;
     var extend = helper.extend;
     var getRect = helper.getRect;
-    var is = helper.is;
     var isFunction = helper.isFunction;
     var matchWord = helper.matchWord;
     var toPlainRect = helper.toPlainRect;
@@ -21,6 +19,7 @@
     var state = {};
     var lastState = {};
     var mousedown = false;
+    var inited;
     var activeTyper;
     var activeHandle;
     var hoverNode;
@@ -231,9 +230,9 @@
     Editor.widgets.visualizer = {
         init: function (e) {
             $(e.typer.element).addClass('has-typer-visualizer');
-            if (!init.init) {
+            if (!inited) {
                 init();
-                init.init = true;
+                inited = true;
             }
         },
         focusin: function (e) {

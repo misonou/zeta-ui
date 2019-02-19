@@ -13,7 +13,6 @@
     var hasOwnProperty = Object.hasOwnProperty;
     var getPrototypeOf = Object.getPrototypeOf;
     var getOwnPropertyNames = Object.getOwnPropertyNames;
-    var waterpipe = window.waterpipe;
     var helper = zeta.helper;
     var dom = zeta.dom;
     var any = helper.any;
@@ -37,6 +36,7 @@
     var noop = helper.noop;
     var position = helper.position;
     var randomId = helper.randomId;
+    var readArgs = helper.readArgs;
     var reject = helper.reject;
     var removeNode = helper.removeNode;
     var runCSSTransition = helper.runCSSTransition;
@@ -801,16 +801,16 @@
             addLabels(this.labels, language, key, value);
         },
         alert: function (message, action, title, data, callback) {
-            return openDefaultDialog(this, 'alert', true, message, new ArgumentIterator([action, title, data, callback]));
+            return openDefaultDialog(this, 'alert', true, message, readArgs([action, title, data, callback]));
         },
         confirm: function (message, action, title, data, callback) {
-            return openDefaultDialog(this, 'confirm', true, message, new ArgumentIterator([action, title, data, callback]));
+            return openDefaultDialog(this, 'confirm', true, message, readArgs([action, title, data, callback]));
         },
         prompt: function (message, value, action, title, description, data, callback) {
-            return openDefaultDialog(this, 'prompt', value, message, new ArgumentIterator([action, title, description, data, callback]));
+            return openDefaultDialog(this, 'prompt', value, message, readArgs([action, title, description, data, callback]));
         },
         notify: function (message, kind, timeout, within, data) {
-            var iter = new ArgumentIterator([kind, timeout, within, data]);
+            var iter = readArgs([kind, timeout, within, data]);
             return this.import('dialog.notify').render({
                 label: message,
                 kind: iter.string() || true,
@@ -1360,32 +1360,6 @@
         }
     });
 
-    function ArgumentIterator(args) {
-        this.args = args;
-        this.done = false;
-    }
-    definePrototype(ArgumentIterator, {
-        next: function (type) {
-            var arr = this.args;
-            if (type === 'object' ? isPlainObject(arr[0]) : typeof type === 'string' ? typeof arr[0] === type : is(arr[0], type)) {
-                this.value = arr.shift();
-                this.done = !arr.length;
-                return true;
-            }
-        },
-        nextAll: function (type) {
-            var arr = [];
-            while (this.next(type) && arr.push(this.value));
-            return arr;
-        },
-        fn: function () {
-            return this.next('function') && this.value;
-        },
-        string: function () {
-            return this.next('string') && this.value;
-        }
-    });
-
     function defineControlType(type, specs, layoutOnly) {
         specs = extend({}, specs);
         specs.templates = inheritTemplates({}, specs);
@@ -1407,7 +1381,7 @@
                 for (var i = 0, len = arguments.length, arr = new Array(len); i < len; i++) {
                     arr[i] = arguments[i];
                 }
-                var iter = new ArgumentIterator(arr);
+                var iter = readArgs(arr);
                 var name = iter.string();
                 var options = {};
                 if (specs.parseOptions) {
@@ -2064,7 +2038,7 @@
             dom.snap(element, snapTo, 'auto');
             helper.setZIndexOver(element, parentElement || document.activeElement);
             setTimeout(function () {
-                dom.focus(element, true);
+                dom.focus(element);
             });
         },
         error: function (e, self) {

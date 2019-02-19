@@ -1,4 +1,4 @@
-(function () {
+(function ($) {
     'use strict';
 
     var FLIP_POS = {
@@ -20,7 +20,7 @@
     var defineProperty = Object.defineProperty;
     var keys = Object.keys;
     var getComputedStyle = window.getComputedStyle;
-    var when = jQuery.when;
+    var when = $.when;
 
     var root = document.documentElement;
     var selection = window.getSelection();
@@ -28,6 +28,10 @@
     var originDiv = $('<div style="position:fixed; top:0; left:0;">')[0];
 
     function noop() { }
+
+    function readArgs(args) {
+        return new ArgumentIterator(makeArray(args));
+    }
 
     function isArray(obj) {
         return Array.isArray(obj) && obj;
@@ -919,22 +923,46 @@
         }
     });
 
+    function ArgumentIterator(args) {
+        this.value = null;
+        this.args = args;
+        this.done = !args.length;
+    }
+
+    definePrototype(ArgumentIterator, {
+        next: function (type) {
+            var arr = this.args;
+            if (type === 'object' ? isPlainObject(arr[0]) : typeof type === 'string' ? typeof arr[0] === type : is(arr[0], type)) {
+                this.value = arr.shift();
+                this.done = !arr.length;
+                return true;
+            }
+        },
+        nextAll: function (type) {
+            var arr = [];
+            while (this.next(type) && arr.push(this.value));
+            return arr;
+        },
+        fn: function () {
+            return this.next('function') && this.value;
+        },
+        string: function () {
+            return this.next('string') && this.value;
+        }
+    });
+
     var zeta = {
         IS_IOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
         IS_IE10: !!window.ActiveXObject,
         IS_IE: !!window.ActiveXObject || root.style.msTouchAction !== undefined || root.style.msUserSelect !== undefined,
         IS_MAC: navigator.userAgent.indexOf('Macintosh') >= 0,
-        IS_TOUCH: 'ontouchstart' in window
-    };
-    zeta.shim = {
-        MutationObserver: shim.MutationObserver,
-        WeakMap: shim.WeakMap,
-        Map: shim.Map,
-        Set: shim.Set
+        IS_TOUCH: 'ontouchstart' in window,
+        shim: shim
     };
     zeta.helper = {
         extend: extend,
         noop: noop,
+        readArgs: readArgs,
         isArray: isArray,
         isFunction: isFunction,
         isPlainObject: isPlainObject,
@@ -1006,4 +1034,4 @@
     };
     window.zeta = zeta;
 
-}());
+}(jQuery));

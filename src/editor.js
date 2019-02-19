@@ -95,6 +95,9 @@
     var selection = window.getSelection();
     var getComputedStyle = window.getComputedStyle;
     var clipboard = {};
+    var defaultOptions = {};
+    var definedWidgets = {};
+    var fontCache = {};
     var composingEditor = null;
     var detachedElements = new WeakMap();
     var dirtySelections = new Set();
@@ -309,10 +312,9 @@
     }
 
     function getFontMetric(elm) {
-        var cache = getFontMetric.cache || (getFontMetric.cache = {});
         var style = getComputedStyle(isElm(elm) || elm.parentNode);
         var key = [style.fontFamily, style.fontWeight, style.fontStyle].join('|');
-        if (!cache[key]) {
+        if (!fontCache[key]) {
             var $dummy = $('<div style="position:fixed;font-size:1000px;"><span style="display:inline-block;width:0;height:0;"></span>&nbsp;</div>').css({
                 fontFamily: style.fontFamily,
                 fontWeight: style.fontWeight,
@@ -320,7 +322,7 @@
             }).appendTo(document.body);
             var $img = $dummy.children();
             var offset = getRect($dummy[0]).top;
-            cache[key] = {
+            fontCache[key] = {
                 baseline: (getRect($img.css('vertical-align', 'baseline')[0]).top - offset) / 1000,
                 height: (getRect($img.css('vertical-align', 'text-bottom')[0]).top - offset) / 1000,
                 middle: (getRect($img.css('vertical-align', 'middle')[0]).top - offset) / 1000,
@@ -331,10 +333,10 @@
         var fontSize = parseFloat(style.fontSize);
         return {
             fontSize: fontSize,
-            baseline: cache[key].baseline * fontSize,
-            height: cache[key].height * fontSize,
-            middle: cache[key].middle * fontSize,
-            wsWidth: cache[key].wsWidth * fontSize
+            baseline: fontCache[key].baseline * fontSize,
+            height: fontCache[key].height * fontSize,
+            middle: fontCache[key].middle * fontSize,
+            wsWidth: fontCache[key].wsWidth * fontSize
         };
     }
 
@@ -358,7 +360,7 @@
             options = topElement;
             topElement = topElement.element;
         }
-        options = extend(true, {}, (!options || options.defaultOptions !== false) && Typer.defaultOptions, options);
+        options = extend(true, {}, (!options || options.defaultOptions !== false) && defaultOptions, options);
 
         var typer = this;
         var topNodeType = options.inline || is(topElement, INNER_PTAG) ? NODE_EDITABLE_PARAGRAPH : NODE_EDITABLE;
@@ -387,12 +389,9 @@
             return widgetOptions[id] && widgetOptions[id].element && (widgetOptions[id].inline || !is(node, NODE_EDITABLE_PARAGRAPH)) && (matchWidgetList(id, 'allowedIn', node.widget.id) && matchWidgetList(node.widget.id, 'allow', id));
         }
 
-        function getAllWidgets() {
-            return currentSelection.getWidgets().reverse().concat(staticWidgets);
-        }
-
         function findWidgetWithCommand(name) {
-            return any(getAllWidgets(), function (v) {
+            var widgets = currentSelection.getWidgets().reverse().concat(staticWidgets);
+            return any(widgets, function (v) {
                 return widgetOptions[v.id] && isFunction((widgetOptions[v.id].commands || {})[name]);
             });
         }
@@ -1352,7 +1351,7 @@
             each(options.widgets, function (i, v) {
                 setWidgetOption(i, v, options[i]);
             });
-            each(Typer.widgets, function (i, v) {
+            each(definedWidgets, function (i, v) {
                 if (options[i]) {
                     setWidgetOption(i, v, options[i]);
                 }
@@ -1398,8 +1397,8 @@
                 if (!id) {
                     setEnable(true);
                     container.emitAsync('stateChange');
-                } else if (!widgetOptions[id] && Typer.widgets[id] && !Typer.widgets[id].element) {
-                    setWidgetOption(id, Typer.widgets[id], options);
+                } else if (!widgetOptions[id] && definedWidgets[id] && !definedWidgets[id].element) {
+                    setWidgetOption(id, definedWidgets[id], options);
                     registerStaticWidget(id);
                 }
             },
@@ -1504,8 +1503,8 @@
         NODE_ANY_INLINE: NODE_ANY_INLINE,
         ZWSP: ZWSP,
         ZWSP_ENTITIY: ZWSP_ENTITIY,
-        defaultOptions: {},
-        widgets: {},
+        defaultOptions: defaultOptions,
+        widgets: definedWidgets,
     });
     zeta.Editor = Typer;
 
@@ -1625,10 +1624,11 @@
         }
         return acceptNode(inst, node);
     }
+    treeWalkerAcceptNode.$1 = 0;
 
     function treeWalkerNodeAccepted(inst, node, checkWidget) {
-        treeWalkerAcceptNode.returnValue = treeWalkerAcceptNode(inst, node, checkWidget);
-        if (treeWalkerAcceptNode.returnValue === 1) {
+        treeWalkerAcceptNode.$1 = treeWalkerAcceptNode(inst, node, checkWidget);
+        if (treeWalkerAcceptNode.$1 === 1) {
             inst.currentNode = node;
             return true;
         }
@@ -1640,7 +1640,7 @@
             if (treeWalkerNodeAccepted(inst, node, true)) {
                 return node;
             }
-            if (treeWalkerAcceptNode.returnValue === 3 && node[pChild]) {
+            if (treeWalkerAcceptNode.$1 === 3 && node[pChild]) {
                 node = node[pChild];
                 continue;
             }
@@ -1662,7 +1662,7 @@
                 if (treeWalkerNodeAccepted(inst, sibling)) {
                     return sibling;
                 }
-                sibling = (treeWalkerAcceptNode.returnValue === 2 || !sibling[pChild]) ? sibling[pSib] : sibling[pChild];
+                sibling = (treeWalkerAcceptNode.$1 === 2 || !sibling[pChild]) ? sibling[pSib] : sibling[pChild];
             }
             node = treeWalkerIsNodeVisible(inst, node.parentNode);
             if (!node || node === inst.root || treeWalkerAcceptNode(inst, node, true) === 1) {
@@ -1724,7 +1724,7 @@
                     if (treeWalkerNodeAccepted(self, node, true)) {
                         return node;
                     }
-                    rv = treeWalkerAcceptNode.returnValue;
+                    rv = treeWalkerAcceptNode.$1;
                 }
                 while (node && node !== self.root && !node.nextSibling) {
                     node = treeWalkerIsNodeVisible(self, node.parentNode);
@@ -1736,7 +1736,7 @@
                 if (treeWalkerNodeAccepted(self, node, true)) {
                     return node;
                 }
-                rv = treeWalkerAcceptNode.returnValue;
+                rv = treeWalkerAcceptNode.$1;
             }
         }
     });
@@ -1749,7 +1749,7 @@
                 return 3;
             }
             if (!treeWalkerNodeAccepted(iterator, node, true)) {
-                return treeWalkerAcceptNode.returnValue;
+                return treeWalkerAcceptNode.$1;
             }
             return acceptNode(inst, v) | 1;
         }, false);
@@ -1806,6 +1806,7 @@
         selectionAtomic.executing = true;
         return selectionAtomic.run(callback, args, thisArg);
     }
+    selectionAtomic.executing = false;
     selectionAtomic.run = transaction(function () {
         selectionAtomic.executing = false;
         dirtySelections.forEach(selectionUpdate);
@@ -2551,8 +2552,8 @@
     if (!zeta.IS_IE) {
         try {
             document.designMode = 'on';
-            document.execCommand('enableObjectResizing', false, false);
-            document.execCommand('enableInlineTableEditing', false, false);
+            document.execCommand('enableObjectResizing', false, 'false');
+            document.execCommand('enableInlineTableEditing', false, 'false');
         } catch (e) { }
         document.designMode = 'off';
     }
