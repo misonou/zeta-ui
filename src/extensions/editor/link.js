@@ -1,4 +1,4 @@
-(function ($, zeta) {
+(function () {
     'use strict';
 
     function normalizeUrl(url) {
@@ -183,4 +183,4 @@
         ok: 'OK',
     });
 
-}(jQuery, zeta));
+})();

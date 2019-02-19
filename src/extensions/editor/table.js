@@ -1,4 +1,4 @@
-(function ($, zeta) {
+(function () {
     'use strict';
 
     var TD_HTML = '<td></td>';
@@ -496,4 +496,4 @@
         }
     });
 
-}(jQuery, zeta));
+})();

@@ -1,4 +1,4 @@
-(function ($, zeta) {
+(function () {
     'use strict';
 
     var helper = zeta.helper;
@@ -234,4 +234,4 @@
         clipboardError: 'Unable to access clipboard due to browser security. Please use Ctrl+V or [Paste] from browser\'s menu.',
     });
 
-}(jQuery, zeta));
+})();

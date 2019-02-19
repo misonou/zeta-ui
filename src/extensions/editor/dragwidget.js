@@ -1,4 +1,4 @@
-(function ($, zeta) {
+(function () {
     'use strict';
 
     var Editor = zeta.Editor;
@@ -48,4 +48,4 @@
         }
     });
 
-})(jQuery, zeta);
+})();

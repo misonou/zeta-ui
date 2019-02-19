@@ -1,4 +1,4 @@
-(function ($, zeta) {
+(function () {
     'use strict';
 
     var reMediaType = /\.(?:(jpg|jpeg|png|gif|webp)|(mp4|ogg|webm)|(mp3))(?:\?.*)?$/i;
@@ -92,4 +92,4 @@
         'imageURL': 'Image URL'
     });
 
-}(jQuery, zeta));
+})();

@@ -1,4 +1,4 @@
-(function ($, zeta) {
+(function () {
     'use strict';
 
     var helper = zeta.helper;
@@ -35,4 +35,4 @@
         }
     };
 
-}(jQuery, zeta));
+})();

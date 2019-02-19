@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2017
+ * Copyright (c) 2019
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,3 +23,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define('zeta-ui', ['jquery', 'waterpipe'], factory);
+    } else if (typeof module === 'object' && module.exports) {
+        module.exports = factory(require('jquery'), require('waterpipe'));
+    } else {
+        root.zeta = factory(root.jQuery, root.waterpipe);
+    }
+}(typeof self !== 'undefined' ? self : this, function ($, waterpipe, zeta) {
+
+<%= grunt.file.read("build/lib.js") %>
+return zeta;
+
+}));

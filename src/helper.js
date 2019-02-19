@@ -1,4 +1,4 @@
-(function ($) {
+(function () {
     'use strict';
 
     var FLIP_POS = {
@@ -19,7 +19,6 @@
     var compareBoundaryPoints_ = Range.prototype.compareBoundaryPoints;
     var defineProperty = Object.defineProperty;
     var keys = Object.keys;
-    var getComputedStyle = window.getComputedStyle;
     var when = $.when;
 
     var root = document.documentElement;
@@ -951,7 +950,7 @@
         }
     });
 
-    var zeta = {
+    zeta = {
         IS_IOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
         IS_IE10: !!window.ActiveXObject,
         IS_IE: !!window.ActiveXObject || root.style.msTouchAction !== undefined || root.style.msUserSelect !== undefined,
@@ -1032,6 +1031,5 @@
         reject: reject,
         always: always
     };
-    window.zeta = zeta;
 
-}(jQuery));
+})();

@@ -1,4 +1,4 @@
-(function ($, zeta, Date) {
+(function () {
     'use strict';
 
     var MONTH_STR = 'January February March April May June July August September October November December'.split(' ');
@@ -577,4 +577,4 @@
     });
     ui.i18n('en', DEFAULT_LABELS);
 
-}(jQuery, zeta, Date));
+})();

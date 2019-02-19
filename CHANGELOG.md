@@ -1,3 +1,107 @@
+## 1.0.0-beta / 2019-02-19
+
+- Helper function module (`zeta.helper`)
+  - `setState` now accepts multiple class names
+  - synchronous callback for `runCSSTransition` that is fired directly after the end of CSS transition/animation
+  - `runCSSTransition` rejects if transition/animation is interrupted
+  - New overload of `rect.collapse`
+  - Fix: `getState` return incorrect value
+- Shim module (`zeta.shim`)
+  - Fix: `Map.values` method overriden by internal property
+  - Fix: `Map.set` unable to update existing entry
+- DOM event module (`zeta.dom`)
+  - Promotes use of more common property `e.type` for event name
+  - Improve overall touch handling
+  - Improve scroll prevention on wheel events
+  - Remove auto focus return for mouse actions
+  - Fix: `mousewheel` event fired when dir = 0 (odd case)
+  - Fix: `dom.drag` did not resolve upon touchend event
+  - Fix: `focusout` event fired when setting focus on the same element
+  - Fix: `scrollIntoView` altered ZERO_OFFSET which causes issues in subsequent calls
+  - Fix: `scrollIntoView` when either deltaX/Y is zero
+  - Fix: cater synthetic event where `e.buttons` not set
+  - Fix: focus issue when active element becomes invisible
+  - Fix: issues on handling focus/blur when there are modal element(s)
+  - Fix: `init/destroy` events not fired on re-registering component
+  - Fix: `textInput` event not fired in DOM `keypress` event
+  - Fix: event source after `dom.drag` is complete
+  - Fix: event source for Firefox and composition events
+  - Fix: corrupted focus path when setting focus to other element during `focusin` event
+  - Fix: focus when mouseup/touchend
+  - Fix: focus not properly moved when calling `setFocus`
+  - Fix: IME bug in IE, and improves IME behavior
+  - Fix: IE `pointer-events: none` shim not working
+- Editor module (`zeta.Editor`)
+  - Add return value for `select`/`selectAll` to indicate whether selection is changed by the call
+  - Add default actions for UpArrow/DownArrow
+  - Permit native actions for F5/F12/Tab
+  - `focusin`/`focusout` events are now only available on static widgets
+  - Fix: editor should not be focused when disabled
+  - Fix: selecting text in Chrome causes drag-n-drop effect
+  - Fix: selection and caret objects not properly updated after content modifications
+  - Fix: selection not in clean state after normalization
+  - Fix: caret should not be anchored at unrendered text nodes (collapsed white-spaces)
+  - Fix: `caret.getRange` returns range at incorrect position when caret is at the end of a text node
+  - Fix: `caret.moveTo` moves caret to incorrect position when given edge of nested elm
+  - Fix: `caret.moveTo` moves to invalid position when given another caret
+  - Fix: `caret.moveToText` exception when there is no text node in the element
+  - Fix: `caret.moveToPoint` when given position outside editable area
+  - Fix: `caret.moveByCharacter` steps through inline widgets
+  - Fix: `caret.moveByLine` moves to incorrect line where there are nested blocks
+  - Fix: `typer.setValue` cannot clear formatting
+  - Fix: virtual keyboard does not appear on touch device
+  - Fix: DOM event listeners are not removed after editor is destroyed
+  - Fix: `receive` event not fired when inserting content
+  - Fix: `insertHtml` failed to insert a list of nodes
+  - Fix: `stateChange` event fired during init
+  - Fix: unknown element not filtered on insert
+  - Fix: whitespace (`nbsp`) normalization
+  - Fix: node iterator enumerates ineditable elements
+  - Fix: methods missing on prototype
+  - Built-in extension
+    - Support inserting row or column by clicking cell edges
+    - Fix: formatting extension script error
+    - Fix: pasting list to existing list
+    - Fix: toolbar state not up-to-date
+  - Canvas
+    - New overload of `canvas.drawLine`
+    - Add `handle.active`
+    - Fix: clicking canvas handles removes focus from editor
+    - Fix: canvas is not redrawn when handle is released
+- UI module (`zeta.UI`)
+  - API change: `control.watch`
+  - API change: Remove `control.getRoleContext`
+  - Message data binding for built popup box
+  - Improve focus behavior upon validation
+  - Trigger `stateChange` event when child controls are removed
+  - Flush events during `UIContext.update` so that control is updated synchronously
+  - Remove description in alert and confirm popup box
+  - Fix: control click action checking
+  - Fix: control event order of nested layout
+  - Fix: unindent click action for nested layout control
+  - Fix: properties defined by control species are not automatically listened
+  - Built-in components
+    - Add clear button for textbox
+    - Add validation for rich text box
+    - Support empty for number input
+    - Fix: textbox focus class indicator added/removed in incorrect state
+    - Fix: menu keyboard navigation issue
+    - Fix: menu show/hide conflicts in short period of time
+    - Fix: nested menu not shown when mouse over
+    - Fix: reset active button state after menu is hidden
+    - Fix: keyword field opens duplicated dialog
+    - Fix: keyword field unable to type when suggestion list is refreshed
+    - Fix: keyword field does not open dialog on touch device
+    - Fix: dropdown value changed when clicking a non-choice button
+    - Fix: datepicker formats a non-empty string for empty value
+    - Fix: datepicker issue on touch devices
+- Other
+  - UMD-ify
+  - CSS variables on stylesheet
+  - Enable ripple click effect in touch device
+  - Fix: ripple click effect created on ancestor elements
+
+
 ## 1.0.0-pre / 2018-11-01
 
 Intial pre-release, changed from Typer 0.11.3:

@@ -9,10 +9,8 @@
     "grunt-process": "^1.1.4",
     "highlightjs": "^9.12.0",
     "jq-scrollable": "^1.3.0",
-    "jquery": "^3.3.1",
     "qunit": "^2.5.1",
-    "syn": "^0.13.0",
-    "waterpipe": "^2.2.0"
+    "syn": "^0.13.0"
   },
   "author": "misonou",
   "license": "MIT",
@@ -21,8 +19,14 @@
     "url": "git+https://github.com/misonou/zeta-ui.git"
   },
   "homepage": "https://github.com/misonou/zeta-ui",
+  "main": "dist/zeta-ui.min.js",
+  "types": "typings/index.d.ts",
   "scripts": {
     "build": "grunt"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@types/jquery": ">=2",
+    "jquery": ">=2",
+    "waterpipe": "^2.2.1"
+  }
 }

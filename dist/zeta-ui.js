@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2017
+ * Copyright (c) 2019
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,17 @@
  * THE SOFTWARE.
  */
 
-(function (jQuery, window, document, Object, String, Array, Math, Node, Range, DocumentFragment, RegExp, parseFloat, setTimeout, clearTimeout, shim) {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define('zeta-ui', ['jquery', 'waterpipe'], factory);
+    } else if (typeof module === 'object' && module.exports) {
+        module.exports = factory(require('jquery'), require('waterpipe'));
+    } else {
+        root.zeta = factory(root.jQuery, root.waterpipe);
+    }
+}(typeof self !== 'undefined' ? self : this, function ($, waterpipe, zeta) {
+
+(function (window, document, Object, String, Array, Math, Date, Node, Range, DocumentFragment, RegExp, parseFloat, setTimeout, clearTimeout, getComputedStyle, shim) {
 'use strict';
 
 // source: src/helper.js
@@ -47,8 +57,7 @@
     var compareBoundaryPoints_ = Range.prototype.compareBoundaryPoints;
     var defineProperty = Object.defineProperty;
     var keys = Object.keys;
-    var getComputedStyle = window.getComputedStyle;
-    var when = jQuery.when;
+    var when = $.when;
 
     var root = document.documentElement;
     var selection = window.getSelection();
@@ -56,6 +65,10 @@
     var originDiv = $('<div style="position:fixed; top:0; left:0;">')[0];
 
     function noop() { }
+
+    function readArgs(args) {
+        return new ArgumentIterator(makeArray(args));
+    }
 
     function isArray(obj) {
         return Array.isArray(obj) && obj;
@@ -947,22 +960,46 @@
         }
     });
 
-    var zeta = {
+    function ArgumentIterator(args) {
+        this.value = null;
+        this.args = args;
+        this.done = !args.length;
+    }
+
+    definePrototype(ArgumentIterator, {
+        next: function (type) {
+            var arr = this.args;
+            if (type === 'object' ? isPlainObject(arr[0]) : typeof type === 'string' ? typeof arr[0] === type : is(arr[0], type)) {
+                this.value = arr.shift();
+                this.done = !arr.length;
+                return true;
+            }
+        },
+        nextAll: function (type) {
+            var arr = [];
+            while (this.next(type) && arr.push(this.value));
+            return arr;
+        },
+        fn: function () {
+            return this.next('function') && this.value;
+        },
+        string: function () {
+            return this.next('string') && this.value;
+        }
+    });
+
+    zeta = {
         IS_IOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
         IS_IE10: !!window.ActiveXObject,
         IS_IE: !!window.ActiveXObject || root.style.msTouchAction !== undefined || root.style.msUserSelect !== undefined,
         IS_MAC: navigator.userAgent.indexOf('Macintosh') >= 0,
-        IS_TOUCH: 'ontouchstart' in window
-    };
-    zeta.shim = {
-        MutationObserver: shim.MutationObserver,
-        WeakMap: shim.WeakMap,
-        Map: shim.Map,
-        Set: shim.Set
+        IS_TOUCH: 'ontouchstart' in window,
+        shim: shim
     };
     zeta.helper = {
         extend: extend,
         noop: noop,
+        readArgs: readArgs,
         isArray: isArray,
         isFunction: isFunction,
         isPlainObject: isPlainObject,
@@ -1032,12 +1069,11 @@
         reject: reject,
         always: always
     };
-    window.zeta = zeta;
 
-}());
+})();
 
 // source: src/dom.js
-(function ($, zeta) {
+(function () {
     var KEYNAMES = JSON.parse('{"8":"backspace","9":"tab","13":"enter","16":"shift","17":"ctrl","18":"alt","19":"pause","20":"capsLock","27":"escape","32":"space","33":"pageUp","34":"pageDown","35":"end","36":"home","37":"leftArrow","38":"upArrow","39":"rightArrow","40":"downArrow","45":"insert","46":"delete","48":"0","49":"1","50":"2","51":"3","52":"4","53":"5","54":"6","55":"7","56":"8","57":"9","65":"a","66":"b","67":"c","68":"d","69":"e","70":"f","71":"g","72":"h","73":"i","74":"j","75":"k","76":"l","77":"m","78":"n","79":"o","80":"p","81":"q","82":"r","83":"s","84":"t","85":"u","86":"v","87":"w","88":"x","89":"y","90":"z","91":"leftWindow","92":"rightWindowKey","93":"select","96":"numpad0","97":"numpad1","98":"numpad2","99":"numpad3","100":"numpad4","101":"numpad5","102":"numpad6","103":"numpad7","104":"numpad8","105":"numpad9","106":"multiply","107":"add","109":"subtract","110":"decimalPoint","111":"divide","112":"f1","113":"f2","114":"f3","115":"f4","116":"f5","117":"f6","118":"f7","119":"f8","120":"f9","121":"f10","122":"f11","123":"f12","144":"numLock","145":"scrollLock","186":"semiColon","187":"equalSign","188":"comma","189":"dash","190":"period","191":"forwardSlash","192":"backtick","219":"openBracket","220":"backSlash","221":"closeBracket","222":"singleQuote"}');
     var SELECTOR_FOCUSABLE = ':input, [contenteditable], a[href], area[href], iframe';
     var META_KEYS = [16, 17, 18, 91, 93];
@@ -1051,7 +1087,6 @@
     var Map = shim.Map;
     var Set = shim.Set;
     var helper = zeta.helper;
-    var getComputedStyle = window.getComputedStyle;
 
     var any = helper.any;
     var bind = helper.bind;
@@ -2446,10 +2481,10 @@
         }
     });
 
-}(jQuery, zeta));
+})();
 
 // source: src/editor.js
-(function ($, zeta) {
+(function () {
     var INNER_PTAG = 'h1,h2,h3,h4,h5,h6,p,q,blockquote,pre,code,li,caption,figcaption,summary,dt,th';
     var ZWSP = '\u200b';
     var ZWSP_ENTITIY = '&#8203;';
@@ -2542,8 +2577,10 @@
     var RE_SKIP = /[\u200b\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u20d0-\u20ff\ufe20-\ufe2f\udc00-\udcff\u0591-\u05bd\u05bf\u05c1\u05c2\u05c4\u05c5\u05c7\u0610-\u061a\u064b-\u065f\u0670\u06d6-\u06dc\u06df-\u06e4\u06e7\u06e8\u06ea-\u06ed\u08d4-\u08e1\u08e3-\u08ff\u0900-\u0903\u093a-\u093c\u093e-\u094f\u0951-\u0957\u0962\u0963\u3099\u309a]/;
 
     var selection = window.getSelection();
-    var getComputedStyle = window.getComputedStyle;
     var clipboard = {};
+    var defaultOptions = {};
+    var definedWidgets = {};
+    var fontCache = {};
     var composingEditor = null;
     var detachedElements = new WeakMap();
     var dirtySelections = new Set();
@@ -2595,6 +2632,13 @@
     function TyperCaret(typer, selection) {
         this.typer = typer;
         this.selection = selection || null;
+    }
+
+    function TyperTransaction(typer, widget, commandName) {
+        this.typer = typer;
+        this.selection = typer.getSelection();
+        this.widget = widget || null;
+        this.commandName = commandName || null;
     }
 
     function transaction(finalize) {
@@ -2751,10 +2795,9 @@
     }
 
     function getFontMetric(elm) {
-        var cache = getFontMetric.cache || (getFontMetric.cache = {});
         var style = getComputedStyle(isElm(elm) || elm.parentNode);
         var key = [style.fontFamily, style.fontWeight, style.fontStyle].join('|');
-        if (!cache[key]) {
+        if (!fontCache[key]) {
             var $dummy = $('<div style="position:fixed;font-size:1000px;"><span style="display:inline-block;width:0;height:0;"></span>&nbsp;</div>').css({
                 fontFamily: style.fontFamily,
                 fontWeight: style.fontWeight,
@@ -2762,7 +2805,7 @@
             }).appendTo(document.body);
             var $img = $dummy.children();
             var offset = getRect($dummy[0]).top;
-            cache[key] = {
+            fontCache[key] = {
                 baseline: (getRect($img.css('vertical-align', 'baseline')[0]).top - offset) / 1000,
                 height: (getRect($img.css('vertical-align', 'text-bottom')[0]).top - offset) / 1000,
                 middle: (getRect($img.css('vertical-align', 'middle')[0]).top - offset) / 1000,
@@ -2773,10 +2816,10 @@
         var fontSize = parseFloat(style.fontSize);
         return {
             fontSize: fontSize,
-            baseline: cache[key].baseline * fontSize,
-            height: cache[key].height * fontSize,
-            middle: cache[key].middle * fontSize,
-            wsWidth: cache[key].wsWidth * fontSize
+            baseline: fontCache[key].baseline * fontSize,
+            height: fontCache[key].height * fontSize,
+            middle: fontCache[key].middle * fontSize,
+            wsWidth: fontCache[key].wsWidth * fontSize
         };
     }
 
@@ -2800,24 +2843,20 @@
             options = topElement;
             topElement = topElement.element;
         }
-        options = extend(true, {}, (!options || options.defaultOptions !== false) && Typer.defaultOptions, options);
+        options = extend(true, {}, (!options || options.defaultOptions !== false) && defaultOptions, options);
 
         var typer = this;
         var topNodeType = options.inline || is(topElement, INNER_PTAG) ? NODE_EDITABLE_PARAGRAPH : NODE_EDITABLE;
         var container = new zeta.Container(topElement, typer);
         var widgetOptions = {};
         var staticWidgets = [];
-        var undoable = {};
+        var internals = {};
         var currentSelection;
         var triggerDOMChange;
         var enabled;
         var muteChanges = true;
         var needNormalize = true;
         var $self = $(topElement);
-
-        function TyperTransaction(widget) {
-            this.widget = widget || null;
-        }
 
         function triggerStateChange() {
             container.emit('stateChange', currentSelection.focusNode.widget.element, null, true);
@@ -2833,12 +2872,9 @@
             return widgetOptions[id] && widgetOptions[id].element && (widgetOptions[id].inline || !is(node, NODE_EDITABLE_PARAGRAPH)) && (matchWidgetList(id, 'allowedIn', node.widget.id) && matchWidgetList(node.widget.id, 'allow', id));
         }
 
-        function getAllWidgets() {
-            return currentSelection.getWidgets().reverse().concat(staticWidgets);
-        }
-
         function findWidgetWithCommand(name) {
-            return any(getAllWidgets(), function (v) {
+            var widgets = currentSelection.getWidgets().reverse().concat(staticWidgets);
+            return any(widgets, function (v) {
                 return widgetOptions[v.id] && isFunction((widgetOptions[v.id].commands || {})[name]);
             });
         }
@@ -2854,7 +2890,7 @@
                 if (needNormalize) {
                     normalize();
                 }
-                undoable.snapshot();
+                internals.snapshot();
             }
 
             function createWidget(element, id) {
@@ -3499,7 +3535,7 @@
             }
 
             function takeSnapshot() {
-                var value = undoable.getValue();
+                var value = typer.getValue();
                 if (!snapshots[0] || value !== snapshots[currentIndex].value) {
                     snapshots.splice(0, currentIndex, {
                         value: value
@@ -3522,10 +3558,7 @@
                 clearTimeout(timeout);
             }
 
-            extend(undoable, {
-                getValue: function () {
-                    return trim(topElement.innerHTML.replace(/\s+style(?:="[^"]*")?|\u200b+(?!<\/)|(^|[^>])\u200b+/g, '$1'));
-                },
+            extend(internals, {
                 canUndo: function () {
                     return currentIndex < snapshots.length - 1;
                 },
@@ -3533,12 +3566,12 @@
                     return currentIndex > 0;
                 },
                 undo: function () {
-                    if (undoable.canUndo()) {
+                    if (internals.canUndo()) {
                         applySnapshot(snapshots[++currentIndex]);
                     }
                 },
                 redo: function () {
-                    if (undoable.canRedo()) {
+                    if (internals.canRedo()) {
                         applySnapshot(snapshots[--currentIndex]);
                     }
                 },
@@ -3580,7 +3613,7 @@
                     curTextNode.data = curTextNode.data.substr(0, curOffset) + inputText + curTextNode.data.slice(curOffset);
                     normalizeWhitespace(currentSelection.startNode.element);
                     currentSelection.moveToText(curTextNode, curOffset + inputText.length);
-                    undoable.snapshot(200);
+                    internals.snapshot(200);
                 }
             }
 
@@ -3725,7 +3758,7 @@
                     (e.metakey === 'shift' ? currentSelection.extendCaret : currentSelection).moveToPoint(e.clientX, e.clientY);
                     currentSelection.focus();
                     dom.drag(e, function (x, y) {
-                        undoable.snapshot(200);
+                        internals.snapshot(200);
                         currentSelection.extendCaret.moveToPoint(x, y);
                     });
                     // browsers update selection range after mousedown event
@@ -3801,7 +3834,7 @@
             each(options.widgets, function (i, v) {
                 setWidgetOption(i, v, options[i]);
             });
-            each(Typer.widgets, function (i, v) {
+            each(definedWidgets, function (i, v) {
                 if (options[i]) {
                     setWidgetOption(i, v, options[i]);
                 }
@@ -3815,7 +3848,7 @@
             });
             options.textFlow = true;
 
-            extend(typer, createTyperDocument(topElement, true));
+            extend(internals, createTyperDocument(topElement, true));
             each(widgetOptions, function (i, v) {
                 if (!v.element || v.element === topElement) {
                     registerStaticWidget(i);
@@ -3836,8 +3869,7 @@
             $self.css('-webkit-user-modify', 'read-write-plaintext-only');
         }
 
-        extend(typer, undoable, {
-            element: topElement,
+        _(typer, extend(internals, {
             on: function (event, handler) {
                 container.add(topElement, helper.isPlainObject(event) || helper.kv(event, handler));
             },
@@ -3848,8 +3880,8 @@
                 if (!id) {
                     setEnable(true);
                     container.emitAsync('stateChange');
-                } else if (!widgetOptions[id] && Typer.widgets[id] && !Typer.widgets[id].element) {
-                    setWidgetOption(id, Typer.widgets[id], options);
+                } else if (!widgetOptions[id] && definedWidgets[id] && !definedWidgets[id].element) {
+                    setWidgetOption(id, definedWidgets[id], options);
                     registerStaticWidget(id);
                 }
             },
@@ -3889,29 +3921,24 @@
                 return extractText(selection);
             },
             invoke: function (command, value) {
-                var tx = new TyperTransaction();
+                var commandName;
+                var widget;
                 if (typeof command === 'string') {
-                    tx.commandName = command;
-                    tx.widget = findWidgetWithCommand(command);
-                    command = tx.widget && widgetOptions[tx.widget.id].commands[command];
+                    widget = findWidgetWithCommand(command);
+                    commandName = command;
+                    command = widget && widgetOptions[widget.id].commands[command];
                 }
                 if (!isFunction(command)) {
                     return false;
                 }
+                var tx = new TyperTransaction(typer, widget, commandName);
                 command.call(typer, tx, value);
                 normalize();
-                undoable.snapshot();
+                internals.snapshot();
                 if (typer.focused(true)) {
                     currentSelection.focus();
                 }
                 return true;
-            }
-        });
-
-        definePrototype(TyperTransaction, {
-            typer: typer,
-            get selection() {
-                return currentSelection;
             },
             insertText: function (text) {
                 insertContents(currentSelection, text);
@@ -3928,7 +3955,7 @@
             removeWidget: function (widget) {
                 var handler = widgetOptions[widget.id].remove;
                 if (isFunction(handler)) {
-                    handler.call(typer, new TyperTransaction(widget));
+                    handler.call(typer, new TyperTransaction(typer, widget));
                 } else if (handler === 'keepText') {
                     var textContent = extractText(widget.element);
                     insertContents(createRange(widget.element, true), textContent);
@@ -3937,7 +3964,9 @@
                     insertContents(createRange(widget.element), '');
                 }
             }
-        });
+        }));
+        typer.element = topElement;
+        typer.rootNode = internals.rootNode;
 
         normalize();
         currentSelection = new TyperSelection(typer, createRange(topElement, 0));
@@ -3957,8 +3986,8 @@
         NODE_ANY_INLINE: NODE_ANY_INLINE,
         ZWSP: ZWSP,
         ZWSP_ENTITIY: ZWSP_ENTITIY,
-        defaultOptions: {},
-        widgets: {},
+        defaultOptions: defaultOptions,
+        widgets: definedWidgets,
     });
     zeta.Editor = Typer;
 
@@ -4003,6 +4032,9 @@
             }
             return !!(new TyperTreeWalker(this.rootNode, ~(NODE_PARAGRAPH | NODE_INLINE)).nextNode());
         },
+        getValue: function () {
+            return trim(this.element.innerHTML.replace(/\s+style(?:="[^"]*")?|\u200b+(?!<\/)|(^|[^>])\u200b+/g, '$1'));
+        },
         setValue: function (value) {
             this.invoke(function (tx) {
                 createDocumentFragment(tx.typer.element.childNodes);
@@ -4033,6 +4065,16 @@
         support: function (command) {
             return this.hasCommand(command) && this.invoke.bind(this, command);
         }
+    });
+    each('on enabled enable disable destroy hasCommand widgetEnabled widgetAllowed getNode getWidgetOption getStaticWidget getStaticWidgets getSelection extractText invoke canUndo canRedo undo redo snapshot', function (i, v) {
+        defineHiddenProperty(Typer.prototype, v, function () {
+            return _(this)[v].apply(null, arguments);
+        });
+    });
+    each('insertText insertHtml insertWidget removeWidget', function (i, v) {
+        defineHiddenProperty(TyperTransaction.prototype, v, function () {
+            return _(this.typer)[v].apply(null, arguments);
+        });
     });
 
     definePrototype(TyperWidget, {
@@ -4065,10 +4107,11 @@
         }
         return acceptNode(inst, node);
     }
+    treeWalkerAcceptNode.$1 = 0;
 
     function treeWalkerNodeAccepted(inst, node, checkWidget) {
-        treeWalkerAcceptNode.returnValue = treeWalkerAcceptNode(inst, node, checkWidget);
-        if (treeWalkerAcceptNode.returnValue === 1) {
+        treeWalkerAcceptNode.$1 = treeWalkerAcceptNode(inst, node, checkWidget);
+        if (treeWalkerAcceptNode.$1 === 1) {
             inst.currentNode = node;
             return true;
         }
@@ -4080,7 +4123,7 @@
             if (treeWalkerNodeAccepted(inst, node, true)) {
                 return node;
             }
-            if (treeWalkerAcceptNode.returnValue === 3 && node[pChild]) {
+            if (treeWalkerAcceptNode.$1 === 3 && node[pChild]) {
                 node = node[pChild];
                 continue;
             }
@@ -4102,7 +4145,7 @@
                 if (treeWalkerNodeAccepted(inst, sibling)) {
                     return sibling;
                 }
-                sibling = (treeWalkerAcceptNode.returnValue === 2 || !sibling[pChild]) ? sibling[pSib] : sibling[pChild];
+                sibling = (treeWalkerAcceptNode.$1 === 2 || !sibling[pChild]) ? sibling[pSib] : sibling[pChild];
             }
             node = treeWalkerIsNodeVisible(inst, node.parentNode);
             if (!node || node === inst.root || treeWalkerAcceptNode(inst, node, true) === 1) {
@@ -4164,7 +4207,7 @@
                     if (treeWalkerNodeAccepted(self, node, true)) {
                         return node;
                     }
-                    rv = treeWalkerAcceptNode.returnValue;
+                    rv = treeWalkerAcceptNode.$1;
                 }
                 while (node && node !== self.root && !node.nextSibling) {
                     node = treeWalkerIsNodeVisible(self, node.parentNode);
@@ -4176,7 +4219,7 @@
                 if (treeWalkerNodeAccepted(self, node, true)) {
                     return node;
                 }
-                rv = treeWalkerAcceptNode.returnValue;
+                rv = treeWalkerAcceptNode.$1;
             }
         }
     });
@@ -4189,7 +4232,7 @@
                 return 3;
             }
             if (!treeWalkerNodeAccepted(iterator, node, true)) {
-                return treeWalkerAcceptNode.returnValue;
+                return treeWalkerAcceptNode.$1;
             }
             return acceptNode(inst, v) | 1;
         }, false);
@@ -4246,6 +4289,7 @@
         selectionAtomic.executing = true;
         return selectionAtomic.run(callback, args, thisArg);
     }
+    selectionAtomic.executing = false;
     selectionAtomic.run = transaction(function () {
         selectionAtomic.executing = false;
         dirtySelections.forEach(selectionUpdate);
@@ -4991,8 +5035,8 @@
     if (!zeta.IS_IE) {
         try {
             document.designMode = 'on';
-            document.execCommand('enableObjectResizing', false, false);
-            document.execCommand('enableInlineTableEditing', false, false);
+            document.execCommand('enableObjectResizing', false, 'false');
+            document.execCommand('enableInlineTableEditing', false, 'false');
         } catch (e) { }
         document.designMode = 'off';
     }
@@ -5009,10 +5053,10 @@
         }
     }, 100);
 
-}(jQuery, zeta));
+})();
 
 // source: src/ui.js
-(function ($, zeta) {
+(function () {
     var MAC_CTRLKEY = JSON.parse('{"ctrl":"\u2318","alt":"\u2325","shift":"\u21e7","enter":"\u21a9","tab":"\u2135","pageUp":"\u21de","pageDown":"\u21df","backspace":"\u232b","escape":"\u238b","leftArrow":"\u2b60","upArrow":"\u2b61","rightArrow":"\u2b62","downArrow":"\u2b63","home":"\u2b66","end":"\u2b68"}');
     var BOOL_ATTRS = 'checked selected disabled readonly multiple ismap';
     var CONST_PROPS = 'element name type parent all controls context previousSibling nextSibling';
@@ -5025,7 +5069,6 @@
     var hasOwnProperty = Object.hasOwnProperty;
     var getPrototypeOf = Object.getPrototypeOf;
     var getOwnPropertyNames = Object.getOwnPropertyNames;
-    var waterpipe = window.waterpipe;
     var helper = zeta.helper;
     var dom = zeta.dom;
     var any = helper.any;
@@ -5049,6 +5092,7 @@
     var noop = helper.noop;
     var position = helper.position;
     var randomId = helper.randomId;
+    var readArgs = helper.readArgs;
     var reject = helper.reject;
     var removeNode = helper.removeNode;
     var runCSSTransition = helper.runCSSTransition;
@@ -5813,16 +5857,16 @@
             addLabels(this.labels, language, key, value);
         },
         alert: function (message, action, title, data, callback) {
-            return openDefaultDialog(this, 'alert', true, message, new ArgumentIterator([action, title, data, callback]));
+            return openDefaultDialog(this, 'alert', true, message, readArgs([action, title, data, callback]));
         },
         confirm: function (message, action, title, data, callback) {
-            return openDefaultDialog(this, 'confirm', true, message, new ArgumentIterator([action, title, data, callback]));
+            return openDefaultDialog(this, 'confirm', true, message, readArgs([action, title, data, callback]));
         },
         prompt: function (message, value, action, title, description, data, callback) {
-            return openDefaultDialog(this, 'prompt', value, message, new ArgumentIterator([action, title, description, data, callback]));
+            return openDefaultDialog(this, 'prompt', value, message, readArgs([action, title, description, data, callback]));
         },
         notify: function (message, kind, timeout, within, data) {
-            var iter = new ArgumentIterator([kind, timeout, within, data]);
+            var iter = readArgs([kind, timeout, within, data]);
             return this.import('dialog.notify').render({
                 label: message,
                 kind: iter.string() || true,
@@ -6372,32 +6416,6 @@
         }
     });
 
-    function ArgumentIterator(args) {
-        this.args = args;
-        this.done = false;
-    }
-    definePrototype(ArgumentIterator, {
-        next: function (type) {
-            var arr = this.args;
-            if (type === 'object' ? isPlainObject(arr[0]) : typeof type === 'string' ? typeof arr[0] === type : is(arr[0], type)) {
-                this.value = arr.shift();
-                this.done = !arr.length;
-                return true;
-            }
-        },
-        nextAll: function (type) {
-            var arr = [];
-            while (this.next(type) && arr.push(this.value));
-            return arr;
-        },
-        fn: function () {
-            return this.next('function') && this.value;
-        },
-        string: function () {
-            return this.next('string') && this.value;
-        }
-    });
-
     function defineControlType(type, specs, layoutOnly) {
         specs = extend({}, specs);
         specs.templates = inheritTemplates({}, specs);
@@ -6419,7 +6437,7 @@
                 for (var i = 0, len = arguments.length, arr = new Array(len); i < len; i++) {
                     arr[i] = arguments[i];
                 }
-                var iter = new ArgumentIterator(arr);
+                var iter = readArgs(arr);
                 var name = iter.string();
                 var options = {};
                 if (specs.parseOptions) {
@@ -7076,7 +7094,7 @@
             dom.snap(element, snapTo, 'auto');
             helper.setZIndexOver(element, parentElement || document.activeElement);
             setTimeout(function () {
-                dom.focus(element, true);
+                dom.focus(element);
             });
         },
         error: function (e, self) {
@@ -7211,18 +7229,16 @@
 
     waterpipe.pipes[':zeta-shortcut'] = zeta.IS_MAC ? formatShortcutMac : formatShortcutWin;
 
-})(jQuery, zeta);
+})();
 
 // source: src/canvas.js
-(function ($, zeta) {
+(function () {
     var Editor = zeta.Editor;
     var helper = zeta.helper;
     var bind = helper.bind;
-    var createRange = helper.createRange;
     var each = helper.each;
     var extend = helper.extend;
     var getRect = helper.getRect;
-    var is = helper.is;
     var isFunction = helper.isFunction;
     var matchWord = helper.matchWord;
     var toPlainRect = helper.toPlainRect;
@@ -7235,6 +7251,7 @@
     var state = {};
     var lastState = {};
     var mousedown = false;
+    var inited;
     var activeTyper;
     var activeHandle;
     var hoverNode;
@@ -7445,9 +7462,9 @@
     Editor.widgets.visualizer = {
         init: function (e) {
             $(e.typer.element).addClass('has-typer-visualizer');
-            if (!init.init) {
+            if (!inited) {
                 init();
-                init.init = true;
+                inited = true;
             }
         },
         focusin: function (e) {
@@ -7479,10 +7496,10 @@
         }
     });
 
-})(jQuery, zeta);
+})();
 
 // source: src/extensions/editor/dragwidget.js
-(function ($, zeta) {
+(function () {
     var Editor = zeta.Editor;
     var helper = zeta.helper;
     var getRect = helper.getRect;
@@ -7530,10 +7547,10 @@
         }
     });
 
-})(jQuery, zeta);
+})();
 
 // source: src/extensions/editor/formatting.js
-(function ($, zeta) {
+(function () {
     var ALIGN_VALUE = {
         justifyLeft: 'left',
         justifyRight: 'right',
@@ -7641,7 +7658,7 @@
             selection.moveToText(wrapElm, -0);
         } else if (textNodes[0]) {
             paragraphs.forEach(function (v) {
-                if (!styleCheck || !helper.matchWord(window.getComputedStyle(v)[styleCheck[0]], styleCheck[1])) {
+                if (!styleCheck || !helper.matchWord(getComputedStyle(v)[styleCheck[0]], styleCheck[1])) {
                     if (!currentState) {
                         $(v).find(textNodes).wrap(wrapElm);
                     } else {
@@ -8113,10 +8130,10 @@
         format_blockquote: 'Blockquote'
     });
 
-}(jQuery, zeta));
+})();
 
 // source: src/extensions/editor/link.js
-(function ($, zeta) {
+(function () {
     function normalizeUrl(url) {
         var anchor = document.createElement('a');
         anchor.href = url || '';
@@ -8197,6 +8214,7 @@
                 danger: true,
                 execute: function (self) {
                     self.parentContext.typer.invoke('unlink');
+                    return self.all.dialog.destroy();
                 },
                 visible: function (self) {
                     return self.parentContext.typer.hasCommand('unlink');
@@ -8298,10 +8316,10 @@
         ok: 'OK',
     });
 
-}(jQuery, zeta));
+})();
 
 // source: src/extensions/editor/media.js
-(function ($, zeta) {
+(function () {
     var reMediaType = /\.(?:(jpg|jpeg|png|gif|webp)|(mp4|ogg|webm)|(mp3))(?:\?.*)?$/i;
     var helper = zeta.helper;
 
@@ -8393,10 +8411,10 @@
         'imageURL': 'Image URL'
     });
 
-}(jQuery, zeta));
+})();
 
 // source: src/extensions/editor/stateclass.js
-(function ($, zeta) {
+(function () {
     var helper = zeta.helper;
 
     function toggleClass(widget, className, value) {
@@ -8431,10 +8449,10 @@
         }
     };
 
-}(jQuery, zeta));
+})();
 
 // source: src/extensions/editor/table.js
-(function ($, zeta) {
+(function () {
     var TD_HTML = '<td></td>';
     var TH_HTML = '<th></th>';
     var TR_HTML = '<tr>%</tr>';
@@ -8930,10 +8948,10 @@
         }
     });
 
-}(jQuery, zeta));
+})();
 
 // source: src/extensions/editor/toolbar.js
-(function ($, zeta) {
+(function () {
     var helper = zeta.helper;
     var toolbar;
     var contextmenu;
@@ -9167,10 +9185,10 @@
         clipboardError: 'Unable to access clipboard due to browser security. Please use Ctrl+V or [Paste] from browser\'s menu.',
     });
 
-}(jQuery, zeta));
+})();
 
 // source: src/extensions/editor/validation.js
-(function ($, zeta) {
+(function () {
     function filter(value, options, currentLength) {
         if (options.invalidCharsRegex) {
             value = value.replace(options.invalidCharsRegex, '');
@@ -9218,10 +9236,10 @@
         }
     };
 
-}(jQuery, zeta));
+})();
 
 // source: src/extensions/effects/material.js
-(function ($, zeta) {
+(function () {
     var helper = zeta.helper;
 
     function createRipple(elm, x, y, until) {
@@ -9258,10 +9276,10 @@
         }
     });
 
-}(jQuery, zeta));
+})();
 
 // source: src/extensions/ui/datepicker.js
-(function ($, zeta, Date) {
+(function () {
     var MONTH_STR = 'January February March April May June July August September October November December'.split(' ');
     var WEEKDAYS_STR = 'Su Mo Tu We Th Fr Sa'.split(' ');
     var MS_PER_DAY = 86400000;
@@ -9838,10 +9856,10 @@
     });
     ui.i18n('en', DEFAULT_LABELS);
 
-}(jQuery, zeta, Date));
+})();
 
 // source: src/extensions/ui/keyword.js
-(function ($, zeta) {
+(function () {
     var SHOW_DIALOG = zeta.IS_TOUCH;
 
     var helper = zeta.helper;
@@ -10239,10 +10257,10 @@
         cancel: 'Cancel'
     });
 
-}(jQuery, zeta));
+})();
 
 // source: src/extensions/ui/number.js
-(function ($, zeta) {
+(function () {
     function setValue(widget, value) {
         if (value === null || value === '' || isNaN(value)) {
             value = value ? '0' : '';
@@ -10311,9 +10329,9 @@
         preset: preset
     });
 
-}(jQuery, zeta));
+})();
 
-}(jQuery, window, document, Object, String, Array, Math, Node, Range, DocumentFragment, RegExp, parseFloat, setTimeout, clearTimeout, new (function () {
+}(window, document, Object, String, Array, Math, Date, Node, Range, DocumentFragment, RegExp, parseFloat, setTimeout, clearTimeout, getComputedStyle, new (function () {
 
 // source: src/shim/Map.js
 this.Map = window.Map || (function (shim) {
@@ -10568,3 +10586,7 @@ this.WeakMap = window.WeakMap || (function () {
 }());
 
 })));
+
+return zeta;
+
+}));

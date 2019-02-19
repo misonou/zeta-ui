@@ -1,4 +1,4 @@
-(function ($, zeta) {
+(function () {
     'use strict';
 
     var SHOW_DIALOG = zeta.IS_TOUCH;
@@ -398,4 +398,4 @@
         cancel: 'Cancel'
     });
 
-}(jQuery, zeta));
+})();

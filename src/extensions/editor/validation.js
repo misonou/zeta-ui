@@ -1,4 +1,4 @@
-(function ($, zeta) {
+(function () {
     'use strict';
 
     function filter(value, options, currentLength) {
@@ -48,4 +48,4 @@
         }
     };
 
-}(jQuery, zeta));
+})();

@@ -3,7 +3,7 @@ module.exports = function (grunt) {
 
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
-        imports: 'jQuery, window, document, Object, String, Array, Math, Node, Range, DocumentFragment, RegExp, parseFloat, setTimeout, clearTimeout',
+        imports: 'window, document, Object, String, Array, Math, Date, Node, Range, DocumentFragment, RegExp, parseFloat, setTimeout, clearTimeout, getComputedStyle',
         concat: {
             shim: {
                 options: {
@@ -32,7 +32,7 @@ module.exports = function (grunt) {
                 options: {
                     process: true
                 },
-                src: ['src/license.js', 'build/lib.js'],
+                src: ['build/template'],
                 dest: 'dist/zeta-ui.js'
             }
         },
@@ -89,7 +89,7 @@ module.exports = function (grunt) {
                 files: [{ src: 'css/zeta-ui.css', dest: 'css/zeta-ui.css' }]
             }
         },
-        clean: ['build/']
+        clean: ['build/*.js']
     });
 
     grunt.loadNpmTasks('grunt-contrib-concat');

@@ -1,4 +1,4 @@
-(function ($, zeta) {
+(function () {
     'use strict';
 
     var ALIGN_VALUE = {
@@ -108,7 +108,7 @@
             selection.moveToText(wrapElm, -0);
         } else if (textNodes[0]) {
             paragraphs.forEach(function (v) {
-                if (!styleCheck || !helper.matchWord(window.getComputedStyle(v)[styleCheck[0]], styleCheck[1])) {
+                if (!styleCheck || !helper.matchWord(getComputedStyle(v)[styleCheck[0]], styleCheck[1])) {
                     if (!currentState) {
                         $(v).find(textNodes).wrap(wrapElm);
                     } else {
@@ -580,4 +580,4 @@
         format_blockquote: 'Blockquote'
     });
 
-}(jQuery, zeta));
+})();

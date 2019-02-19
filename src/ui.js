@@ -1,4 +1,4 @@
-(function ($, zeta) {
+(function () {
     'use strict';
 
     var MAC_CTRLKEY = JSON.parse('{"ctrl":"\u2318","alt":"\u2325","shift":"\u21e7","enter":"\u21a9","tab":"\u2135","pageUp":"\u21de","pageDown":"\u21df","backspace":"\u232b","escape":"\u238b","leftArrow":"\u2b60","upArrow":"\u2b61","rightArrow":"\u2b62","downArrow":"\u2b63","home":"\u2b66","end":"\u2b68"}');
@@ -2173,4 +2173,4 @@
 
     waterpipe.pipes[':zeta-shortcut'] = zeta.IS_MAC ? formatShortcutMac : formatShortcutWin;
 
-})(jQuery, zeta);
+})();

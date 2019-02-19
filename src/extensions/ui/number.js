@@ -1,4 +1,4 @@
-(function ($, zeta) {
+(function () {
     'use strict';
 
     function setValue(widget, value) {
@@ -69,4 +69,4 @@
         preset: preset
     });
 
-}(jQuery, zeta));
+})();
