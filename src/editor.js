@@ -148,6 +148,13 @@
         this.selection = selection || null;
     }
 
+    function TyperTransaction(typer, widget, commandName) {
+        this.typer = typer;
+        this.selection = typer.getSelection();
+        this.widget = widget || null;
+        this.commandName = commandName || null;
+    }
+
     function transaction(finalize) {
         var count = 0;
         return function run(callback, args, thisArg) {
@@ -358,17 +365,13 @@
         var container = new zeta.Container(topElement, typer);
         var widgetOptions = {};
         var staticWidgets = [];
-        var undoable = {};
+        var internals = {};
         var currentSelection;
         var triggerDOMChange;
         var enabled;
         var muteChanges = true;
         var needNormalize = true;
         var $self = $(topElement);
-
-        function TyperTransaction(widget) {
-            this.widget = widget || null;
-        }
 
         function triggerStateChange() {
             container.emit('stateChange', currentSelection.focusNode.widget.element, null, true);
@@ -405,7 +408,7 @@
                 if (needNormalize) {
                     normalize();
                 }
-                undoable.snapshot();
+                internals.snapshot();
             }
 
             function createWidget(element, id) {
@@ -1050,7 +1053,7 @@
             }
 
             function takeSnapshot() {
-                var value = undoable.getValue();
+                var value = typer.getValue();
                 if (!snapshots[0] || value !== snapshots[currentIndex].value) {
                     snapshots.splice(0, currentIndex, {
                         value: value
@@ -1073,10 +1076,7 @@
                 clearTimeout(timeout);
             }
 
-            extend(undoable, {
-                getValue: function () {
-                    return trim(topElement.innerHTML.replace(/\s+style(?:="[^"]*")?|\u200b+(?!<\/)|(^|[^>])\u200b+/g, '$1'));
-                },
+            extend(internals, {
                 canUndo: function () {
                     return currentIndex < snapshots.length - 1;
                 },
@@ -1084,12 +1084,12 @@
                     return currentIndex > 0;
                 },
                 undo: function () {
-                    if (undoable.canUndo()) {
+                    if (internals.canUndo()) {
                         applySnapshot(snapshots[++currentIndex]);
                     }
                 },
                 redo: function () {
-                    if (undoable.canRedo()) {
+                    if (internals.canRedo()) {
                         applySnapshot(snapshots[--currentIndex]);
                     }
                 },
@@ -1131,7 +1131,7 @@
                     curTextNode.data = curTextNode.data.substr(0, curOffset) + inputText + curTextNode.data.slice(curOffset);
                     normalizeWhitespace(currentSelection.startNode.element);
                     currentSelection.moveToText(curTextNode, curOffset + inputText.length);
-                    undoable.snapshot(200);
+                    internals.snapshot(200);
                 }
             }
 
@@ -1276,7 +1276,7 @@
                     (e.metakey === 'shift' ? currentSelection.extendCaret : currentSelection).moveToPoint(e.clientX, e.clientY);
                     currentSelection.focus();
                     dom.drag(e, function (x, y) {
-                        undoable.snapshot(200);
+                        internals.snapshot(200);
                         currentSelection.extendCaret.moveToPoint(x, y);
                     });
                     // browsers update selection range after mousedown event
@@ -1366,7 +1366,7 @@
             });
             options.textFlow = true;
 
-            extend(typer, createTyperDocument(topElement, true));
+            extend(internals, createTyperDocument(topElement, true));
             each(widgetOptions, function (i, v) {
                 if (!v.element || v.element === topElement) {
                     registerStaticWidget(i);
@@ -1387,8 +1387,7 @@
             $self.css('-webkit-user-modify', 'read-write-plaintext-only');
         }
 
-        extend(typer, undoable, {
-            element: topElement,
+        _(typer, extend(internals, {
             on: function (event, handler) {
                 container.add(topElement, helper.isPlainObject(event) || helper.kv(event, handler));
             },
@@ -1440,29 +1439,24 @@
                 return extractText(selection);
             },
             invoke: function (command, value) {
-                var tx = new TyperTransaction();
+                var commandName;
+                var widget;
                 if (typeof command === 'string') {
-                    tx.commandName = command;
-                    tx.widget = findWidgetWithCommand(command);
-                    command = tx.widget && widgetOptions[tx.widget.id].commands[command];
+                    widget = findWidgetWithCommand(command);
+                    commandName = command;
+                    command = widget && widgetOptions[widget.id].commands[command];
                 }
                 if (!isFunction(command)) {
                     return false;
                 }
+                var tx = new TyperTransaction(typer, widget, commandName);
                 command.call(typer, tx, value);
                 normalize();
-                undoable.snapshot();
+                internals.snapshot();
                 if (typer.focused(true)) {
                     currentSelection.focus();
                 }
                 return true;
-            }
-        });
-
-        definePrototype(TyperTransaction, {
-            typer: typer,
-            get selection() {
-                return currentSelection;
             },
             insertText: function (text) {
                 insertContents(currentSelection, text);
@@ -1479,7 +1473,7 @@
             removeWidget: function (widget) {
                 var handler = widgetOptions[widget.id].remove;
                 if (isFunction(handler)) {
-                    handler.call(typer, new TyperTransaction(widget));
+                    handler.call(typer, new TyperTransaction(typer, widget));
                 } else if (handler === 'keepText') {
                     var textContent = extractText(widget.element);
                     insertContents(createRange(widget.element, true), textContent);
@@ -1488,7 +1482,9 @@
                     insertContents(createRange(widget.element), '');
                 }
             }
-        });
+        }));
+        typer.element = topElement;
+        typer.rootNode = internals.rootNode;
 
         normalize();
         currentSelection = new TyperSelection(typer, createRange(topElement, 0));
@@ -1554,6 +1550,9 @@
             }
             return !!(new TyperTreeWalker(this.rootNode, ~(NODE_PARAGRAPH | NODE_INLINE)).nextNode());
         },
+        getValue: function () {
+            return trim(this.element.innerHTML.replace(/\s+style(?:="[^"]*")?|\u200b+(?!<\/)|(^|[^>])\u200b+/g, '$1'));
+        },
         setValue: function (value) {
             this.invoke(function (tx) {
                 createDocumentFragment(tx.typer.element.childNodes);
@@ -1584,6 +1583,16 @@
         support: function (command) {
             return this.hasCommand(command) && this.invoke.bind(this, command);
         }
+    });
+    each('on enabled enable disable destroy hasCommand widgetEnabled widgetAllowed getNode getWidgetOption getStaticWidget getStaticWidgets getSelection extractText invoke canUndo canRedo undo redo snapshot', function (i, v) {
+        defineHiddenProperty(Typer.prototype, v, function () {
+            return _(this)[v].apply(null, arguments);
+        });
+    });
+    each('insertText insertHtml insertWidget removeWidget', function (i, v) {
+        defineHiddenProperty(TyperTransaction.prototype, v, function () {
+            return _(this.typer)[v].apply(null, arguments);
+        });
     });
 
     definePrototype(TyperWidget, {
