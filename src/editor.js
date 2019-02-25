@@ -1915,8 +1915,9 @@
         getWidgets: function () {
             var nodes = [];
             for (var node = this.focusNode; node.widget.id !== WIDGET_ROOT; node = node.parentNode) {
-                nodes.unshift(node.widget);
-                node = this.typer.getNode(node.widget.element);
+                if (node.widget !== nodes[0]) {
+                    nodes.unshift(node.widget);
+                }
             }
             return nodes;
         },
