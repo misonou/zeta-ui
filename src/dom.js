@@ -1343,9 +1343,9 @@
 
         // detect native scrollbar size
         // height being picked because scrollbar may not be shown if container is too short
-        var $dummy = $('<div style="overflow:scroll;height:80px"><div style="height:100px"></div></div>').appendTo(body);
-        scrollbarWidth = $dummy.outerWidth() - $dummy.children().width();
-        $dummy.remove();
+        var dummy = $('<div style="overflow:scroll;height:80px"><div style="height:100px"></div></div>').appendTo(body)[0];
+        scrollbarWidth = getRect(dummy).width - getRect(dummy.children[0]).width;
+        helper.removeNode(dummy);
 
         var timeout;
 
@@ -1363,23 +1363,30 @@
     // define common mixin methods that is not mentioned in this file
     'undo redo canUndo canRedo enable disable enabled'.split(' ').forEach(defineMixinMethod);
 
+    function getScrollOffset(winOrElm) {
+        return {
+            x: winOrElm.pageXOffset || winOrElm.scrollLeft || 0,
+            y: winOrElm.pageYOffset || winOrElm.scrollTop || 0
+        };
+    }
+
     defineMixin({
         focus: function (element) {
             element.focus();
         },
         scrollBy: function (element, x, y) {
             var winOrElm = element === root || element === document.body ? window : element;
-            var origX = $(winOrElm).scrollLeft();
-            var origY = $(winOrElm).scrollTop();
+            var orig = getScrollOffset(winOrElm);
             if (winOrElm.scrollBy) {
                 winOrElm.scrollBy(x, y);
             } else {
-                winOrElm.scrollLeft = origX + x;
-                winOrElm.scrollTop = origY + y;
+                winOrElm.scrollLeft = orig.x + x;
+                winOrElm.scrollTop = orig.y + y;
             }
+            var cur = getScrollOffset(winOrElm);
             return {
-                x: $(winOrElm).scrollLeft() - origX,
-                y: $(winOrElm).scrollTop() - origY
+                x: cur.x - orig.x,
+                y: cur.y - orig.y
             };
         },
         getUnobscuredRect: function (element) {

@@ -42,6 +42,7 @@
     var isFunction = helper.isFunction;
     var iterate = helper.iterate;
     var iterateToArray = helper.iterateToArray;
+    var makeArray = helper.makeArray;
     var noop = helper.noop;
     var rangeCovers = helper.rangeCovers;
     var rangeIntersects = helper.rangeIntersects;
@@ -325,7 +326,7 @@
                 baseline: (getRect($img.css('vertical-align', 'baseline')[0]).top - offset) / 1000,
                 height: (getRect($img.css('vertical-align', 'text-bottom')[0]).top - offset) / 1000,
                 middle: (getRect($img.css('vertical-align', 'middle')[0]).top - offset) / 1000,
-                wsWidth: $dummy.width() / 1000
+                wsWidth: getRect($dummy[0]).width / 1000
             };
             $dummy.remove();
         }
@@ -340,11 +341,11 @@
     }
 
     function combineNodeFilters() {
-        var args = $.grep(arguments, isFunction);
+        var args = makeArray(arguments);
         return function (node) {
             var result = 1;
             for (var i = 0, len = args.length; i < len; i++) {
-                var value = args[i](node);
+                var value = isFunction(args[i]) && args[i](node);
                 if (value === 2) {
                     return 2;
                 }
@@ -796,7 +797,7 @@
                 if (containsOrEquals(topElement, content)) {
                     removeNode(content);
                 }
-                content = helper.makeArray(createDocumentFragment(content).childNodes);
+                content = makeArray(createDocumentFragment(content).childNodes);
                 textOnly = content.length === 1 && !!is(content[0], 'p:not([class])');
             } else {
                 content = $(String(content || '').replace(/\u000d/g, '').replace(/</g, '&lt;').replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>').replace(/.*/, '<p>$&</p>').replace(/\s/g, '\u00a0')).get();
@@ -924,7 +925,7 @@
                     }
                     insertAsInline = insertAsInline && !!is(node, NODE_ANY_ALLOWTEXT | NODE_ANY_INLINE);
                     if (insertAsInline) {
-                        var nodes = helper.makeArray(paragraphAsInline && !is(node, NODE_ANY_INLINE) ? nodeToInsert.childNodes : nodeToInsert);
+                        var nodes = makeArray(paragraphAsInline && !is(node, NODE_ANY_INLINE) ? nodeToInsert.childNodes : nodeToInsert);
                         if (nodes[0]) {
                             caretPoint.getRange().insertNode(createDocumentFragment(nodes));
                             normalizeWhitespace(caretNode.element);
