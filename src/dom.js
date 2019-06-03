@@ -212,7 +212,7 @@
                 new ZetaMixin(path[0]).focus();
                 // ensure previously focused element is properly blurred
                 // in case the new element is not focusable
-                if (document.activeElement === activeElement) {
+                if (activeElement && activeElement !== document.body && activeElement !== root && document.activeElement === activeElement) {
                     activeElement.blur();
                 }
             }
