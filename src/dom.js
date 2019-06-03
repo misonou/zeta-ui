@@ -74,6 +74,9 @@
     }
 
     function parentsAndSelf(element) {
+        if (element === window) {
+            return [];
+        }
         for (var arr = []; element && element !== document && arr.push(element); element = element.parentNode || element.parent);
         return arr;
     }
