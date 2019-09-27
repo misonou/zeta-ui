@@ -1585,12 +1585,12 @@
     });
     each('on enabled enable disable destroy hasCommand widgetEnabled widgetAllowed getNode getWidgetOption getStaticWidget getStaticWidgets getSelection extractText invoke canUndo canRedo undo redo snapshot', function (i, v) {
         defineHiddenProperty(Typer.prototype, v, function () {
-            return _(this)[v].apply(null, arguments);
+            return _(this)[v].apply(this, arguments);
         });
     });
     each('insertText insertHtml insertWidget removeWidget', function (i, v) {
         defineHiddenProperty(TyperTransaction.prototype, v, function () {
-            return _(this.typer)[v].apply(null, arguments);
+            return _(this.typer)[v].apply(this, arguments);
         });
     });
 
