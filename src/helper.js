@@ -824,9 +824,17 @@
             callback = setState.bind(null, element, className, false);
         }
         setState(element, className, true);
-        var arr = iterateToArray(createNodeIterator(element, 1, function (v) {
+        var arr = [];
+        var map1 = new shim.Map();
+        iterate(createNodeIterator(element, 1, function (v) {
+            if (!isVisible(v)) {
+                return 2;
+            }
             var style = getComputedStyle(v);
-            return style.transitionDuration !== '0s' || style.animationName != 'none';
+            if (style.transitionDuration !== '0s' || style.animationName != 'none') {
+                map1.set(v, style.transitionProperty.split(/,\s*/));
+                arr.push(v);
+            }
         }));
         if (!arr[0]) {
             callback();
@@ -844,10 +852,17 @@
         var map = new shim.Map();
         each(arr, function (i, v) {
             var curStyle = getComputedStyle(v);
+            var transitionProperties = map1.get(v);
             var dict = {};
             each(curStyle, function (j, v) {
                 var curValue = curStyle[v];
                 var newValue = newStyle[i][v];
+                if (curValue === 'matrix(1, 0, 0, 1, 0, 0)') {
+                    curValue = 'none';
+                }
+                if (newValue === 'matrix(1, 0, 0, 1, 0, 0)') {
+                    newValue = 'none';
+                }
                 if (curValue !== newValue) {
                     var prop = removeVendorPrefix(v);
                     var allowNumber = matchWord(v, 'opacity line-height');
@@ -858,8 +873,10 @@
                                 dict['@' + v] = true;
                             }
                         });
-                    } else if (animatableValue(curValue, allowNumber) && animatableValue(newValue, allowNumber) && !/^scroll-limit/.test(prop)) {
-                        dict[prop] = true;
+                    } else if (prop === 'transform' || (animatableValue(curValue, allowNumber) && animatableValue(newValue, allowNumber) && !/^scroll-limit/.test(prop))) {
+                        if (transitionProperties[0] === 'all' || transitionProperties.indexOf(v) >= 0) {
+                            dict[prop] = true;
+                        }
                     }
                 }
             });
