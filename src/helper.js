@@ -826,32 +826,42 @@
         setState(element, className, true);
         var arr = [];
         var map1 = new shim.Map();
+        var test = function (element, pseudoElement) {
+            var style = getComputedStyle(element, pseudoElement);
+            if (style.transitionDuration !== '0s' || style.animationName != 'none') {
+                var key = { element: element, pseudoElement: pseudoElement };
+                map1.set(key, style.transitionProperty.split(/,\s*/));
+                arr.push(key);
+            }
+        };
         iterate(createNodeIterator(element, 1, function (v) {
             if (!isVisible(v)) {
                 return 2;
             }
-            var style = getComputedStyle(v);
-            if (style.transitionDuration !== '0s' || style.animationName != 'none') {
-                map1.set(v, style.transitionProperty.split(/,\s*/));
-                arr.push(v);
-            }
+            test(v, null);
+            test(v, '::before');
+            test(v, '::after');
         }));
         if (!arr[0]) {
             callback();
             return when();
         }
 
+        var targets = arr.map(function (v) {
+            return v.element;
+        });
         setState(element, className, false);
-        $(arr).css('transition', 'none');
+        $(targets).css('transition', 'none');
         setState(element, className, true);
         var newStyle = arr.map(function (v) {
-            return styleToJSON(getComputedStyle(v));
+            return styleToJSON(getComputedStyle(v.element, v.pseudoElement));
         });
         setState(element, className, false);
 
         var map = new shim.Map();
         each(arr, function (i, v) {
-            var curStyle = getComputedStyle(v);
+            var pseudoElement = v.pseudoElement;
+            var curStyle = getComputedStyle(v.element, pseudoElement);
             var transitionProperties = map1.get(v);
             var dict = {};
             each(curStyle, function (j, v) {
@@ -870,21 +880,21 @@
                         var prevAnim = curValue.replace(/,/g, '');
                         each(newValue.split(/,\s*/), function (i, v) {
                             if (v !== 'none' && !matchWord(prevAnim, v)) {
-                                dict['@' + v] = true;
+                                dict['@' + v + (pseudoElement || '')] = true;
                             }
                         });
                     } else if (prop === 'transform' || (animatableValue(curValue, allowNumber) && animatableValue(newValue, allowNumber) && !/^scroll-limit/.test(prop))) {
-                        if (transitionProperties[0] === 'all' || transitionProperties.indexOf(v) >= 0) {
-                            dict[prop] = true;
+                        if (transitionProperties[0] === 'all' || transitionProperties.indexOf(v + (pseudoElement || '')) >= 0) {
+                            dict[prop + (pseudoElement || '')] = true;
                         }
                     }
                 }
             });
             if (keys(dict)[0]) {
-                map.set(v, dict);
+                map.set(v.element, dict);
             }
         });
-        $(arr).css('transition', '');
+        $(targets).css('transition', '');
         setState(element, className, true);
         if (!map.size) {
             callback();
@@ -894,7 +904,7 @@
         var deferred = $.Deferred();
         var unbind = bind(element, 'animationend transitionend', function (e) {
             var dict = map.get(e.target) || {};
-            delete dict[e.propertyName ? removeVendorPrefix(e.propertyName) : '@' + e.animationName];
+            delete dict[(e.propertyName ? removeVendorPrefix(e.propertyName) : '@' + e.animationName) + (e.pseudoElement || '')];
             if (!keys(dict)[0] && map.delete(e.target) && !map.size) {
                 var accept = getState(element, className);
                 unbind();
