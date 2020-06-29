@@ -951,7 +951,7 @@
         var fn = single(shortcuts[e.data], function (v, i) {
             return dom.support(i);
         });
-        return fn && e.handled(fn());
+        return fn ? e.handled(fn()) : undefined;
     });
     dom.on('escape', function (e) {
         setFocus(document.body);
