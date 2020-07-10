@@ -862,6 +862,7 @@
         });
         setState(element, className, false);
 
+        var appendPseudoToAnim = window.AnimationEvent && 'pseudoElement' in AnimationEvent.prototype;
         var map = new shim.Map();
         each(arr, function (i, v) {
             var pseudoElement = v.pseudoElement;
@@ -884,7 +885,7 @@
                         var prevAnim = curValue.replace(/,/g, '');
                         each(newValue.split(/,\s*/), function (i, v) {
                             if (v !== 'none' && !matchWord(prevAnim, v)) {
-                                dict['@' + v + (pseudoElement || '')] = true;
+                                dict['@' + v + ((appendPseudoToAnim && pseudoElement) || '')] = true;
                             }
                         });
                     } else if (prop === 'transform' || (animatableValue(curValue, allowNumber) && animatableValue(newValue, allowNumber) && !/^scroll-limit/.test(prop))) {
