@@ -562,6 +562,10 @@
         return b.left >= a.left && b.right <= a.right && b.top >= a.top && b.bottom <= a.bottom;
     }
 
+    function rectIntersects(a, b) {
+        return !(b.right < a.left || b.left > a.right) && !(b.bottom < a.top || b.top > a.bottom);
+    }
+
     function pointInRect(x, y, rect, within) {
         within = within || 0;
         return rect.width && rect.height && x - rect.left >= -within && x - rect.right <= within && y - rect.top >= -within && y - rect.bottom <= within;
@@ -1034,6 +1038,7 @@
         toPlainRect: toPlainRect,
         rectEquals: rectEquals,
         rectCovers: rectCovers,
+        rectIntersects: rectIntersects,
         pointInRect: pointInRect,
         mergeRect: mergeRect,
         elementFromPoint: elementFromPoint,
