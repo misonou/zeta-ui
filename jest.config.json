@@ -1,0 +1,20 @@
+{
+    "testEnvironment": "jsdom",
+    "transform": {},
+    "setupFilesAfterEnv": [
+        "<rootDir>/tests/setup.js"
+    ],
+    "modulePathIgnorePatterns": [
+        "<rootDir>/build/"
+    ],
+    "moduleNameMapper": {
+        "^src/(.*)$": "<rootDir>/src/$1",
+        "^zeta-dom/(.*)$": "<rootDir>/../zeta-dom/src/$1",
+        "^zeta-editor/(.*)$": "<rootDir>/../zeta-editor/src/$1"
+    },
+    "collectCoverageFrom": [
+        "src/**/*.js",
+        "!src/index.js",
+        "!src/include/**/*"
+    ]
+}

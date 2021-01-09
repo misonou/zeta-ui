@@ -1,0 +1,1507 @@
+:root {
+    --zui-font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial;
+    --zui-font-size: 14px;
+    --zui-icon-size: 18px;
+    --zui-line-height: 1.2;
+
+    --zui-text-color: #333;
+    --zui-text-color-secondary: #555;
+    --zui-text-color-disabled: #999;
+    --zui-text-color-error: #a90007;
+    --zui-text-color-header: #103492;
+    --zui-text-color-aux: #aeb8c2;
+    --zui-separate-border-color: rgba(0, 0, 0, 0.15);
+    --zui-separate-border-color-secondary: rgba(0, 0, 0, 0.05);
+
+    --zui-float-background-color: white;
+    --zui-float-background-color-wbd: rgba(255, 255, 255, 0.7);
+    --zui-float-shadow-color: rgba(0, 0, 0, 0.5);
+    --zui-float-shadow-color-aux: rgba(0, 0, 0, 0.3);
+    --zui-float-roundness: 2px;
+    --zui-button-background-color: transparent;
+    --zui-button-background-color-disabled: var(--zui-button-background-color);
+    --zui-button-background-color-active: rgba(128, 128, 128, 0.2);
+    --zui-button-background-color-busy: #d3d3d3;
+    --zui-button-background-color-danger: var(--zui-button-background-color);
+    --zui-button-text-color: inherit;
+    --zui-button-text-color-disabled: var(--zui-text-color-disabled);
+    --zui-button-text-color-active: var(--zui-button-text-color);
+    --zui-button-text-color-busy: var(--zui-button-text-color);
+    --zui-button-text-color-danger: #a90007;
+    --zui-button-submit-background-color: rgba(16, 52, 146, 0.7);
+    --zui-button-submit-text-color: white;
+    --zui-button-roundness: 2px;
+    --zui-dropdown-arrow-color: #666;
+    --zui-dropdown-arrow-color-disabled: #999;
+    --zui-textbox-text-color: #212121;
+    --zui-textbox-label-color: #103492;
+    --zui-textbox-placeholder-color: #aeb8c2;
+    --zui-textbox-frame-color: #aeb8c2;
+    --zui-textbox-frame-color-error: #a90007;
+    --zui-textbox-frame-color-focus: #103492;
+    --zui-textbox-frame-shadow-color: rgba(128, 128, 128, 0.5);
+    --zui-textbox-frame-roundness: 2px;
+    --zui-checkbox-frame-color: #aaa;
+    --zui-checkbox-frame-color-hover: #aeb8c2;
+    --zui-checkbox-frame-color-disabled: #d3d3d3;
+    --zui-checkbox-frame-color-active: rgba(16, 52, 146, 0.75);
+    --zui-checkbox-frame-color-error: rgba(169, 0, 7, 0.75);
+    --zui-checkbox-frame-roundness: 2px;
+    --zui-checkbox-tick-color: #212121;
+    --zui-checkbox-background-color: rgba(255, 255, 255, 0.3);
+    --zui-calendar-header-color: #999;
+    --zui-calendar-date-text-color-aux: rgba(16, 52, 146, 0.5);
+    --zui-calendar-date-background-color-active: rgba(16, 52, 146, 0.2);
+    --zui-clock-hand-color: #999;
+    --zui-clock-mark-color: #aeb8c2;
+    --zui-grid-cell-background-color: white;
+    --zui-grid-cell-background-color-active: rgba(0, 0, 0, 0.15);
+    --zui-grid-cell-border: rgba(0, 0, 0, 0.15);
+    --zui-dialog-header-color: #103492;
+    --zui-dialog-shadow-color: rgba(0, 0, 0, 0.5);
+    --zui-notify-warn-color: #c18401;
+    --zui-notify-success-color: #50a14f;
+    --zui-notify-info-color: #4078f2;
+    --zui-ripple-color-init: #fafafa;
+    --zui-ripple-color-end: black;
+}
+
+.zui-root {
+    font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial;
+    font-family: var(--zui-font-family);
+    font-size: 14px;
+    font-size: var(--zui-font-size);
+    color: #333;
+    color: var(--zui-text-color);
+    line-height: 1.2;
+    line-height: var(--zui-line-height);
+    -webkit-text-size-adjust: none;
+}
+
+.zui-root input,
+.zui-root textarea,
+.zui-root select,
+.zui-root button,
+.zui-root label {
+    font-family: inherit;
+    font-size: 100%;
+}
+
+.zui-root button::-moz-focus-inner {
+    border: 0;
+}
+
+.zui-root label a {
+    display: block;
+    color: inherit !important;
+}
+
+.zui-root *:active,
+.zui-root *:focus {
+    outline: none;
+}
+
+.zui-root .hidden {
+    display: none !important;
+}
+
+.zui-root .disabled {
+    opacity: 0.5 !important;
+    pointer-events: none !important;
+    cursor: default !important;
+}
+
+.zui-root .disabled .disabled {
+    opacity: 1 !important;
+}
+
+.zui-root input[type="file"] {
+    position: absolute;
+    left: -10000px;
+}
+
+.zui-checkbox:before,
+.zui-textbox-error:before,
+.zui-textbox-clear:before {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 16px;
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    vertical-align: text-bottom;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga';
+}
+
+
+/* Icons and Labels */
+
+.zui-label {
+    display: inline-block;
+    position: relative;
+    vertical-align: top;
+    -webkit-flex: 1 1 auto;
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto;
+    z-index: 1;
+}
+
+.zui-label > span {
+    display: inline-block;
+    white-space: normal;
+    vertical-align: text-bottom;
+}
+
+.zui-label:empty,
+.zui-label > span:empty {
+    display: none !important;
+}
+
+.zui-label .material-icons {
+    display: inline-block;
+    position: relative;
+    width: 1em;
+    height: 1em;
+    font-size: 18px;
+    font-size: var(--zui-icon-size);
+    line-height: 1;
+    vertical-align: top;
+    overflow: hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.zui-label .material-icons:not(.hidden) + span,
+.zui-checkbox > span:first-child {
+    padding-left: 8px;
+}
+
+.zui-label p {
+    margin: 0;
+}
+
+.zui-label-description {
+    position: relative;
+    padding-left: 4em;
+    color: #aeb8c2;
+    color: var(--zui-text-color-aux);
+    font-weight: normal;
+    text-align: right;
+}
+
+
+/* Buttons */
+
+.zui-root label,
+.zui-root button {
+    display: block;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+    border-style: none;
+    background-color: transparent;
+    background-color: var(--zui-button-background-color);
+    background-image: none;
+    text-align: left;
+    vertical-align: top;
+    cursor: pointer;
+    color: inherit;
+    color: var(--zui-button-text-color);
+    font-weight: inherit;
+    line-height: inherit;
+    text-transform: inherit;
+    white-space: nowrap;
+    border-radius: 2px;
+    border-radius: var(--zui-button-roundness);
+    box-sizing: border-box;
+    overflow: visible;
+    -webkit-transition: opacity 0.1s ease-out, background-color 0.1s ease-out;
+    -moz-transition: opacity 0.1s ease-out, background-color 0.1s ease-out;
+    -ms-transition: opacity 0.1s ease-out, background-color 0.1s ease-out;
+    transition: opacity 0.1s ease-out, background-color 0.1s ease-out;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.zui-root button,
+.zui-root label.zui-buttonlike,
+.zui-buttonlist label,
+.zui-buttonset label {
+    padding: 0.7em 0.75em;
+    min-height: calc(1.4em + 18px);
+    min-height: calc(1.4em + var(--zui-icon-size));
+}
+
+.zui-root label.disabled,
+.zui-root button.disabled {
+    background-color: transparent;
+    background-color: var(--zui-button-background-color-disabled);
+    color: #999;
+    color: var(--zui-button-text-color-disabled);
+}
+
+.zui-root .zui-buttonlike:hover,
+.zui-root .zui-buttonlike.focused-keyboard,
+.zui-root .zui-buttonlike.active,
+.zui-root label.focused-keyboard,
+.zui-root label.active,
+.zui-root button:hover,
+.zui-root button.focused-keyboard,
+.zui-root button.active {
+    background-color: rgba(128, 128, 128, 0.2);
+    background-color: var(--zui-button-background-color-active);
+    color: inherit;
+    color: var(--zui-button-text-color-active);
+}
+
+@media (any-hover: none) {
+    .zui-root .zui-buttonlike:hover,
+    .zui-root button:hover {
+        background-color: transparent;
+        background-color: var(--zui-button-background-color);
+        color: inherit;
+        color: var(--zui-button-text-color);
+    }
+}
+
+.zui-root .zui-buttonlike.danger:not(.disabled),
+.zui-root button.danger:not(.disabled) {
+    background-color: transparent;
+    background-color: var(--zui-button-background-color-danger);
+    color: #a90007;
+    color: var(--zui-button-text-color-danger);
+}
+
+.zui-root .zui-buttonlike.loading,
+.zui-root button.loading {
+    background-color: #d3d3d3;
+    background-color: var(--zui-button-background-color-busy);
+    color: inherit;
+    color: var(--zui-button-text-color-busy);
+    cursor: progress;
+}
+
+.zui-form > button.zui-checkbox,
+.zui-fieldset-title > button.zui-checkbox {
+    margin-left: -0.75em;
+}
+
+.zui-form > button.zui-checkbox:hover {
+    background-color: transparent;
+    background-color: var(--zui-button-background-color);
+}
+
+button.zui-checkbox:before {
+    content: '\00e876';
+    display: inline-block;
+    position: relative;
+    margin: -1px;
+    width: 1em;
+    height: 1em;
+    border: 2px solid #aaa;
+    border: 2px solid var(--zui-checkbox-frame-color);
+    border-radius: 2px;
+    border-radius: var(--zui-checkbox-frame-roundness);
+    background-color: rgba(255, 255, 255, 0.3);
+    background-color: var(--zui-checkbox-background-color);
+    color: transparent;
+    z-index: 1;
+}
+
+button.zui-checkbox:hover:before {
+    border-color: #aeb8c2;
+    border-color: var(--zui-checkbox-frame-color-hover);
+}
+
+button.zui-checkbox.disabled:before {
+    border-color: #d3d3d3;
+    border-color: var(--zui-checkbox-frame-color-disabled);
+}
+
+button.zui-checkbox.checked:before {
+    color: #212121;
+    color: var(--zui-checkbox-tick-color);
+}
+
+button.zui-checkbox:focus:before,
+button.zui-checkbox:active:before {
+    border-color: rgba(16, 52, 146, 0.75);
+    border-color: var(--zui-checkbox-frame-color-active);
+}
+
+button.zui-checkbox.error:before {
+    border-color: rgba(169, 0, 7, 0.75);
+    border-color: var(--zui-checkbox-frame-color-error);
+}
+
+button.zui-checkbox.disabled:before {
+    box-shadow: none;
+}
+
+label.zui-callout,
+label.zui-dropdown {
+    padding: 0;
+}
+
+label.zui-dropdown > .zui-label,
+.zui-buttonlist > label.zui-callout > button {
+    padding-right: 2em !important;
+}
+
+label.zui-dropdown > .zui-label:after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: 0;
+    margin: -0.25em 0.5em 0 0;
+    border-top: 0.5em solid;
+    border-left: 0.4em solid transparent;
+    border-right: 0.4em solid transparent;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.zui-buttonlist > label.zui-callout > button:after,
+.zui-buttonlist > label.zui-dropdown > .zui-label:after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: 0;
+    height: 0;
+    margin: -0.4em 0.5em 0 0;
+    border-left: 0.5em solid #666;
+    border-left: 0.5em solid var(--zui-dropdown-arrow-color);
+    border-top: 0.4em solid transparent;
+    border-bottom: 0.4em solid transparent;
+    border-right: none;
+    pointer-events: none;
+}
+
+label.zui-dropdown.disabled:after {
+    border-top-color: #999;
+    border-top-color: var(--zui-dropdown-arrow-color-disabled);
+}
+
+label.zui-dropdown.error {
+    color: #a90007;
+    color: var(--zui-text-color-error);
+}
+
+label.zui-dropdown.error .zui-label:after {
+    content: '\00e001';
+    display: inline-block;
+    margin-left: 0.25em;
+    font-family: 'Material Icons';
+    font-weight: normal;
+    text-transform: none;
+    vertical-align: top;
+}
+
+.is-dropdown button {
+    padding-left: 2em;
+}
+
+.is-dropdown button.selected:before,
+.zui-dropdown button.selected:before {
+    position: absolute;
+    content: '\00e876';
+    font-family: 'Material Icons';
+    top: 50%;
+    left: 0.7em;
+    line-height: 1;
+    margin-top: -0.5em;
+    text-transform: none;
+    font-size: 16px;
+}
+
+
+/* Menus */
+
+.zui-float {
+    position: absolute;
+    border-radius: 2px;
+    border-radius: var(--zui-float-roundness);
+    background-color: white;
+    background-color: var(--zui-float-background-color);
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 2px var(--zui-float-shadow-color), 0 0 10px var(--zui-float-shadow-color-aux);
+    z-index: 1;
+}
+
+@supports (-webkit-backdrop-filter: blur(0px)) or (-moz-backdrop-filter: blur(0px)) or (backdrop-filter: blur(0px)) {
+    .zui-float {
+        background-color: transparent;
+    }
+
+    .zui-float:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 2px;
+        border-radius: var(--zui-float-roundness);
+        background-color: rgba(255, 255, 255, 0.7);
+        background-color: var(--zui-float-background-color-wbd);
+        -webkit-backdrop-filter: blur(20px);
+        -moz-backdrop-filter: blur(20px);
+        backdrop-filter: blur(20px);
+        z-index: -1;
+    }
+}
+
+.zui-float label,
+.zui-float button {
+    border-radius: 0;
+}
+
+.zui-menu {
+    margin: 10px;
+    width: -webkit-max-content;
+    width: -moz-max-content;
+    width: max-content;
+    overflow: hidden;
+}
+
+body > .zui-menu {
+    -webkit-transform: translateY(-10px);
+    -moz-transform: translateY(-10px);
+    -ms-transform: translateY(-10px);
+    transform: translateY(-10px);
+    -webkit-transition: 0.1s ease-out;
+    -moz-transition: 0.1s ease-out;
+    -ms-transition: 0.1s ease-out;
+    transition: 0.1s ease-out;
+    -webkit-transition-property: transform, opacity;
+    -moz-transition-property: transform, opacity;
+    -ms-transition-property: transform, opacity;
+    transition-property: transform, opacity;
+    opacity: 0;
+}
+
+.zui-menu.open {
+    -webkit-transform: none;
+    -moz-transform: none;
+    -ms-transform: none;
+    transform: none;
+    opacity: 1;
+}
+
+.zui-menu.closing {
+    opacity: 0;
+}
+
+.zui-menu .zui-dialog-buttonset {
+    margin: 0.5em;
+}
+
+.zui-menu .zui-buttonlist {
+    min-width: 7em;
+}
+
+.zui-buttonlist {
+    display: block;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -ms-flex-direction: column;
+    flex-direction: column;
+}
+
+.zui-buttonlist label,
+.zui-buttonlist button {
+    display: block;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    width: 100%;
+    align-items: center;
+}
+
+.zui-buttonlist.sep-before:before,
+.zui-buttonlist.sep-after:after {
+    content: '';
+    display: block;
+    margin: 0.25em 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.15);
+    border-top: 1px solid var(--zui-separate-border-color);
+}
+
+.zui-buttonlist > .zui-buttonset {
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.zui-buttonset-pad {
+    -webkit-flex-grow: 1;
+    -ms-flex-positive: 1;
+    flex-grow: 1;
+}
+
+.zui-buttonset-pad:last-child {
+    display: none;
+}
+
+.zui-buttonset > *,
+.zui-buttonset > label,
+.zui-buttonset > button {
+    display: inline-block;
+    position: relative;
+    vertical-align: top;
+    width: auto;
+}
+
+.zui-buttonset > .zui-buttonset {
+    display: inline;
+}
+
+
+/* Textbox */
+
+.zui-textbox .zui-label {
+    -webkit-flex-grow: 0;
+    -ms-flex-positive: 0;
+    flex-grow: 0;
+}
+
+.zui-buttonlist .zui-textbox .zui-label,
+.zui-buttonset .zui-textbox .zui-label {
+    display: inline-block;
+    margin-right: 0.25em;
+}
+
+.zui-textbox-wrapper {
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    position: relative;
+    margin: 0.5em 0.25em;
+    padding: 0 0.25em 0.2em;
+    border-bottom: 1px solid #aeb8c2;
+    border-bottom: 1px solid var(--zui-textbox-frame-color);
+    vertical-align: top;
+    line-height: 1.33;
+    -webkit-transition: padding 0.2s;
+    -moz-transition: padding 0.2s;
+    -ms-transition: padding 0.2s;
+    transition: padding 0.2s;
+}
+
+.zui-textbox-wrapper[data-label],
+.zui-textbox.keep-placeholder:not(.empty) .zui-textbox-wrapper {
+    padding-top: 1.5em;
+}
+
+.zui-buttonset .zui-textbox-wrapper,
+.zui-buttonlist .zui-textbox-wrapper {
+    display: -webkit-inline-flex;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    margin: 0 0 -0.25em;
+    border-bottom-style: none;
+}
+
+.zui-form .zui-textbox-wrapper {
+    margin-left: -0.25em;
+    margin-right: -0.25em;
+}
+
+.zui-textbox.focused .zui-textbox-wrapper {
+    border-bottom-color: #103492;
+    border-bottom-color: var(--zui-textbox-frame-color-focus);
+}
+
+.zui-textbox.error .zui-textbox-wrapper {
+    border-bottom-color: #a90007;
+    border-bottom-color: var(--zui-textbox-frame-color-error);
+}
+
+.zui-textbox-wrapper[data-label]:before {
+    content: attr(data-label);
+    display: block;
+    position: absolute;
+    top: 0;
+    font-size: 95%;
+    color: #103492;
+    color: var(--zui-textbox-label-color);
+}
+
+.zui-textbox-wrapper:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background-color: #103492;
+    background-color: var(--zui-textbox-frame-color-focus);
+    transform: scaleX(0);
+    transition: transform 0.2s;
+}
+
+.zui-textbox.error .zui-textbox-wrapper:after {
+    background-color: #a90007;
+    background-color: var(--zui-textbox-frame-color-error);
+}
+
+.zui-textbox.focused .zui-textbox-wrapper:after {
+    transform: scaleX(1);
+}
+
+.zui-textbox-inner {
+    -webkit-flex: 1 0 1px;
+    -ms-flex: 1 0 1px;
+    flex: 1 0 1px;
+}
+
+.zui-textbox .zui-editable {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    background: url('data:image/gif:,');
+    vertical-align: top;
+    color: #212121;
+    color: var(--zui-textbox-text-color);
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-word;
+    cursor: text;
+    box-sizing: border-box;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    z-index: 1;
+}
+
+.zui-buttonlist .zui-textbox .zui-editable,
+.zui-buttonset .zui-textbox .zui-editable {
+    white-space: nowrap;
+    overflow: hidden;
+    min-width: 3em;
+}
+
+.zui-textbox-placeholder {
+    display: none;
+    position: relative;
+    margin-left: -100%;
+    width: 100%;
+    color: #aeb8c2;
+    color: var(--zui-textbox-placeholder-color);
+    vertical-align: top;
+    pointer-events: none;
+    white-space: normal;
+    cursor: text;
+    box-sizing: border-box;
+}
+
+.zui-textbox-error,
+.zui-textbox-clear {
+    display: none;
+    position: relative;
+    left: 0.35em;
+}
+
+.zui-textbox-error {
+    color: #a90007;
+    color: var(--zui-text-color-error);
+}
+
+.zui-textbox-clear {
+    cursor: pointer;
+}
+
+.zui-buttonlist .zui-textbox-placeholder,
+.zui-buttonlist .zui-textbox-error,
+.zui-buttonset .zui-textbox-placeholder,
+.zui-buttonset .zui-textbox-error {
+    white-space: nowrap;
+}
+
+.zui-textbox.empty .zui-textbox-placeholder,
+.zui-textbox.error .zui-textbox-error,
+.zui-richtext.empty .zui-textbox-placeholder,
+.zui-richtext.error .zui-textbox-error,
+.zui-textbox.focused:not(.empty) .zui-textbox-clear {
+    display: inline-block;
+}
+
+.zui-textbox-placeholder:empty:before {
+    content: 'Enter text';
+}
+
+.zui-textbox-error:before {
+    content: 'error_outline';
+}
+
+.zui-textbox-clear:before {
+    content: 'close';
+}
+
+.zui-textbox.keep-placeholder .zui-textbox-placeholder {
+    display: block;
+    position: absolute;
+    top: 0;
+    margin-left: 0;
+    width: calc(100% - 0.5em);
+    white-space: nowrap;
+    visibility: visible;
+    -webkit-transition: font-size 0.2s;
+    -moz-transition: font-size 0.2s;
+    -ms-transition: font-size 0.2s;
+    transition: font-size 0.2s;
+}
+
+.zui-textbox.keep-placeholder:not(.empty) .zui-textbox-placeholder {
+    color: #103492;
+    color: var(--zui-textbox-label-color);
+    font-size: 95%;
+}
+
+.zui-textbox.error .zui-textbox-placeholder {
+    padding-right: 20px;
+}
+
+.zui-richtext {
+    margin: 0.67em -1px;
+    border: 1px solid #aeb8c2;
+    border: 1px solid var(--zui-textbox-frame-color);
+    border-radius: 2px;
+    border-radius: var(--zui-textbox-frame-roundness);
+}
+
+.zui-richtext.focused {
+    border-color: #103492;
+    border-color: var(--zui-textbox-frame-color-focus);
+    box-shadow: inset 0 0 2px rgba(128, 128, 128, 0.5), 0 0 2px #103492;
+    box-shadow: inset 0 0 2px var(--zui-textbox-frame-shadow-color), 0 0 2px var(--zui-textbox-frame-color-focus);
+}
+
+.zui-richtext-toolbar {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--zui-separate-border-color-secondary);
+}
+
+.zui-richtext .zui-textbox {
+    padding: 0 0.67em;
+    line-height: 1.7;
+}
+
+.zui-richtext .zui-editable {
+    padding: 0;
+}
+
+
+/* Form */
+
+.zui-form {
+    position: relative;
+    padding: 0 0.75em;
+}
+
+.zui-form .zui-form,
+.zui-form > .zui-buttonset,
+.zui-form > .zui-buttonlist,
+.zui-form > .zui-dropdown {
+    margin-left: -0.75em;
+    margin-right: -0.75em;
+}
+
+.zui-form > .zui-textbox {
+    margin-bottom: 1em;
+}
+
+.zui-fieldset,
+.zui-fieldset-title {
+    position: relative;
+}
+
+.zui-fieldset-title p {
+    margin: 0.25em 0 1em;
+    color: #555;
+    color: var(--zui-text-color-secondary);
+}
+
+.zui-fieldset-title p:empty {
+    display: none;
+}
+
+.zui-fieldset.optional {
+    padding-left: 24px;
+}
+
+.zui-fieldset.optional-checked,
+.zui-fieldset:not(.optional) {
+    margin-bottom: 1em;
+}
+
+.optional > .zui-fieldset-title {
+    margin-left: -24px;
+}
+
+.optional > .zui-fieldset-title > p {
+    margin-left: 24px;
+}
+
+:not(.optional) > .zui-fieldset-title {
+    pointer-events: none;
+}
+
+:not(.optional) > .zui-fieldset-title > .zui-checkbox {
+    font-size: 90%;
+    font-weight: bold;
+    color: #103492;
+    color: var(--zui-text-color-header);
+    text-transform: uppercase;
+}
+
+:not(.optional) > .zui-fieldset-title > .zui-checkbox:before {
+    content: none;
+}
+
+:not(.optional) > .zui-fieldset-title > .zui-checkbox > span:first-child {
+    padding-left: 0;
+}
+
+
+/* Snackbar */
+
+.zui-snackbar {
+    max-width: 80%;
+}
+
+@media (max-width: 500px) {
+    .zui-snackbar {
+        width: calc(100% - 1em);
+    }
+}
+
+.zui-snackbar .zui-float {
+    position: relative;
+    -webkit-transform: translateY(-10px);
+    -moz-transform: translateY(-10px);
+    -ms-transform: translateY(-10px);
+    transform: translateY(-10px);
+    -webkit-transition: transform 0.2s, opacity 0.2s;
+    -moz-transition: transform 0.2s, opacity 0.2s;
+    -ms-transition: transform 0.2s, opacity 0.2s;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.zui-snackbar.open .zui-float {
+    -webkit-transform: translateY(0);
+    -moz-transform: translateY(0);
+    -ms-transform: translateY(0);
+    transform: translateY(0);
+}
+
+.zui-snackbar.closing .zui-float {
+    opacity: 0;
+}
+
+.zui-snackbar .zui-buttonset {
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    padding: 0.25em 0.25em 0.25em 0.75em;
+    border-radius: 2px;
+    border-radius: var(--zui-float-roundness);
+    align-items: center;
+}
+
+.zui-snackbar.notify-info .zui-buttonset {
+    border-left: 5px solid #4078f2;
+    border-left: 5px solid var(--zui-notify-info-color);
+}
+
+.zui-snackbar.notify-success .zui-buttonset {
+    border-left: 5px solid #50a14f;
+    border-left: 5px solid var(--zui-notify-success-color);
+}
+
+.zui-snackbar.notify-warn .zui-buttonset {
+    border-left: 5px solid #c18401;
+    border-left: 5px solid var(--zui-notify-warn-color);
+}
+
+.zui-snackbar.notify-error .zui-buttonset {
+    border-left: 5px solid #a90007;
+    border-left: 5px solid var(--zui-text-color-error);
+}
+
+.zui-snackbar button {
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 90%;
+}
+
+
+/* Dialog */
+
+.zui-dialog {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    position: fixed;
+    top: 0;
+    margin: 10px;
+    min-width: 350px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 370px) {
+    .zui-dialog {
+        min-width: calc(100vw - 20px);
+    }
+}
+
+.zui-dialog-inner {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    position: relative;
+    max-width: inherit;
+    max-height: inherit;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5), 0 2px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 2px var(--zui-dialog-shadow-color), 0 2px 30px var(--zui-dialog-shadow-color);
+    border-radius: 2px;
+    border-radius: var(--zui-float-roundness);
+    -webkit-transition: 0.2s ease-out;
+    -moz-transition: 0.2s ease-out;
+    -ms-transition: 0.2s ease-out;
+    transition: 0.2s ease-out;
+    -webkit-transition-property: transform, opacity;
+    -moz-transition-property: transform, opacity;
+    -ms-transition-property: transform, opacity;
+    transition-property: transform, opacity;
+    opacity: 0;
+    -webkit-flex: 1 1 auto;
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    z-index: 0;
+}
+
+.zui-dialog-inner.open {
+    opacity: 1;
+}
+
+.zui-dialog-inner.closing {
+    -webkit-transform: scale(0.75);
+    -moz-transform: scale(0.75);
+    -ms-transform: scale(0.75);
+    transform: scale(0.75);
+    opacity: 0;
+}
+
+.zui-dialog-inner.pop {
+    -webkit-animation: dialog-content-pop 0.1s linear;
+    -moz-animation: dialog-content-pop 0.1s linear;
+    animation: dialog-content-pop 0.1s linear;
+}
+
+@-webkit-keyframes dialog-content-pop {
+    0% {
+        -webkit-transform: translateY(-10px);
+    }
+}
+
+@-moz-keyframes dialog-content-pop {
+    0% {
+        -moz-transform: translateY(-10px);
+    }
+}
+
+@keyframes dialog-content-pop {
+    0% {
+        transform: translateY(-10px);
+    }
+}
+
+.zui-dialog-pin {
+    display: none;
+    position: absolute;
+    padding: 0.4em;
+    width: 1.2em;
+    height: 1.2em;
+    font-size: 10px;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.zui-dialog-pin:before {
+    content: '';
+    display: block;
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.95);
+    width: 1.2em;
+    height: 1.2em;
+    box-shadow: 1.4px 1.4px 5px rgba(0, 0, 0, 0.3);
+    -webkit-transform: rotate(45deg);
+    -moz-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+.zui-dialog-pin.dir-bottom:before {
+    bottom: -0.6em;
+}
+
+.zui-dialog-pin.dir-top:before {
+    top: -0.6em;
+}
+
+.zui-dialog-pin.dir-left:before {
+    left: -0.6em;
+}
+
+.zui-dialog-pin.dir-right:before {
+    right: -0.6em;
+}
+
+.zui-dialog-content {
+    position: relative;
+    padding: 1em;
+    -webkit-flex: 0 1 auto;
+    -ms-flex: 0 1 auto;
+    flex: 0 1 auto;
+    overflow: auto;
+}
+
+.zui-dialog-content > h2 {
+    margin: 0.5em 0;
+    color: #103492;
+    color: var(--zui-dialog-header-color);
+    font-size: 100%;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.zui-dialog-content > h2:empty,
+.zui-dialog-content > p:empty {
+    display: none;
+}
+
+.zui-dialog-content > .zui-form {
+    padding: 0;
+    -webkit-transform: scale(1);
+    -moz-transform: scale(1);
+    transform: scale(1);
+}
+
+.zui-dialog-content > .zui-form > .zui-label {
+    display: block;
+    margin: 0.5em 0;
+}
+
+.zui-dialog-error {
+    margin: 0 1em;
+    color: #a90007;
+    color: var(--zui-text-color-error);
+}
+
+.zui-dialog-buttonset {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    margin: 0.5em;
+    -webkit-flex-shrink: 0;
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
+}
+
+.zui-dialog-buttonset button.zui-submit {
+    background-color: rgba(16, 52, 146, 0.7);
+    background-color: var(--zui-button-submit-background-color);
+    color: white;
+    color: var(--zui-button-submit-text-color);
+}
+
+.zui-dialog-buttonset > label,
+.zui-dialog-buttonset > button {
+    border-radius: 2px;
+    border-radius: var(--zui-button-roundness);
+}
+
+
+/* Animated Effects */
+
+.zui-root .zui-buttonlike {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.zui-clickeffect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.zui-clickeffect i {
+    position: absolute !important;
+    background-color: #fafafa;
+    background-color: var(--zui-ripple-color-init);
+    width: 1em;
+    height: 1em;
+    border-radius: 1em;
+    opacity: 0.3;
+    -webkit-transform: translate(-50%, -50%);
+    -moz-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    -webkit-transition: transform ease-out, background-color cubic-bezier(0, 0, 0, 1), opacity cubic-bezier(1, 0, 1, 1);
+    -moz-transition: transform ease-out, background-color cubic-bezier(0, 0, 0, 1), opacity cubic-bezier(1, 0, 1, 1);
+    -ms-transition: transform ease-out, background-color cubic-bezier(0, 0, 0, 1), opacity cubic-bezier(1, 0, 1, 1);
+    transition: transform ease-out, background-color cubic-bezier(0, 0, 0, 1), opacity cubic-bezier(1, 0, 1, 1);
+    -webkit-transition-duration: 0.2s;
+    -moz-transition-duration: 0.2s;
+    -ms-transition-duration: 0.2s;
+    transition-duration: 0.2s;
+}
+
+.zui-clickeffect i.animate-in {
+    background-color: black;
+    background-color: var(--zui-ripple-color-end);
+    opacity: 0.2;
+}
+
+.zui-clickeffect i.animate-out {
+    opacity: 0;
+}
+
+
+/* Grid */
+
+.zui-grid {
+    padding: 0.75em;
+}
+
+.zui-grid .zui-label {
+    display: block;
+    text-align: center;
+    margin-top: 0.5em;
+}
+
+.zui-grid-cell {
+    margin: 1px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--zui-grid-cell-border);
+    background-color: white;
+    background-color: var(--zui-grid-cell-background-color);
+    width: 1em;
+    height: 1em;
+    float: left;
+}
+
+.zui-grid-cell.active {
+    background-color: rgba(0, 0, 0, 0.15);
+    background-color: var(--zui-grid-cell-background-color-active);
+}
+
+.zui-grid-row:after {
+    content: '';
+    display: block;
+    clear: both;
+}
+
+
+/* Tagging */
+
+.zui-keyword-item {
+    display: inline-block;
+    margin-right: 0.25em;
+    vertical-align: baseline;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.zui-keyword-item::selection {
+    background-color: transparent;
+}
+
+.zui-keyword-item.invalid {
+    background: bottom repeat-x url(data:image/gif;base64,R0lGODdhBAADAPcAAAAAAAAAVQAAqgAA/wAkAAAkVQAkqgAk/wBJAABJVQBJqgBJ/wBtAABtVQBtqgBt/wCSAACSVQCSqgCS/wC2AAC2VQC2qgC2/wDbAADbVQDbqgDb/wD/AAD/VQD/qgD//yQAACQAVSQAqiQA/yQkACQkVSQkqiQk/yRJACRJVSRJqiRJ/yRtACRtVSRtqiRt/ySSACSSVSSSqiSS/yS2ACS2VSS2qiS2/yTbACTbVSTbqiTb/yT/ACT/VST/qiT//0kAAEkAVUkAqkkA/0kkAEkkVUkkqkkk/0lJAElJVUlJqklJ/0ltAEltVUltqklt/0mSAEmSVUmSqkmS/0m2AEm2VUm2qkm2/0nbAEnbVUnbqknb/0n/AEn/VUn/qkn//20AAG0AVW0Aqm0A/20kAG0kVW0kqm0k/21JAG1JVW1Jqm1J/21tAG1tVW1tqm1t/22SAG2SVW2Sqm2S/222AG22VW22qm22/23bAG3bVW3bqm3b/23/AG3/VW3/qm3//5IAAJIAVZIAqpIA/5IkAJIkVZIkqpIk/5JJAJJJVZJJqpJJ/5JtAJJtVZJtqpJt/5KSAJKSVZKSqpKS/5K2AJK2VZK2qpK2/5LbAJLbVZLbqpLb/5L/AJL/VZL/qpL//7YAALYAVbYAqrYA/7YkALYkVbYkqrYk/7ZJALZJVbZJqrZJ/7ZtALZtVbZtqrZt/7aSALaSVbaSqraS/7a2ALa2Vba2qra2/7bbALbbVbbbqrbb/7b/ALb/Vbb/qrb//9sAANsAVdsAqtsA/9skANskVdskqtsk/9tJANtJVdtJqttJ/9ttANttVdttqttt/9uSANuSVduSqtuS/9u2ANu2Vdu2qtu2/9vbANvbVdvbqtvb/9v/ANv/Vdv/qtv///8AAP8AVf8Aqv8A//8kAP8kVf8kqv8k//9JAP9JVf9Jqv9J//9tAP9tVf9tqv9t//+SAP+SVf+Sqv+S//+2AP+2Vf+2qv+2///bAP/bVf/bqv/b////AP//Vf//qv///yH5BAAAAAAALAAAAAAEAAMAQAgMAP8JBPePYMFvBAMCADs=);
+}
+
+.zui-keyword-item i {
+    display: inline-block;
+    font-size: 0;
+    line-height: 0;
+    opacity: 0.5;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.zui-keyword-item i:after {
+    content: 'close';
+    margin-left: 0.25em;
+    font-size: 14px;
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga';
+}
+
+
+/* Calendar */
+
+.zui-buttonlist .zui-calendar,
+.zui-buttonlist .zui-clock,
+.zui-calendar-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid var(--zui-separate-border-color);
+}
+
+.zui-calendar-header label.zui-dropdown > .zui-label {
+    padding-right: 0.75em !important;
+}
+
+.zui-calendar-header label.zui-dropdown > .zui-label:after {
+    content: none;
+}
+
+.zui-calendar table {
+    border-collapse: separate;
+    border-spacing: 0.5em 0;
+    table-layout: fixed;
+    font-size: 90%;
+    line-height: 1.2;
+}
+
+.zui-calendar.select-range table {
+    border-collapse: collapse;
+}
+
+.zui-calendar th {
+    padding: 0.75em 0.5em 0.5em 0;
+    color: #999;
+    color: var(--zui-calendar-header-color);
+    font-weight: normal;
+    text-align: right;
+    cursor: default;
+}
+
+.zui-calendar.select-range th {
+    padding-right: 0.75em;
+}
+
+.zui-calendar td {
+    padding: 0;
+}
+
+.zui-calendar.select-range td {
+    padding-left: 0.25em;
+    padding-right: 0.25em;
+}
+
+.zui-calendar.select-range td:first-child {
+    padding-left: 0.5em;
+}
+
+.zui-calendar.select-range td:last-child {
+    padding-right: 0.5em;
+}
+
+.zui-calendar td.prev button,
+.zui-calendar td.next button {
+    color: rgba(16, 52, 146, 0.5);
+    color: var(--zui-calendar-date-text-color-aux);
+}
+
+.zui-calendar td.selected {
+    background-color: rgba(16, 52, 146, 0.2);
+    background-color: var(--zui-calendar-date-background-color-active);
+}
+
+.zui-calendar td button {
+    display: block;
+    padding: 0.5em;
+    width: 2.2em;
+    min-height: 0;
+    background-color: transparent !important;
+    line-height: 1.2;
+    text-align: right;
+}
+
+.zui-clock {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-align-self: stretch;
+    -ms-flex-item-align: stretch;
+    align-self: stretch;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.zui-calendar + .zui-clock {
+    border-left: 1px solid rgba(0, 0, 0, 0.15);
+    border-left: 1px solid var(--zui-separate-border-color);
+}
+
+.zui-clock [contenteditable] {
+    min-width: auto !important;
+}
+
+.zui-clock .zui-buttonset > * {
+    vertical-align: middle;
+}
+
+.zui-clock-face {
+    position: relative;
+    margin: 1em;
+    width: 10em;
+    height: 10em;
+    color: #aeb8c2;
+    color: var(--zui-clock-mark-color);
+    -webkit-flex-grow: 1;
+    -ms-flex-positive: 1;
+    flex-grow: 1;
+}
+
+.zui-clock-face i,
+.zui-clock-face i:before,
+.zui-clock-face i:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    border: 0.75em;
+    border-style: none solid;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.zui-clock-face i {
+    opacity: 0.75;
+}
+
+.zui-clock-face i + i {
+    transform: rotate(30deg);
+}
+
+.zui-clock-face i:before,
+.zui-clock-face i:after {
+    top: 0;
+    left: -0.75em;
+    width: calc(100% + 1.5em);
+}
+
+.zui-clock-face i:before {
+    transform: rotate(120deg);
+}
+
+.zui-clock-face i:after {
+    transform: rotate(-120deg);
+}
+
+.zui-clock-face s {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-left: -2px;
+    color: #999;
+    color: var(--zui-clock-hand-color);
+    -webkit-transform-origin: 2px center;
+    -moz-transform-origin: 2px center;
+    -ms-transform-origin: 2px center;
+    transform-origin: 2px center;
+}
+
+.zui-clock-face s[hand="m"] {
+    width: 45%;
+}
+
+.zui-clock-face s[hand="h"] {
+    width: 30%;
+}
+
+.zui-clock-face s:before {
+    content: '';
+    position: absolute;
+    left: 100%;
+    margin-left: -0.5em;
+    margin-top: -0.5em;
+    border: 0.5em solid;
+    border-radius: 1em;
+    opacity: 0;
+    -webkit-transition: opacity 0.1s ease-out;
+    -moz-transition: opacity 0.1s ease-out;
+    -ms-transition: opacity 0.1s ease-out;
+    transition: opacity 0.1s ease-out;
+}
+
+.zui-clock-face:hover s:before {
+    opacity: 1;
+}
+
+.zui-clock-face s:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin-top: -2px;
+    width: 100%;
+    border-width: 2px;
+    border-style: solid none;
+    border-radius: 2px;
+}
+
+.zui-textbox input[type="month"],
+.zui-textbox input[type="week"],
+.zui-textbox input[type="date"],
+.zui-textbox input[type="datetime-local"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    -webkit-appearance: none;
+    z-index: 1;
+}

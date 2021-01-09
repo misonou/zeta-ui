@@ -1,0 +1,51 @@
+{
+  "name": "zeta-ui",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "build": "node ./scripts/build.cjs",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules npx jest",
+    "version": "npm run build && git add -A dist",
+    "release": "node ./scripts/release.cjs"
+  },
+  "author": "misonou",
+  "license": "ISC",
+  "homepage": "https://github.com/misonou/zeta-ui",
+  "repository": "github:misonou/zeta-ui",
+  "dependencies": {
+    "jquery": "^3.0.0",
+    "promise-polyfill": "^8.2.0",
+    "waterpipe": "^2.4.0",
+    "zeta-dom": "^0.1.4"
+  },
+  "optionalDependencies": {
+    "zeta-editor": "^0.1.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.3",
+    "@babel/preset-env": "^7.12.1",
+    "@jest/globals": "^26.6.2",
+    "@types/jest": "^26.0.15",
+    "babel-loader": "^8.2.1",
+    "clean-webpack-plugin": "^3.0.0",
+    "cross-env": "^7.0.2",
+    "jest": "^27.0.6",
+    "ncp": "^2.0.0",
+    "syn": "^0.15.0",
+    "webpack": "^5.3.0",
+    "webpack-cli": "^4.1.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "not dead",
+    "ie >= 11"
+  ],
+  "keywords": [
+    "html",
+    "dom",
+    "ui"
+  ]
+}
